@@ -6,6 +6,8 @@ class Settings:
     def __init__(self):
         self._accounts = []
         self._def_account = ""
+        self._def_access = 0
+        self._def_playlist = ""
         self._vids_folder = "videos/"
         self._def_title = ""
         self._def_description = ""
@@ -24,9 +26,11 @@ class Settings:
                              f'def_account={self._def_account}\n',
                              f'def_title={self._def_title}\n',
                              f'def_description={self._def_description}\n',
+                             f'def_playlist={self._def_playlist}\n',
                              f'def_tags={",".join(self._def_tags)}\n',
                              f'def_ends={",".join(self._def_ends)}\n',
                              f'def_preview={self._def_preview}\n',
+                             f'def_access={self._def_access}\n',
                              f'def_publ_time={self._def_publ_time}\n'])
         self.create_videos_dir()
 
@@ -47,12 +51,16 @@ class Settings:
                     self._vids_folder = line.split("=")[1]
                 elif line.find("def_description") != -1:
                     self._def_description = line.split("=")[1]
+                elif line.find("def_playlist") != -1:
+                    self._def_playlist = line.split("=")[1]
                 elif line.find("def_tags") != -1:
                     self._def_tags = line.split("=")[1].split(",")
                 elif line.find("def_ends") != -1:
                     self._def_ends = line.split("=")[1].split(",")
                 elif line.find("def_preview") != -1:
                     self._def_preview = line.split("=")[1]
+                elif line.find("def_access") != -1:
+                    self._def_access = int(line.split("=")[1])
                 elif line.find("def_publ_time") != -1:
                     self._def_publ_time = int(line.split("=")[1])
                 line = file.readline().strip()
@@ -84,6 +92,7 @@ class Settings:
         self._def_account = val
         self.update_settings()
         return
+
     def add_def_title(self, val):
         self._def_title = val
         self.update_settings()
@@ -91,6 +100,11 @@ class Settings:
 
     def add_def_description(self, val):
         self._def_description = val
+        self.update_settings()
+        return
+
+    def add_def_playlist(self, val):
+        self._def_playlist = val
         self.update_settings()
         return
 
@@ -106,6 +120,11 @@ class Settings:
 
     def add_def_preview(self, val):
         self._def_preview = val
+        self.update_settings()
+        return
+
+    def add_def_access(self, val):
+        self._def_access = val
         self.update_settings()
         return
 
