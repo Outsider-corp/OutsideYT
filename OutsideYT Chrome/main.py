@@ -18,7 +18,7 @@ driver_options = webdriver.ChromeOptions()
 driver_options.add_argument(f"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36")
 driver_options.add_argument("--disable-blink-features=AutomationControlled")
 # driver_options.add_argument(f"--proxy-server=203.24.102.11:0080")
-driver = webdriver.Chrome(executable_path="chromedriver.exe",
+driver = webdriver.Chrome(executable_path="chromedriver110.exe",
                           options=driver_options)
 
 
