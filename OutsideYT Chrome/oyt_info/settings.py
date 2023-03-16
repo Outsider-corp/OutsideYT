@@ -141,3 +141,21 @@ class Settings:
             if not os.path.exists(f'{path}/{login}'):
                 os.mkdir(f'{path}/{login}')
         return
+
+    @staticmethod
+    def check_cookies():
+        accs = []
+        for file in os.listdir():
+            if file.endswith("_cookies"):
+                accs.append(file.replace("_cookies", ""))
+        out = ""
+        with open("oyt_info/settings", "r") as f:
+            for line in f:
+                if line.find("accounts=") != -1:
+                    out += "accounts=" + ",".join(accs) + "\n"
+                else:
+                    out += line
+        print(out, file=open("oyt_info/settings", "w", encoding="UTF-8"))
+
+if os.path.exists("oyt_info/settings"):
+    Settings.check_cookies()
