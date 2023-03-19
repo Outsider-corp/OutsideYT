@@ -78,7 +78,7 @@ def upload_video(driver, user, video, preview=None, title=None,
         driver.implicitly_wait(wait_time)
 
         driver.get(url2)
-        driver.implicitly_wait(wait_time)
+        driver.implicitly_wait(wait_time//2)
 
         driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
         driver.implicitly_wait(wait_time)
@@ -137,12 +137,12 @@ def upload_video(driver, user, video, preview=None, title=None,
                 if not isinstance(playlist, (tuple, list)):
                     playlist = [playlist]
                 for i in playlist:
-                    playlist_el.find_element(By.XPATH, f'//span[@class="label label-text'
-                                                       f' style-scope ytcp-checkbox-group" and'
-                                                       f' contains(text(), "{i}")]').click()
-                driver.find_element(By.XPATH,
-                                    f'//*[@class="done-button action-button style-scope ytcp-playlist-dialog"]/div').click()
-                driver.implicitly_wait(wait_time//2)
+                    try:
+                        playlist_el.find_element(By.XPATH, f'//span[@class="label label-text'
+                                                           f' style-scope ytcp-checkbox-group" and'
+                                                           f' contains(text(), "{i.rstrip()}")]').click()
+                    except:
+                        print(f"No playlist: {i}")
             except Exception as e:
                 print("Произошла ошибка на этапе добавления видео в плейлисты")
                 print(e)
@@ -150,11 +150,9 @@ def upload_video(driver, user, video, preview=None, title=None,
                 try:
                     driver.find_element(By.XPATH,
                                         f'//*[@class="done-button action-button style-scope ytcp-playlist-dialog"]/div').click()
+                    driver.implicitly_wait(wait_time // 2)
                 except:
                     pass
-
-        time.sleep(10)
-
 
         if not tags:
             tags = find_files(text_extensions, folder=path, name="Tags")
@@ -177,22 +175,21 @@ def upload_video(driver, user, video, preview=None, title=None,
                 driver.find_element(By.XPATH, f'//*[@id="endscreens-button"]').click()
                 driver.implicitly_wait(wait_time)
 
+                ends_el = driver.find_element(By.XPATH,
+                                              f'//*[@id="cards-row"]')
                 if ends == "import":
-                    pass
+                    end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
+                                                             f' style-scope ytve-endscreen'
+                                                             f'-template-picker"]')[0]
                 elif ends == "random":
-                    ends_el = driver.find_elements(By.XPATH,
-                                                   f'//*[@class="card style-scope ytve-endscreen-template-picker"]')
                     while True:
-                        end_num = random.randint(0, len(ends_el) - 1)
-                        if "Playlist" not in \
-                                ends_el[end_num].find_element(By.XPATH,
-                                                              f'//*[@class="title style-scope ytve-endscreen-template-picker"]').text \
-                                and "Плейлист" not in \
-                                ends_el[end_num].find_element(By.XPATH,
-                                                              f'//*[@class="title style-scope ytve-endscreen-template-picker"]').text:
-                            ends_el[end_num].click()
+                        end_num = random.randint(0, 5)
+                        end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
+                                                                 f' style-scope ytve-endscreen'
+                                                                 f'-template-picker"]')[end_num]
+                        if "playlist" not in end_el.text.lower() and "плейлист" not in end_el.text.lower():
                             break
-
+                end_el.find_element(By.XPATH, "..").click()
                 driver.implicitly_wait(wait_time // 2)
                 time.sleep(2)
                 driver.find_element(By.XPATH, f'//*[@id="save-button"]').click()
@@ -221,8 +218,6 @@ def upload_video(driver, user, video, preview=None, title=None,
                 publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
         driver.implicitly_wait(wait_time // 2)
-        driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
-        driver.implicitly_wait(wait_time)
         while True:
             try:
                 driver.find_element(By.XPATH, f'//ytcp-video-upload-progress[@checks-summary-status-v2='
@@ -230,6 +225,8 @@ def upload_video(driver, user, video, preview=None, title=None,
                 break
             except:
                 continue
+        driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
+        driver.implicitly_wait(wait_time)
         print(f"\033[32m\033[1mВидео {video} было успешно загружено!\033[0m")
     except Exception as e:
         print("Error!")
@@ -267,8 +264,10 @@ def change_def_access(account: str, access: int):
     """
     pass
 
+
 def get_playlists(account: str):
     pass
+
 
 def start():
     global settings
@@ -315,4 +314,4 @@ if __name__ == "__main__":
     #         run_on_insecure_origins=True)
     login = "outsider.deal3"
     # google_login(login, driver)
-    upload_video(driver, login, "1")
+    upload_video(driver, login, "1", ends="import")
