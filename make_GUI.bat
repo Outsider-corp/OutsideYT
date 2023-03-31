@@ -1,0 +1,1 @@
+pyuic5 -x Outside_YouTube.ui -o oyt_gui.py
