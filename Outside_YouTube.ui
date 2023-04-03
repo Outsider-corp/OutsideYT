@@ -95,7 +95,7 @@ selection-background-color: rgb(15, 15, 15);</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -581,6 +581,36 @@ selection-background-color: rgb(15, 15, 15);</string>
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="Watch_Threads_Label">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>9</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Thread count</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="Watch_Threads_SpinBox">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>9</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="value">
+             <number>1</number>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="Watch_UseProxy_CheckBox">

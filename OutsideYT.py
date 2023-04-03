@@ -32,7 +32,7 @@ def update_form():
         else:
             ui.Watch_Progress_Label.setText('')
     elif current_page == 2:
-        if ui.Download_Progress_Label.text() == '':
+        if ui.Download_Progress_Label.text() == ' ':
             ui.Download_Progress_Label.setText("Вы нажали F5, да?")
         else:
             ui.Download_Progress_Label.setText('')
@@ -56,6 +56,11 @@ def start_GUI():
     ui.Upload_Progress_Bar.setVisible(False)
     ui.Watch_Progress_Bar.setVisible(False)
     ui.Download_Progress_Bar.setVisible(False)
+
+def table_update(page):
+    table = getattr(ui, f'{page}_Table')
+
+    table1 = ui.Upload_Table.
 
 
 if __name__ == '__main__':
