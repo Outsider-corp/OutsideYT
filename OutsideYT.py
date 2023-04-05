@@ -60,7 +60,7 @@ def start_GUI():
 def table_update(page):
     table = getattr(ui, f'{page}_Table')
 
-    table1 = ui.Upload_Table.
+    # table1 = ui.Upload_Table.
 
 
 if __name__ == '__main__':
