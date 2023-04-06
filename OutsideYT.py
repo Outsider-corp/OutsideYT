@@ -1,12 +1,12 @@
-import functools
 import sys
 import os
 
-from oyt_gui import Ui_YouTubeOutside
+from outside.oyt_gui import Ui_YouTubeOutside
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QStyleFactory, QMainWindow, QShortcut, QTableWidgetItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QStyleFactory, QMainWindow, QShortcut
 from PyQt5.QtGui import QKeySequence
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTableWidgetItem
 
 
 class QMainWindowPlus(QMainWindow):
@@ -28,8 +28,10 @@ class QMainWindowPlus(QMainWindow):
     @classmethod
     def table_update(cls):
         current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
-        # globals()[f'{current_page}_table'] = globals()[f'add_row_{current_page.lower()}_table']()
-        # globals()[f'{current_page}_table'].show()
+        table = globals()[f'{current_page}_table']
+        rows = table.rowCount()
+        [table.setItem(i, 0, QTableWidgetItem(f"e{i + 1}")) for i in range(rows)]
+        table.update()
 
     @classmethod
     def add_row(cls):
@@ -37,7 +39,6 @@ class QMainWindowPlus(QMainWindow):
         table = globals()[f'{current_page}_table']
         table = Upload.add_row_update_table(table)
         table.show()
-
 
 def update_ui():
     update_upload()
@@ -47,16 +48,20 @@ def update_ui():
 
 def update_upload():
     global Upload_table
-
+    Upload_table = ui.Upload_Table
+    Upload_table.verticalHeader().setSectionsMovable(True)
     ui.Upload_Progress_Bar.setVisible(False)
 
-    Upload_table = ui.Upload_Table
-    Upload_table.setColumnCount(14)
-    Upload_table.setHorizontalHeaderLabels(["User", "Title", "Publ time", "Video", "Description",
+    Upload_table.setColumnCount(15)
+    Upload_table.setHorizontalHeaderLabels(["id", "User", "Title", "Publ time", "Video", "Description",
                                             "Playlist", "Preview", "Tags", "Ends", "Cards", "Access",
                                             "Save title?", "Delete", "Select"])
 
     ui.Upload_SelectAll_CheckBox.stateChanged.connect(Upload.checkbox_changed)
+
+    Upload_table.setDragEnabled(True)
+    Upload_table.setDropIndicatorShown(True)
+    Upload_table.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 
 
 class Upload:
@@ -65,42 +70,46 @@ class Upload:
     def checkbox_changed(cls, state):
         for i in range(Upload_table.rowCount()):
             if state == Qt.Checked:
-                Upload_table.item(i, 13).setFlags(Upload_table.item(i, 13).flags() | Qt.ItemIsEnabled)
+                Upload_table.item(i, 14).setFlags(Upload_table.item(i, 14).flags() | Qt.ItemIsEnabled)
             else:
-                Upload_table.item(i, 13).setFlags(Upload_table.item(i, 13).flags() & ~Qt.ItemIsEnabled)
+                Upload_table.item(i, 14).setFlags(Upload_table.item(i, 14).flags() & ~Qt.ItemIsEnabled)
         Upload_table.update()
+
+    id = 1
 
     @classmethod
     def add_row_update_table(cls, user=None, video="-def", preview="-def",
                              title="-def", description="-def", playlist="-def",
                              tags="-def", ends="random", cards=1, publ_time=None,
                              access=0, save_title=False):
-        table = Upload_table
-        row = table.rowCount()
+        row = Upload_table.rowCount()
         Upload_table.insertRow(row)
-        Upload_table.setItem(row, 0, QTableWidgetItem("user"))
-        Upload_table.setItem(row, 1, QTableWidgetItem(title))
-        Upload_table.setItem(row, 2, QTableWidgetItem(publ_time))
-        Upload_table.setItem(row, 3, QTableWidgetItem(video))
-        Upload_table.setItem(row, 4, QTableWidgetItem(description))
-        Upload_table.setItem(row, 5, QTableWidgetItem(playlist))
-        Upload_table.setItem(row, 6, QTableWidgetItem(preview))
-        Upload_table.setItem(row, 7, QTableWidgetItem(tags))
-        Upload_table.setItem(row, 8, QTableWidgetItem(ends))
-        Upload_table.setItem(row, 9, QTableWidgetItem(cards))
-        Upload_table.setItem(row, 10, QTableWidgetItem(access))
+        Upload_table.setVerticalHeaderItem(row, QTableWidgetItem(">"))
+        Upload_table.setItem(row, 0, QTableWidgetItem(f"{cls.id}"))
+        Upload_table.setItem(row, 1, QTableWidgetItem("user"))
+        Upload_table.setItem(row, 2, QTableWidgetItem(title))
+        Upload_table.setItem(row, 3, QTableWidgetItem(publ_time))
+        Upload_table.setItem(row, 4, QTableWidgetItem(video))
+        Upload_table.setItem(row, 5, QTableWidgetItem(description))
+        Upload_table.setItem(row, 6, QTableWidgetItem(playlist))
+        Upload_table.setItem(row, 7, QTableWidgetItem(preview))
+        Upload_table.setItem(row, 8, QTableWidgetItem(tags))
+        Upload_table.setItem(row, 9, QTableWidgetItem(ends))
+        Upload_table.setItem(row, 10, QTableWidgetItem(cards))
+        Upload_table.setItem(row, 11, QTableWidgetItem(access))
         svt = QTableWidgetItem()
         svt.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
         if save_title:
             svt.setCheckState(Qt.Checked)
         else:
             svt.setCheckState(Qt.Unchecked)
-        Upload_table.setItem(row, 11, svt)
-        Upload_table.setItem(row, 12, QTableWidgetItem("Delete?"))
+        Upload_table.setItem(row, 12, svt)
+        Upload_table.setItem(row, 13, QTableWidgetItem("Delete?"))
         chk = QTableWidgetItem()
         chk.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
         chk.setCheckState(Qt.Checked)
-        Upload_table.setItem(row, 13, chk)
+        Upload_table.setItem(row, 14, chk)
+        cls.id += 1
         return Upload_table
 
 
