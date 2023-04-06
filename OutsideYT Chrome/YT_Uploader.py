@@ -64,8 +64,7 @@ def upload_video(driver, user, video, preview=None, title=None,
     :param publ_time: время публикации
     :param access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
     Используется, если publ_time = None (не указано)
-    :param save_title: Bool - использовать ли название файла с видео в качестве названия
-    :param save_preview: Bool - использовать ли стандартное превью
+    :param save_title: Bool - использовать ли название файла с видео в качестве названия видео
     :return:
     """
     try:
