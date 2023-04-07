@@ -1,31 +1,43 @@
-import json
 import os
 import random
-import subprocess
 import time
+import sys
+
+import OutsideYT
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 # from selenium_stealth import stealth
 # import undetected_chromedriver as uc
-import webbrowser
 import pickle
 
-from oyt_info.settings import Settings
+from OutsideYT import app_settings
 
 text_extensions = [".txt"]
 video_extensions = [".mp4", ".avi"]
 image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
 wait_time = 5
 
+def get_driver():
+    driver_options = webdriver.ChromeOptions()
+    user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+                 f" AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    driver_options.add_argument(
+        f"user-agent={user_agent}")
+    driver_options.add_argument("--disable-blink-features=AutomationControlled")
+    driver = webdriver.Chrome(executable_path=
+                              os.path.join(OutsideYT.project_folder, "outside", "bin", "chromedriver111.exe"),
+                              options=driver_options)
+    return driver
 
-def google_login(login: str, driver: webdriver):
+def google_login(login: str, mail: str):
     try:
-        login = login.split('@')[0]
+        driver = get_driver()
         filename = f"{login}_cookies"
         url = "https://youtube.com"
         url_log = "https://accounts.google.com/"
-        url1 = "https://bot.sannysoft.com/"
         driver.get(url)
         driver.implicitly_wait(7)
         print("start hearing...")
@@ -33,11 +45,10 @@ def google_login(login: str, driver: webdriver):
         while True:
             if driver.current_url.find("www.youtube.com/watch") != -1:
                 break
-        if not os.path.exists("oyt_info/"):
-            os.mkdir("oyt_info/")
-        pickle.dump(driver.get_cookies(), open(f"oyt_info/{filename}", "wb"))
+        pickle.dump(driver.get_cookies(),
+                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", filename), "wb"))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
-        settings.add_account(login)
+        app_settings.add_account({login: mail})
     except Exception as e:
         print("Error!\n", e)
     finally:
@@ -58,7 +69,7 @@ def upload_video(driver, user, video, preview=None, title=None,
     :param description: Описание
     :param playlist: Плейлист
     :param tags: теги
-    :param ends: import (default) - импортировать конечные заставки из другого видео (рандомного),
+    :param ends: import (default) - импортировать конечные заставки из предыдушего видео,
     random - рандомные конечные заставки из стандартных
     :param cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
     :param publ_time: время публикации
