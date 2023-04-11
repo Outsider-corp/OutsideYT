@@ -48,6 +48,7 @@ class QMainWindowPlus(QMainWindow):
             table = Upload.add_row_update_table(table)
         elif current_page == "temp":
             table.model().insertRows()
+            print(list(table.model().get_data().id))
         table.show()
     @classmethod
     def login_google(cls):
@@ -84,78 +85,26 @@ def update_upload_new():
     temp_table.horizontalHeader().setCascadingSectionResizes(False)
     temp_table.horizontalHeader().setSortIndicatorShown(True)
     temp_table.horizontalHeader().setStretchLastSection(False)
+
+    temp_table.setVerticalHeader(TableModels.HeaderView(temp_table))
+
     temp_table.verticalHeader().setCascadingSectionResizes(False)
     temp_table.verticalHeader().setDefaultSectionSize(40)
     temp_table.verticalHeader().setMinimumSectionSize(40)
-    temp_table.verticalHeader().setSortIndicatorShown(True)
     temp_table.verticalHeader().setStretchLastSection(False)
-
-
+    temp_table.verticalHeader().setSectionsMovable(True)
     temp_table.setDragEnabled(True)
-    temp_table.setAcceptDrops(True)
     temp_table.setDropIndicatorShown(True)
-    temp_table.setDragDropMode(temp_table.InternalMove)
-    temp_table.setSelectionBehavior(temp_table.SelectRows)
-    # temp_table.setItemDelegate(TableModels.RowDelegate())
-    # class QW(temp_table):
-    # def startDrag(self, supportedActions):
-    #     index = self.currentIndex()
-    #     item = self.model().itemFromIndex(index)
-    #
-    #     mimeData = QtCore.QMimeData()
-    #     mimeData.setData("application/x-qabstractitemmodeldatalist", self.model().mimeData([index]))
-    #
-    #     drag = QtGui.QDrag(temp_table)
-    #     drag.setMimeData(mimeData)
-    #     drag.exec_(supportedActions)
-    #
-    # def dragEnterEvent(self, event):
-    #     print(1)
-    #     if event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
-    #         event.accept()
-    #     else:
-    #         event.ignore()
-    #
-    # def dragMoveEvent(self, event):
-    #     print(2)
-    #     if event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
-    #         event.setDropAction(Qt.MoveAction)
-    #         event.accept()
-    #     else:
-    #         event.ignore()
-    #
-    # def dropEvent(self, event):
-    #     print(3)
-    #     if event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
-    #         mimedata = event.mimeData()
-    #         bstream = QtCore.QByteArray(mimedata.data("application/x-qabstractitemmodeldatalist"))
-    #         stream = QtCore.QDataStream(bstream, QtCore.QIODevice.ReadOnly)
-    #
-    #         row = -1
-    #         col = -1
-    #         dropRow = self.indexAt(event.pos()).row()
-    #         itemlist = self.model().selecterIndexes()
-    #         while not stream.atEnd():
-    #             item = QtGui.QStandardItem()
-    #             stream >> item
-    #             if row < 0:
-    #                 row = item.row()
-    #                 col = item.column()
-    #             if item.row() != row:
-    #                 self.model().insertRow(dropRow, itemlist)
-    #                 row = item.row()
-    #                 dropRow += 1
-    #             itemlist.append(item)
-    #
-    #         if itemlist:
-    #             self.model().insertRow(dropRow, itemlist)
-    #     else:
-    #         event.ignore()
+    temp_table.setDefaultDropAction(QtCore.Qt.MoveAction)
+    temp_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    temp_table.viewport().setAcceptDrops(True)
+    temp_table.setDragDropOverwriteMode(False)
+    temp_table.setSortingEnabled(True)
 
-    temp_table.dragEnterEvent = dragEnterEvent
-    temp_table.dragEnterEvent = dragMoveEvent
-    temp_table.dragEnterEvent = dropEvent
-    temp_table.startDrag = startDrag
+
+    # delegate = TableModels.HeaderDelegate()
+    # temp_table.setItemDelegateForColumn(0,delegate)
+
 def update_upload():
     global Upload_table
     Upload_table = ui.Upload_Table
