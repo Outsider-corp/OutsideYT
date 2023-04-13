@@ -15,7 +15,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidgetItem
 
 
-
 class QMainWindowPlus(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -30,6 +29,7 @@ class QMainWindowPlus(QMainWindow):
 
         self.shortcut4 = QShortcut(QKeySequence('Ctrl+R'), self)
         self.shortcut4.activated.connect(QMainWindowPlus.login_google)
+
     @classmethod
     def open_main_folder(cls):
         os.startfile(os.getcwd())
@@ -37,7 +37,8 @@ class QMainWindowPlus(QMainWindow):
     @classmethod
     def table_update(cls):
         current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
-        table = globals()[f'{current_page}_table']
+        table = globals()[f'temp_table']
+        print(table.model().get_data().iloc[0])
         table.update()
 
     @classmethod
@@ -48,8 +49,8 @@ class QMainWindowPlus(QMainWindow):
             table = Upload.add_row_update_table(table)
         elif current_page == "temp":
             table.model().insertRows()
-            print(list(table.model().get_data().id))
-        table.show()
+        table.update()
+
     @classmethod
     def login_google(cls):
         table = globals()['temp_table']
@@ -74,23 +75,20 @@ def update_upload_new():
     font.setFamily("Arial")
     font.setPointSize(11)
     temp_table.setFont(font)
-    temp_table.setFrameShape(QtWidgets.QFrame.NoFrame)
+    temp_table.setFrameShape(QtWidgets.QFrame.StyledPanel)
     temp_table.setFrameShadow(QtWidgets.QFrame.Sunken)
     temp_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
     temp_table.setAlternatingRowColors(False)
     temp_table.setTextElideMode(Qt.ElideRight)
     temp_table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
     temp_table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-    temp_table.setGridStyle(Qt.DotLine)
+    temp_table.setGridStyle(Qt.SolidLine)
     temp_table.horizontalHeader().setCascadingSectionResizes(False)
-    temp_table.horizontalHeader().setSortIndicatorShown(True)
     temp_table.horizontalHeader().setStretchLastSection(False)
 
     temp_table.setVerticalHeader(TableModels.HeaderView(temp_table))
 
     temp_table.verticalHeader().setCascadingSectionResizes(False)
-    temp_table.verticalHeader().setDefaultSectionSize(40)
-    temp_table.verticalHeader().setMinimumSectionSize(40)
     temp_table.verticalHeader().setStretchLastSection(False)
     temp_table.verticalHeader().setSectionsMovable(True)
     temp_table.setDragEnabled(True)
@@ -100,10 +98,15 @@ def update_upload_new():
     temp_table.viewport().setAcceptDrops(True)
     temp_table.setDragDropOverwriteMode(False)
     temp_table.setSortingEnabled(True)
+    temp_table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter)
+    temp_table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
+    temp_table.hideColumn(list(temp_table.model().get_data().columns).index("Selected"))
 
+    user_combo_del = TableModels.ComboBoxDelegate(OutsideYT.app_settings.accounts.keys())
+    access_combo_del = TableModels.ComboBoxDelegate(["Private", "On link", "Public"])
+    temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("User"), user_combo_del)
+    temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("Access"), access_combo_del)
 
-    # delegate = TableModels.HeaderDelegate()
-    # temp_table.setItemDelegateForColumn(0,delegate)
 
 def update_upload():
     global Upload_table
@@ -113,7 +116,7 @@ def update_upload():
     Upload_table.setColumnCount(15)
     Upload_table.setHorizontalHeaderLabels(["id", "User", "Title", "Publ time", "Video", "Description",
                                             "Playlist", "Preview", "Tags", "Ends", "Cards", "Access",
-                                            "Save title?", "Delete", "Select"])
+                                            "Save title?", "Delete", "Selected"])
     ui.Upload_SelectAll_CheckBox.stateChanged.connect(Upload.checkbox_changed)
 
     Upload_table.setDragEnabled(True)

@@ -217,14 +217,14 @@ def upload_video(driver, user, video, preview=None, title=None,
             pass
         else:
             publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
-            if access == 0:
+            if access == "Private":
                 publ_el.find_element(By.XPATH, f'//*[@name="PRIVATE"]').click()
-            elif access == 1:
+            elif access == "On link":
                 publ_el.find_element(By.XPATH, f'//*[@name="UNLISTED"]').click()
                 video_url = driver.find_element(By.XPATH, f'//span[@class="video-url-fadeable'
                                                           f' style-scope ytcp-video-info"]/a').text
                 print(video_url)
-            elif access == 2:
+            elif access == "Public":
                 publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
         driver.implicitly_wait(wait_time // 2)
