@@ -102,10 +102,17 @@ def update_upload_new():
     temp_table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
     temp_table.hideColumn(list(temp_table.model().get_data().columns).index("Selected"))
 
-    user_combo_del = TableModels.ComboBoxDelegate(OutsideYT.app_settings.accounts.keys())
-    access_combo_del = TableModels.ComboBoxDelegate(["Private", "On link", "Public"])
+    user_combo_del = TableModels.ComboBoxDelegate(temp_table, OutsideYT.app_settings.accounts.keys())
     temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("User"), user_combo_del)
+
+    access_combo_del = TableModels.ComboBoxDelegate(temp_table, ["Private", "On link", "Public"])
     temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("Access"), access_combo_del)
+
+    ends_combo_del = TableModels.ComboBoxDelegate(temp_table, ["random", "import"])
+    temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("Ends"), ends_combo_del)
+
+    cards_spin_del = TableModels.SpinBoxDelegate(temp_table)
+    temp_table.setItemDelegateForColumn(list(temp_table.model().get_data().columns).index("Cards"), cards_spin_del)
 
 
 def update_upload():

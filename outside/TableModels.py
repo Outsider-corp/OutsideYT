@@ -13,12 +13,11 @@ from OutsideYT import app_settings
 class UploadModel(QtCore.QAbstractTableModel):
     columns = ["id", "Selected", "User", "Title", "Publish", "Video", "Description",
                "Playlist", "Preview", "Tags", "Ends", "Cards", "Access",
-               "FileTitle"]
+               "Save filename?"]
 
-    default_content = [None, True, app_settings.def_account, "Title", "Now", "select video", "", "", "", "", "random",
+    default_content = [None, True, app_settings.def_account, "", "Now", "select video", "", "", "", "", "random",
                        2, "Private",
                        False]
-
 
     def __init__(self, data=None):
         QtCore.QAbstractTableModel.__init__(self)
@@ -27,8 +26,7 @@ class UploadModel(QtCore.QAbstractTableModel):
         self._data = data
 
     def flags(self, index: QModelIndex):
-        # flags = QtCore.Qt.ItemIsSelectable
-        if self._data.columns[index.column()] == "id":
+        if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Save filename?":
             flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable
         else:
             flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
@@ -50,42 +48,38 @@ class UploadModel(QtCore.QAbstractTableModel):
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         if index.isValid():
             column = self._data.columns[index.column()]
-            if role == QtCore.Qt.CheckStateRole and column == "id":
-                return QtCore.Qt.Checked if self._data.loc[index.row(), "Selected"] else QtCore.Qt.Unchecked
+            if role == QtCore.Qt.CheckStateRole:
+                if column == "id":
+                    return QtCore.Qt.Checked if self._data.loc[index.row(), "Selected"] else QtCore.Qt.Unchecked
+                elif column == "Save filename?":
+                    if self.get_data().loc[index.row(), "Title"] == "":
+                        return QtCore.Qt.Checked if self.get_data().loc[
+                            index.row(), "Save filename?"] else QtCore.Qt.Unchecked
             if role == QtCore.Qt.DisplayRole:
-                if column == "Selected":
+                if column == "Selected" or column == "Save filename?":
                     return
                 if column == "Publish":
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Video":
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Description":
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Playlist":
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Preview":
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Tags":
-                    return self._data.loc[index.row(), column]
-
-                elif column == "Ends":
-                    return self._data.loc[index.row(), column]
-
+                    return self.get_data().loc[index.row(), column]
                 elif column == "Cards":
-                    return self._data.loc[index.row(), column]
+                    return str(self.get_data().loc[index.row(), column])
 
-                elif column == "FileTitle":
-                    return self._data.loc[index.row(), column]
-
-                elif column == "Delete":
-                    return self._data.loc[index.row(), column]
                 else:
-                    return self._data.loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column]
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
@@ -158,10 +152,11 @@ class HeaderView(QtWidgets.QHeaderView):
             self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]
             self.parent().model().reset_ids(self.visualIndexes)
 
+
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
 
-    def __init__(self, items):
-        super().__init__()
+    def __init__(self, parent, items):
+        super().__init__(parent)
         self.items = items
 
     def createEditor(self, parent, option, index):
@@ -176,6 +171,35 @@ class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         value = editor.currentText()
+        model.setData(index, value, QtCore.Qt.EditRole)
+        model.setData(index, value, QtCore.Qt.DisplayRole)
+
+    def commitAndCloseEditor(self):
+        editor = self.sender()
+        self.commitData.emit(editor)
+        self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
+
+
+class SpinBoxDelegate(QtWidgets.QItemDelegate):
+    def __init__(self, parent=None):
+        super(SpinBoxDelegate, self).__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QSpinBox(parent)
+        editor.setMinimum(0)
+        editor.setMaximum(4)
+        return editor
+
+    def setEditorData(self, editor: QtWidgets.QSpinBox, index):
+        value = index.model().get_data().loc[index.row(), "Cards"]
+        if value is not None:
+            editor.setValue(int(value))
+        else:
+            editor.setValue(2)
+
+    def setModelData(self, editor: QtWidgets.QSpinBox, model, index):
+        editor.interpretText()
+        value = editor.value()
         model.setData(index, value, QtCore.Qt.EditRole)
         model.setData(index, value, QtCore.Qt.DisplayRole)
 
