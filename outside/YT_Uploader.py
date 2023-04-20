@@ -13,7 +13,7 @@ from selenium.webdriver.common.by import By
 # import undetected_chromedriver as uc
 import pickle
 
-from OutsideYT import app_settings
+from OutsideYT import app_settings_uploaders
 
 text_extensions = [".txt"]
 video_extensions = [".mp4", ".avi"]
@@ -48,7 +48,7 @@ def google_login(login: str, mail: str):
         pickle.dump(driver.get_cookies(),
                     open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", filename), "wb"))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
-        app_settings.add_account({login: mail})
+        app_settings_uploaders.add_account({login: mail})
     except Exception as e:
         print("Error!\n", e)
     finally:

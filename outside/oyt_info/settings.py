@@ -2,7 +2,7 @@ import os
 import json
 
 
-class Settings:
+class SettingsUploaders:
     def __init__(self, file):
         self._accounts = dict()
         self._def_account = ""
