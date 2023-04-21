@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>513</width>
-    <height>280</height>
+    <width>591</width>
+    <height>299</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,6 +20,12 @@
    <size>
     <width>400</width>
     <height>200</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1000</width>
+    <height>600</height>
    </size>
   </property>
   <property name="baseSize">
@@ -39,6 +45,7 @@
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(39, 39, 39);
+color: rgb(255, 255, 255);
 alternate-background-color: rgb(39, 39, 39);
 selection-background-color: rgb(15, 15, 15);</string>
   </property>
@@ -91,6 +98,35 @@ selection-background-color: rgb(15, 15, 15);</string>
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Default:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="DefUser_ComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <family>Arial</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item>
@@ -98,7 +134,7 @@ selection-background-color: rgb(15, 15, 15);</string>
        <property name="font">
         <font>
          <family>Arial</family>
-         <pointsize>12</pointsize>
+         <pointsize>14</pointsize>
         </font>
        </property>
       </widget>

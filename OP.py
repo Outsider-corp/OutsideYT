@@ -1,9 +1,10 @@
 import sys
 import os
+from functools import partial
 
 import OutsideYT
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
-from outside.views_py import UsersList_Dialog
+from outside.views_py import UsersList_Dialog, AddAccount_Dialog
 from outside.oyt_info import settings
 from outside import TableModels, YT_Uploader
 
@@ -26,11 +27,6 @@ class QMainWindowPlus(QMainWindow):
         self.shortcut3 = QShortcut(QKeySequence('Ctrl+A'), self)
         self.shortcut3.activated.connect(QMainWindowPlus.add_row)
 
-        self.shortcut4 = QShortcut(QKeySequence('Ctrl+R'), self)
-        self.shortcut4.activated.connect(QMainWindowPlus.login_google)
-
-
-
     @classmethod
     def open_main_folder(cls):
         os.startfile(os.getcwd())
@@ -50,13 +46,6 @@ class QMainWindowPlus(QMainWindow):
             table.model().insertRows()
         table.update()
 
-    @classmethod
-    def login_google(cls):
-        table = globals()['Upload_table']
-        login = table.model().get_data().loc[0, "Title"]
-        mail = table.model().get_data().loc[0, "Description"]
-        YT_Uploader.google_login(login, mail)
-
 
 def update_ui():
     update_upload()
@@ -75,45 +64,22 @@ def update_upload():
     font.setFamily("Arial")
     font.setPointSize(11)
     Upload_table.setFont(font)
-    Upload_table.setFrameShape(QtWidgets.QFrame.StyledPanel)
-    Upload_table.setFrameShadow(QtWidgets.QFrame.Sunken)
-    Upload_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
-    Upload_table.setAlternatingRowColors(False)
-    Upload_table.setTextElideMode(Qt.ElideRight)
-    Upload_table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-    Upload_table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-    Upload_table.setGridStyle(Qt.SolidLine)
-    Upload_table.horizontalHeader().setCascadingSectionResizes(False)
-    Upload_table.horizontalHeader().setStretchLastSection(False)
-
-    Upload_table.setVerticalHeader(TableModels.HeaderView(Upload_table))
-
-    Upload_table.verticalHeader().setCascadingSectionResizes(False)
-    Upload_table.verticalHeader().setStretchLastSection(False)
-    Upload_table.verticalHeader().setSectionsMovable(True)
-    Upload_table.setDragEnabled(True)
-    Upload_table.setDropIndicatorShown(True)
-    Upload_table.setDefaultDropAction(QtCore.Qt.MoveAction)
-    Upload_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-    Upload_table.viewport().setAcceptDrops(True)
-    Upload_table.setDragDropOverwriteMode(False)
-    Upload_table.setSortingEnabled(True)
-    Upload_table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter)
-    Upload_table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
+    Upload_table = table_universal(Upload_table)
     Upload_table.hideColumn(list(Upload_table.model().get_data().columns).index("Selected"))
-
+    Upload_table.setVerticalHeader(TableModels.HeaderView(Upload_table))
+    Upload_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
     user_combo_del = TableModels.ComboBoxDelegate(Upload_table, OutsideYT.app_settings_uploaders.accounts.keys())
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("User"), user_combo_del)
 
     access_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["Private", "On link", "Public"])
-    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"), access_combo_del)
+    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
+                                          access_combo_del)
 
     ends_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["random", "import"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
 
     cards_spin_del = TableModels.SpinBoxDelegate(Upload_table)
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Cards"), cards_spin_del)
-
 
 
 class Upload:
@@ -180,20 +146,96 @@ def open_UsersList_Dialog():
     dialog.setWindowTitle("Uploaders List")
     dialog_model = TableModels.UsersModel()
     dialog_settings.Users_Table.setModel(dialog_model)
+    dialog_settings.Users_Table = table_universal(dialog_settings.Users_Table)
+    width = dialog.width() - 30
+    dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.1))
+    dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
+    dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.1) - int(width * 0.3))
+    dialog_settings.Users_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
+    dialog_settings.DefUser_ComboBox.addItems(["No default account", *OutsideYT.app_settings_uploaders.accounts.keys()])
+    if OutsideYT.app_settings_uploaders.def_account is not None:
+        dialog_settings.DefUser_ComboBox.setCurrentIndex(list(OutsideYT.app_settings_uploaders.accounts.keys()).index(
+            OutsideYT.app_settings_uploaders.def_account) + 1)
+    else:
+        dialog_settings.DefUser_ComboBox.setCurrentIndex(0)
+    adduser = partial(open_addUser_Dialog, parent=dialog)
+    dialog_settings.addUser_Button.clicked.connect(adduser)
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(dialog.reject)
     dialog.exec_()
+
 
 def open_Watchers_List_Dialog():
     dialog, dialog_settings = userslist()
     dialog.setWindowTitle("Watchers List")
     dialog.exec_()
 
+
+def open_addUser_Dialog(parent):
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QStyleFactory.create("Fusion"))
+    dialog_settings = AddAccount_Dialog.Ui_AddUser_Dialog()
+    dialog_settings.setupUi(dialog)
+    def ok():
+        login = dialog_settings.Account_textbox.text()
+        mail = dialog_settings.Gmail_textbox.text()
+        if login in list(OutsideYT.app_settings_uploaders.accounts.keys()):
+            TableModels.error_func("This account name is already used!")
+        else:
+            try:
+                dialog.close()
+                YT_Uploader.google_login(login, mail)
+                parent.update()
+            except:
+                TableModels.error_func("Error.")
+
+    dialog.accept = ok
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
+    dialog.exec_()
+
+
+def google_login(login, mail, parent: QtWidgets.QDialog):
+    if login in list(OutsideYT.app_settings_uploaders.accounts.keys()):
+        TableModels.error_func("This account name is already used!")
+    else:
+        try:
+            YT_Uploader.google_login(login, mail)
+            parent.parent().update()
+        except:
+            TableModels.error_func("Error.")
+
+
 def userslist():
     dialog = QtWidgets.QDialog(YouTubeOutside)
     dialog.setStyle(QStyleFactory.create("Fusion"))
     dialog_settings = UsersList_Dialog.Ui_UsersList_Dialog()
     dialog_settings.setupUi(dialog)
-    dialog_settings.addUser_Button.click()
     return dialog, dialog_settings
+
+
+def table_universal(table):
+    table.setFrameShape(QtWidgets.QFrame.StyledPanel)
+    table.setFrameShadow(QtWidgets.QFrame.Sunken)
+    table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
+    table.setAlternatingRowColors(False)
+    table.setTextElideMode(Qt.ElideRight)
+    table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+    table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+    table.setGridStyle(Qt.SolidLine)
+    table.horizontalHeader().setCascadingSectionResizes(False)
+    table.horizontalHeader().setStretchLastSection(False)
+    table.verticalHeader().setCascadingSectionResizes(False)
+    table.verticalHeader().setStretchLastSection(False)
+    table.verticalHeader().setSectionsMovable(True)
+    table.setDragEnabled(True)
+    table.setDropIndicatorShown(True)
+    table.setDefaultDropAction(QtCore.Qt.MoveAction)
+    table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    table.viewport().setAcceptDrops(True)
+    table.setDragDropOverwriteMode(False)
+    table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter)
+    table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
+    return table
+
 
 def start_GUI():
     global app, YouTubeOutside, ui, Upload_table, Download_table, Watch_table

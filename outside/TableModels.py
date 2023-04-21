@@ -131,6 +131,85 @@ class UploadModel(QtCore.QAbstractTableModel):
         return self._data
 
 
+class UsersModel(QtCore.QAbstractTableModel):
+    columns = ['id', 'Account', 'Gmail']
+
+    def __init__(self):
+        QtCore.QAbstractTableModel.__init__(self)
+
+        self._data = pd.DataFrame(columns=UsersModel.columns)
+        self._data["Account"] = app_settings_uploaders.accounts.keys()
+        self._data["Gmail"] = app_settings_uploaders.accounts.values()
+        self._data["id"] = list(map(str, map(lambda x: x + 1, self._data.index)))
+        self._col_sizes = {}
+
+    def flags(self, index: QModelIndex):
+        if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Gmail":
+            flags = QtCore.Qt.ItemIsEnabled
+        elif self._data.columns[index.column()] == "Default":
+            flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+        else:
+            flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+        return flags
+
+    def rowCount(self, parent: QModelIndex = ...) -> int:
+        return len(self._data.index)
+
+    def columnCount(self, parent: QModelIndex = ...) -> int:
+        return len(self._data.columns)
+
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = ...) -> typing.Any:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self._data.columns[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return ">"
+
+    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+        if index.isValid():
+            column = self._data.columns[index.column()]
+            if role == QtCore.Qt.DisplayRole:
+                if column == "Gmail":
+                    return f'{self.get_data().loc[index.row(), column]}@gmail.com'
+                else:
+                    return self.get_data().loc[index.row(), column]
+
+    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+        if index.isValid():
+            column = list(self._data.keys())[index.column()]
+            if column == "Account" and role == QtCore.Qt.DisplayRole:
+                if value not in list(self.get_data()["Account"]):
+                    self._data.loc[index.row(), column] = value
+                    self.dataChanged.emit(index, index, [role])
+                    return True
+                else:
+                    error_func("This Account name is already used")
+        return False
+
+    def insertRows(self, row: tuple, parent: QModelIndex = ..., **kwargs) -> bool:
+        row_count = self.rowCount()
+        self.beginInsertRows(QModelIndex(), row_count, row_count)
+        self._data.loc[row_count] = [str(row_count), row[0], row[1], False]
+        row_count += 1
+        self.endInsertRows()
+        return True
+
+    def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
+        row_count = self.rowCount()
+        row_count -= 1
+        self.beginRemoveRows(QModelIndex(), row_count, row_count)
+        self._data.drop(index=self._data.loc[row])
+        self.reset_ids()
+        self.endRemoveRows()
+        return True
+
+    def reset_ids(self, new_list):
+        self._data.id = list(map(str, map(lambda x: x + 1, new_list)))
+
+    def get_data(self):
+        return self._data
+
+
 class HeaderView(QtWidgets.QHeaderView):
     def __init__(self, parent=None):
         super().__init__(QtCore.Qt.Vertical, parent)
@@ -208,87 +287,6 @@ class SpinBoxDelegate(QtWidgets.QItemDelegate):
         editor = self.sender()
         self.commitData.emit(editor)
         self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
-
-
-class UsersModel(QtCore.QAbstractTableModel):
-    columns = ['id', 'Account', 'Gmail', 'Default']
-
-    def __init__(self):
-        QtCore.QAbstractTableModel.__init__(self)
-
-        self._data = pd.DataFrame(columns=UsersModel.columns)
-        self._data["Account"] = app_settings_uploaders.accounts.keys()
-        self._data["Gmail"] = app_settings_uploaders.accounts.values()
-        self._data["Default"] = False
-        self._data["id"] = list(map(str, self._data.index))
-        try:
-            self._data[self._data["Account"] == app_settings_uploaders.def_account].loc["Default"] = True
-        except:
-            pass
-
-    def flags(self, index: QModelIndex):
-        if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Gmail":
-            flags = QtCore.Qt.ItemIsEnabled
-        else:
-            flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
-        return flags
-
-    def rowCount(self, parent: QModelIndex = ...) -> int:
-        return len(self._data.index)
-
-    def columnCount(self, parent: QModelIndex = ...) -> int:
-        return len(self._data.columns)
-
-    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = ...) -> typing.Any:
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return self._data.columns[section]
-            elif orientation == QtCore.Qt.Vertical:
-                return ">"
-
-    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
-        if index.isValid():
-            column = self._data.columns[index.column()]
-            if role == QtCore.Qt.DisplayRole:
-                if column == "Default":
-                    return self.get_data().loc[index.row(), column]
-                else:
-                    return self.get_data().loc[index.row(), column]
-
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
-        if index.isValid():
-            column = list(self._data.keys())[index.column()]
-            if column == "Account":
-                if value not in list(self.get_data()["Account"]):
-                    self._data.loc[index.row(), column] = value
-                    self.dataChanged.emit(index, index, [role])
-                    return True
-                else:
-                    error_func("This Account name is already used")
-        return False
-
-    def insertRows(self, row: tuple, parent: QModelIndex = ..., **kwargs) -> bool:
-        row_count = self.rowCount()
-        self.beginInsertRows(QModelIndex(), row_count, row_count)
-        self._data.loc[row_count] = [str(row_count), row[0], row[1], False]
-        row_count += 1
-        self.endInsertRows()
-        return True
-
-    def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
-        row_count = self.rowCount()
-        row_count -= 1
-        self.beginRemoveRows(QModelIndex(), row_count, row_count)
-        self._data.drop(index=self._data.loc[row])
-        self.reset_ids()
-        self.endRemoveRows()
-        return True
-
-    def reset_ids(self, new_list):
-        self._data.id = list(map(str, map(lambda x: x + 1, new_list)))
-
-    def get_data(self):
-        return self._data
 
 
 def error_func(text):

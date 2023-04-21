@@ -14,19 +14,21 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_UsersList_Dialog(object):
     def setupUi(self, UsersList_Dialog):
         UsersList_Dialog.setObjectName("UsersList_Dialog")
-        UsersList_Dialog.resize(513, 280)
+        UsersList_Dialog.resize(591, 299)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(UsersList_Dialog.sizePolicy().hasHeightForWidth())
         UsersList_Dialog.setSizePolicy(sizePolicy)
         UsersList_Dialog.setMinimumSize(QtCore.QSize(400, 200))
+        UsersList_Dialog.setMaximumSize(QtCore.QSize(1000, 600))
         UsersList_Dialog.setBaseSize(QtCore.QSize(500, 250))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(11)
         UsersList_Dialog.setFont(font)
         UsersList_Dialog.setStyleSheet("background-color: rgb(39, 39, 39);\n"
+"color: rgb(255, 255, 255);\n"
 "alternate-background-color: rgb(39, 39, 39);\n"
 "selection-background-color: rgb(15, 15, 15);")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(UsersList_Dialog)
@@ -47,11 +49,30 @@ class Ui_UsersList_Dialog(object):
         self.horizontalLayout.addWidget(self.addUser_Button)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
+        self.label = QtWidgets.QLabel(UsersList_Dialog)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        self.label.setFont(font)
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+        self.DefUser_ComboBox = QtWidgets.QComboBox(UsersList_Dialog)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.DefUser_ComboBox.sizePolicy().hasHeightForWidth())
+        self.DefUser_ComboBox.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        self.DefUser_ComboBox.setFont(font)
+        self.DefUser_ComboBox.setObjectName("DefUser_ComboBox")
+        self.horizontalLayout.addWidget(self.DefUser_ComboBox)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.Users_Table = QtWidgets.QTableView(UsersList_Dialog)
         font = QtGui.QFont()
         font.setFamily("Arial")
-        font.setPointSize(12)
+        font.setPointSize(14)
         self.Users_Table.setFont(font)
         self.Users_Table.setObjectName("Users_Table")
         self.verticalLayout.addWidget(self.Users_Table)
@@ -76,6 +97,7 @@ class Ui_UsersList_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         UsersList_Dialog.setWindowTitle(_translate("UsersList_Dialog", "Users List"))
         self.addUser_Button.setText(_translate("UsersList_Dialog", "Add User"))
+        self.label.setText(_translate("UsersList_Dialog", "Default:"))
 
 
 if __name__ == "__main__":
