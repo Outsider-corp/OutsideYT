@@ -34,7 +34,12 @@ class SettingsUploaders:
 
     def del_account(self, login):
         self._accounts.pop(login)
+        self.update_settings()
         return
+
+    def update_accounts(self, accs):
+        self._accounts = accs
+        self.update_settings()
 
     def add_vids_folder(self, path):
         self._vids_folder = path

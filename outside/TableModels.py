@@ -136,12 +136,13 @@ class UsersModel(QtCore.QAbstractTableModel):
 
     def __init__(self):
         QtCore.QAbstractTableModel.__init__(self)
+        self.update()
 
+    def update(self):
         self._data = pd.DataFrame(columns=UsersModel.columns)
         self._data["Account"] = app_settings_uploaders.accounts.keys()
         self._data["Gmail"] = app_settings_uploaders.accounts.values()
         self._data["id"] = list(map(str, map(lambda x: x + 1, self._data.index)))
-        self._col_sizes = {}
 
     def flags(self, index: QModelIndex):
         if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Gmail":
@@ -225,10 +226,7 @@ class HeaderView(QtWidgets.QHeaderView):
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         super().mouseReleaseEvent(e)
-        # for i in range(self.parent().model().rowCount()):
-        #     print(f"{self.visualIndex(i)} -> {self.parent().model().get_data().id.iloc[i]}")
-        if [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != \
-                self.visualIndexes:
+        if [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != self.visualIndexes:
             self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]
             self.parent().model().reset_ids(self.visualIndexes)
 

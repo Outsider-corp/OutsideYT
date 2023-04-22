@@ -160,7 +160,46 @@ def open_UsersList_Dialog():
         dialog_settings.DefUser_ComboBox.setCurrentIndex(0)
     adduser = partial(open_addUser_Dialog, parent=dialog)
     dialog_settings.addUser_Button.clicked.connect(adduser)
-    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(dialog.reject)
+
+    def cancel():
+        def_user = dialog_settings.DefUser_ComboBox.currentText()
+        if def_user == "No default account":
+            def_user = ""
+        if [dialog_settings.Users_Table.visualIndex(i) for i in range(dialog_settings.Users_Table.model().rowCount())] \
+                != [i for i in range(dialog_settings.Users_Table.model().rowCount())] or \
+                (def_user != OutsideYT.app_settings_uploaders.def_account):
+            confirm = QtWidgets.QMessageBox()
+            confirm.setText(f"Are you sure you want to cancel?\n"
+                            f"All changes will be lost!")
+            confirm.setWindowTitle("Confirmation")
+            confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            confirm.setDefaultButton(QtWidgets.QMessageBox.No)
+            result = confirm.exec_()
+            if result == QtWidgets.QMessageBox.Yes:
+                confirm.reject()
+                dialog.reject()
+        else:
+            dialog.reject()
+
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(cancel)
+
+    def save():
+        if [dialog_settings.Users_Table.visualIndex(i) for i in range(dialog_settings.Users_Table.model().rowCount())] \
+                != [i for i in range(dialog_settings.Users_Table.model().rowCount())]:
+            dialog_settings.Users_Table.model().reset_ids(
+                [dialog_settings.Users_Table.visualIndex(i) for i in
+                 range(dialog_settings.Users_Table.model().rowCount())])
+            dialog_settings.Users_Table.model()._data = dialog_settings.Users_Table.model().get_data().sort_values(
+                by="id")
+            accs = dialog_settings.Users_Table.model().get_data().set_index("Account")["Gmail"].to_dict()
+            OutsideYT.app_settings_uploaders.update_accounts(accs)
+            def_user = dialog_settings.DefUser_ComboBox.currentText()
+            if def_user == "No default account":
+                def_user = ""
+            if def_user != OutsideYT.app_settings_uploaders.def_account:
+                OutsideYT.app_settings_uploaders.add_def_account(def_user)
+
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
     dialog.exec_()
 
 
@@ -170,11 +209,12 @@ def open_Watchers_List_Dialog():
     dialog.exec_()
 
 
-def open_addUser_Dialog(parent):
+def open_addUser_Dialog(parent: QtWidgets.QTableView):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QStyleFactory.create("Fusion"))
     dialog_settings = AddAccount_Dialog.Ui_AddUser_Dialog()
     dialog_settings.setupUi(dialog)
+
     def ok():
         login = dialog_settings.Account_textbox.text()
         mail = dialog_settings.Gmail_textbox.text()
@@ -183,8 +223,10 @@ def open_addUser_Dialog(parent):
         else:
             try:
                 dialog.close()
-                YT_Uploader.google_login(login, mail)
-                parent.update()
+                added = YT_Uploader.google_login(login, mail)
+                if added:
+                    OutsideYT.app_settings_uploaders.add_account({login: mail})
+                    parent.model().update()
             except:
                 TableModels.error_func("Error.")
 
