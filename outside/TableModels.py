@@ -124,8 +124,10 @@ class UploadModel(QtCore.QAbstractTableModel):
         self.endRemoveRows()
         return True
 
-    def reset_ids(self, new_list):
-        self._data.id = list(map(str, map(lambda x: x + 1, new_list)))
+    def reset_ids(self, new_list=None):
+        if new_list is None:
+            new_list = [i + 1 for i in range(self.rowCount())]
+        self._data.id = list(map(str, new_list))
 
     def get_data(self):
         return self._data
@@ -143,12 +145,11 @@ class UsersModel(QtCore.QAbstractTableModel):
         self._data["Account"] = app_settings_uploaders.accounts.keys()
         self._data["Gmail"] = app_settings_uploaders.accounts.values()
         self._data["id"] = list(map(str, map(lambda x: x + 1, self._data.index)))
+        self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
         if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Gmail":
             flags = QtCore.Qt.ItemIsEnabled
-        elif self._data.columns[index.column()] == "Default":
-            flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
         else:
             flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
         return flags
@@ -178,7 +179,7 @@ class UsersModel(QtCore.QAbstractTableModel):
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
-            if column == "Account" and role == QtCore.Qt.DisplayRole:
+            if column == "Account" and value != self._data.loc[index.row(), column]:
                 if value not in list(self.get_data()["Account"]):
                     self._data.loc[index.row(), column] = value
                     self.dataChanged.emit(index, index, [role])
@@ -209,6 +210,15 @@ class UsersModel(QtCore.QAbstractTableModel):
 
     def get_data(self):
         return self._data
+
+
+class InLineEditDelegate(QtWidgets.QItemDelegate):
+    def createEditor(self, parent: QWidget, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> QWidget:
+        return super(InLineEditDelegate, self).createEditor(parent, option, index)
+
+    def setEditorData(self, editor: QWidget, index: QtCore.QModelIndex) -> None:
+        text = index.data(QtCore.Qt.EditRole) or index.data(QtCore.Qt.DisplayRole)
+        editor.setText(str(text))
 
 
 class HeaderView(QtWidgets.QHeaderView):

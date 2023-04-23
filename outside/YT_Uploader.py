@@ -7,6 +7,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 
 import OutsideYT
+from outside import TableModels
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -45,17 +46,17 @@ def google_login(login: str, mail: str):
         driver.get(url)
         driver.implicitly_wait(7)
         print("start hearing...")
-        # time.sleep(20)
-        # while True:
-        #     if driver.current_url.find("www.youtube.com/watch") != -1:
-        #         break
-        wait = WebDriverWait(driver, 20)
-        wait.until_not(expected_conditions.url_contains("www.youtube.com/watch"))
+        time.sleep(20)
+        while True:
+            time.sleep(1)
+            if "www.youtube.com/watch" in driver.current_url:
+                break
         pickle.dump(driver.get_cookies(),
-                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", filename), "wb"))
+                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", "uploaders", filename), "wb"))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
         added = True
     except Exception as e:
+        TableModels.error_func("An error occurred while trying to login")
         print("Error!\n", e)
     finally:
         # driver.close()

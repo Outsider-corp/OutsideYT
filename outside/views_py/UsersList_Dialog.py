@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\UsersList_Dialog.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/UsersList_Dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -76,16 +76,22 @@ class Ui_UsersList_Dialog(object):
         self.Users_Table.setFont(font)
         self.Users_Table.setObjectName("Users_Table")
         self.verticalLayout.addWidget(self.Users_Table)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.CheckCookies_Button = QtWidgets.QPushButton(UsersList_Dialog)
+        self.CheckCookies_Button.setObjectName("CheckCookies_Button")
+        self.horizontalLayout_2.addWidget(self.CheckCookies_Button)
         self.buttonBox = QtWidgets.QDialogButtonBox(UsersList_Dialog)
         font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(11)
+        font.setFamily("MS Shell Dlg 2")
+        font.setPointSize(8)
         self.buttonBox.setFont(font)
         self.buttonBox.setStyleSheet("color: rgb(255, 255, 255);")
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Discard|QtWidgets.QDialogButtonBox.Save)
         self.buttonBox.setObjectName("buttonBox")
-        self.verticalLayout.addWidget(self.buttonBox)
+        self.horizontalLayout_2.addWidget(self.buttonBox)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
         self.retranslateUi(UsersList_Dialog)
@@ -96,8 +102,9 @@ class Ui_UsersList_Dialog(object):
     def retranslateUi(self, UsersList_Dialog):
         _translate = QtCore.QCoreApplication.translate
         UsersList_Dialog.setWindowTitle(_translate("UsersList_Dialog", "Users List"))
-        self.addUser_Button.setText(_translate("UsersList_Dialog", "Add User"))
+        self.addUser_Button.setText(_translate("UsersList_Dialog", " Add User "))
         self.label.setText(_translate("UsersList_Dialog", "Default:"))
+        self.CheckCookies_Button.setText(_translate("UsersList_Dialog", " Check Cookies "))
 
 
 if __name__ == "__main__":

@@ -92,12 +92,16 @@ class SettingsUploaders:
     def check_cookies(self):
         folder = os.path.dirname(self.file)
         to_del = []
+        os.makedirs(os.path.join(folder, "uploaders"), exist_ok=True)
         for acc in self.accounts.keys():
-            if not os.path.isfile(os.path.join(folder, f'{acc}_cookies')):
+            if not os.path.isfile(os.path.join(folder, "uploaders", f'{acc}_cookies')):
                 to_del.append(acc)
         for acc in to_del:
             self._accounts.pop(acc)
-        self.update_settings()
+        if not os.path.isfile(os.path.join(folder, "uploaders", f'{self.def_account}_cookies')):
+            self.del_def_account()
+        else:
+            self.update_settings()
 
 
 # class AccountSettings:
