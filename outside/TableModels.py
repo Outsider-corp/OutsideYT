@@ -109,6 +109,7 @@ class UploadModel(QtCore.QAbstractTableModel):
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
         for i in range(count):
+            UploadModel.default_content[2] = app_settings_uploaders.def_account
             self._data.loc[row_count + i] = [str(row_count + i + 1) if j is None else j for j in
                                              UploadModel.default_content]
         row_count += count
@@ -304,3 +305,28 @@ def error_func(text):
     error_dialog.setStyle(QStyleFactory.create("Fusion"))
     error_dialog.setWindowTitle("Error")
     error_dialog.exec_()
+
+
+def table_universal(table):
+    table.setFrameShape(QtWidgets.QFrame.StyledPanel)
+    table.setFrameShadow(QtWidgets.QFrame.Sunken)
+    table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
+    table.setAlternatingRowColors(False)
+    table.setTextElideMode(Qt.ElideRight)
+    table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+    table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+    table.setGridStyle(Qt.SolidLine)
+    table.horizontalHeader().setCascadingSectionResizes(False)
+    table.horizontalHeader().setStretchLastSection(False)
+    table.verticalHeader().setCascadingSectionResizes(False)
+    table.verticalHeader().setStretchLastSection(False)
+    table.verticalHeader().setSectionsMovable(True)
+    table.setDragEnabled(True)
+    table.setDropIndicatorShown(True)
+    table.setDefaultDropAction(QtCore.Qt.MoveAction)
+    table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    table.viewport().setAcceptDrops(True)
+    table.setDragDropOverwriteMode(False)
+    table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter)
+    table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
+    return table
