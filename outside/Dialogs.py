@@ -2,11 +2,10 @@ import glob
 import os
 from functools import partial
 
-import TableModels
+from outside import TableModels, YT_Uploader
 from PyQt5 import QtWidgets, QtGui
 import OutsideYT
-import YT_Uploader
-from outside.views_py import UsersList_Dialog, AddAccount_Dialog
+from outside.views_py import UsersList_Dialog, AddAccount_Dialog, SelectVideos_Dialog
 
 
 def open_UsersList_Dialog(parent):
@@ -144,6 +143,54 @@ def open_addUser_Dialog(parent: QtWidgets.QTableView, parent_settings):
     dialog.exec_()
 
 
+def open_upload_select_videos(parent, table):
+    dialog = QtWidgets.QDialog(parent)
+    dialog_settings = SelectVideos_Dialog.Ui_SelectVideos_Dialog()
+    dialog_settings.setupUi(dialog)
+    dialog_settings.Users_ComboBox = update_combobox(dialog_settings.Users_ComboBox,
+                                                     ["No default account",
+                                                      *OutsideYT.app_settings_uploaders.accounts.keys()])
+
+    def select_video(next_func):
+        try:
+            path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Video", ".",
+                                                              QtWidgets.QFileDialog.ShowDirsOnly)
+            print(path)
+            next_func(path=path)
+            dialog.accept()
+        except Exception as e:
+            TableModels.error_func(f"Error.\n {e}")
+
+    def del_vids_folder():
+        try:
+            OutsideYT.app_settings_uploaders.del_vids_folder()
+            dialog.accept()
+        except Exception as e:
+            TableModels.error_func(f"Error.\n {e}")
+
+    def select_folder(path):
+        user = dialog_settings.Users_ComboBox.currentText()
+        if user == "No default account":
+            user = ""
+        for smth in os.scandir(path):
+            if smth.is_dir():
+                TableModels.add_video_for_uploading(table, os.path.abspath(smth), user=user)
+
+    dialog_settings.SelectVideo_Button.clicked.connect(
+        partial(select_video, partial(TableModels.add_video_for_uploading, table=table)))
+    dialog_settings.SelectFolderForUser_Button.clicked.connect(partial(select_video, select_folder))
+    dialog_settings.ChangeDefFolder_Button.clicked.connect(partial(select_video, change_def_folder))
+    dialog_settings.SetDefFolder_Button.clicked.connect(del_vids_folder)
+    dialog.exec_()
+
+
+def scan_videos_folder(table):
+    users = list(OutsideYT.app_settings_uploaders.accounts.keys())
+    for user in users:
+        for vid in os.scandir(os.path.join(OutsideYT.app_settings_uploaders.vids_folder, user)):
+            if vid.is_dir():
+                TableModels.add_video_for_uploading(table, os.path.abspath(vid), user)
+
 def update_combobox(combobox, items):
     combobox.clear()
     combobox.addItems(items)
@@ -153,6 +200,13 @@ def update_combobox(combobox, items):
     else:
         combobox.setCurrentIndex(0)
     return combobox
+
+
+def change_def_folder(path):
+    if os.path.isdir(path):
+        OutsideYT.app_settings_uploaders.add_vids_folder(path)
+    else:
+        TableModels.error_func("This is not a directory!")
 
 
 def google_login(login, mail, parent: QtWidgets.QDialog):

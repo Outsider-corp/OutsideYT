@@ -24,6 +24,7 @@ video_extensions = [".mp4", ".avi"]
 image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
 wait_time = 5
 
+
 def get_driver():
     driver_options = webdriver.ChromeOptions()
     user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
@@ -35,6 +36,7 @@ def get_driver():
                               os.path.join(OutsideYT.project_folder, "outside", "bin", "chromedriver111.exe"),
                               options=driver_options)
     return driver
+
 
 def google_login(login: str, mail: str):
     added = False
@@ -64,26 +66,22 @@ def google_login(login: str, mail: str):
         return added
 
 
-def upload_video(driver, user, video, preview=None, title=None,
-                 description=None, playlist=None, tags=None,
-                 ends="random", cards=1, publ_time=None,
-                 access=0, save_title=False):
+def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Tags, Ends, Cards, Access, Save_title):
     """
-    :param driver: Объект драйвера
-    :param user: Имя пользователя
-    :param video: папка с данными для видео
-    :param preview: Превью
-    :param title: Название
-    :param description: Описание
-    :param playlist: Плейлист
-    :param tags: теги
-    :param ends: import (default) - импортировать конечные заставки из предыдушего видео,
+    :param User: Имя пользователя
+    :param Title: Название
+    :param Publish: время публикации
+    :param Video: папка с данными для видео
+    :param Description: Описание
+    :param Playlist: Плейлист
+    :param Preview: Превью
+    :param Tags: теги
+    :param Ends: import (default) - импортировать конечные заставки из предыдушего видео,
     random - рандомные конечные заставки из стандартных
-    :param cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
-    :param publ_time: время публикации
-    :param access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
+    :param Cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
+    :param Access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
     Используется, если publ_time = None (не указано)
-    :param save_title: Bool - использовать ли название файла с видео в качестве названия видео
+    :param Save_title: Bool - использовать ли название файла с видео в качестве названия видео
     :return:
     """
     try:
@@ -91,36 +89,30 @@ def upload_video(driver, user, video, preview=None, title=None,
         url2 = "https://studio.youtube.com/"
         driver.get(url)
         driver.implicitly_wait(wait_time)
-        for cookie in pickle.load(open(f"oyt_info/{user}_cookies", "rb")):
+        for cookie in pickle.load(open(f"oyt_info/{User}_cookies", "rb")):
             driver.add_cookie(cookie)
         driver.implicitly_wait(wait_time)
 
         driver.get(url2)
-        driver.implicitly_wait(wait_time//2)
+        driver.implicitly_wait(wait_time // 2)
 
         driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
         driver.implicitly_wait(wait_time)
 
-        path = os.path.join(settings.vids_folder, user, video)
-        vid = find_files(video_extensions, folder=path)
-        driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(os.path.abspath(os.path.join(path, vid)))
+        driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(Video)
         driver.implicitly_wait(wait_time)
 
-        if not title:
-            title = find_files(text_extensions, folder=path, name="Title")
         title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                  f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                  f'*[@slot="body"]/*[@id="input"]/div')
-        if title:
+        if Title:
             time.sleep(1)
             title_el.clear()
-            title_el.send_keys(title)
-        elif title_el.text != ".".join(vid.split(".")[:-1]) and save_title:
+            title_el.send_keys(Title)
+        elif title_el.text != ".".join(os.path.basename(Video).split(".")[:-1]) and Save_title:
             title_el.clear()
-            title_el.send_keys(".".join(vid.split(".")[:-1]))
+            title_el.send_keys(".".join(os.path.basename(Video).split(".")[:-1]))
 
-        if not description:
-            description = find_files(".txt", folder=path, name="Description")
         description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                        f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                        f'*[@slot="body"]/*[@id="input"]/div')
@@ -131,30 +123,25 @@ def upload_video(driver, user, video, preview=None, title=None,
             descs_del = "\n\n"
         else:
             descs_del = ""
-        description_el.send_keys("".join([description, descs_del, description_old]))
+        description_el.send_keys("".join([Description, descs_del, description_old]))
 
-        if not preview:
-            preview = find_files(image_extensions, folder=path)
-        if preview:
+        if Preview:
             try:
-                driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(
-                    os.path.abspath(os.path.join(path, preview)))
+                driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(Preview)
                 driver.implicitly_wait(wait_time)
             except Exception:
                 print("Превью невозможно загрузить")
 
-        if not playlist:
-            playlist = find_files(text_extensions, folder=path, name="Playlist").split("\n")
-        if playlist:
+        if Playlist:
             try:
                 playlist_el = driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger'
                                                             f'[@class="dropdown style-scope'
                                                             f' ytcp-video-metadata-playlists"]')
                 playlist_el.click()
                 driver.implicitly_wait(wait_time // 2)
-                if not isinstance(playlist, (tuple, list)):
-                    playlist = [playlist]
-                for i in playlist:
+                if not isinstance(Playlist, (tuple, list)):
+                    playlist = [Playlist]
+                for i in Playlist:
                     try:
                         playlist_el.find_element(By.XPATH, f'//span[@class="label label-text'
                                                            f' style-scope ytcp-checkbox-group" and'
@@ -172,15 +159,13 @@ def upload_video(driver, user, video, preview=None, title=None,
                 except:
                     pass
 
-        if not tags:
-            tags = find_files(text_extensions, folder=path, name="Tags")
-        if tags:
+        if Tags:
             driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
             driver.implicitly_wait(wait_time)
             tags_el = driver.find_element(By.XPATH, f'//*[@id="tags-container"]/'
                                                     f'*[@id="outer"]/*[@id="child-input"]/'
                                                     f'*[@slot="body"]/*[@id="chip-bar"]/div/*[@id="text-input"]')
-            tags_el.send_keys(tags)
+            tags_el.send_keys(Tags)
             driver.implicitly_wait(wait_time)
 
         driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
@@ -188,18 +173,18 @@ def upload_video(driver, user, video, preview=None, title=None,
 
         # Добавить добавление подсказок
 
-        if ends:
+        if Ends:
             try:
                 driver.find_element(By.XPATH, f'//*[@id="endscreens-button"]').click()
                 driver.implicitly_wait(wait_time)
 
                 ends_el = driver.find_element(By.XPATH,
                                               f'//*[@id="cards-row"]')
-                if ends == "import":
+                if Ends == "import":
                     end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
                                                              f' style-scope ytve-endscreen'
                                                              f'-template-picker"]')[0]
-                elif ends == "random":
+                elif Ends == "random":
                     while True:
                         end_num = random.randint(0, 5)
                         end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
@@ -221,18 +206,18 @@ def upload_video(driver, user, video, preview=None, title=None,
         driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
         driver.implicitly_wait(wait_time // 2)
 
-        if publ_time:
+        if Publish:
             pass
         else:
             publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
-            if access == "Private":
+            if Access == "Private":
                 publ_el.find_element(By.XPATH, f'//*[@name="PRIVATE"]').click()
-            elif access == "On link":
+            elif Access == "On link":
                 publ_el.find_element(By.XPATH, f'//*[@name="UNLISTED"]').click()
                 video_url = driver.find_element(By.XPATH, f'//span[@class="video-url-fadeable'
                                                           f' style-scope ytcp-video-info"]/a').text
                 print(video_url)
-            elif access == "Public":
+            elif Access == "Public":
                 publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
         driver.implicitly_wait(wait_time // 2)
@@ -245,55 +230,13 @@ def upload_video(driver, user, video, preview=None, title=None,
                 continue
         driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
         driver.implicitly_wait(wait_time)
-        print(f"\033[32m\033[1mВидео {video} было успешно загружено!\033[0m")
+        print(f"\033[32m\033[1mВидео {os.path.basename(Video)} было успешно загружено!\033[0m")
     except Exception as e:
         print("Error!")
         print(e)
 
 
-def find_files(args: list, folder: str, name: str = ""):
-    for file in os.listdir(folder):
-        if file.endswith(tuple(args)) and file.startswith(name):
-            if ".txt" in args:
-                with open(os.path.join(folder, file), "r", encoding="UTF-8") as f:
-                    return f.read()
-            return file
-    print("File not founded")
-    return None
-
-
-def change_def_title(account: str, title: str):
-    pass
-
-
-def change_def_description(account: str, description: str):
-    pass
-
-
-def change_def_tags(account: str, tags):
-    pass
-
-
-def change_def_access(account: str, access: int):
-    """
-    :param account: Название аккаунта
-    :param access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое
-    :return:
-    """
-    pass
-
-
-def get_playlists(account: str):
-    pass
-
-
-def start():
-    global settings
-    settings = Settings()
-
-
 if __name__ == "__main__":
-    start()
     driver_options = webdriver.ChromeOptions()
     user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
                  f" AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
@@ -332,4 +275,4 @@ if __name__ == "__main__":
     #         run_on_insecure_origins=True)
     login = "outsider.deal3"
     # google_login(login, driver)
-    upload_video(driver, login, "1", ends="import")
+    # upload_video(driver, login, "1", ends="import")

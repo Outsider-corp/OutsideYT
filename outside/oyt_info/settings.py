@@ -47,7 +47,7 @@ class SettingsUploaders:
         return
 
     def del_vids_folder(self):
-        self._vids_folder = "/videos"
+        self._vids_folder = "videos"
         self.update_settings()
         return
 
@@ -64,7 +64,7 @@ class SettingsUploaders:
     def create_videos_dir(self):
         path = self.vids_folder
         if not os.path.exists(path):
-            os.mkdir(path)
+            os.makedirs(path, exist_ok=True)
         for login in self.accounts.keys():
             if not os.path.exists(os.path.join(path, login)):
                 os.mkdir(os.path.join(path, login))

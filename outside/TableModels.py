@@ -2,6 +2,8 @@ import os
 import sys
 import typing
 
+import OutsideYT
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PyQt5 import QtCore, QtWidgets, Qt, QtGui
 from PyQt5.QtCore import QModelIndex
@@ -9,22 +11,32 @@ from PyQt5.QtWidgets import QWidget, QStyleOptionViewItem, QStyleFactory
 import pandas as pd
 from OutsideYT import app_settings_uploaders
 
+text_extensions = [".txt"]
+video_extensions = [".mp4", ".avi"]
+image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
+
 
 class UploadModel(QtCore.QAbstractTableModel):
     columns = ["id", "Selected", "User", "Title", "Publish", "Video", "Description",
                "Playlist", "Preview", "Tags", "Ends", "Cards", "Access",
                "Save filename?"]
 
-    default_content = [None, True, app_settings_uploaders.def_account, "", "Now", "select video", "", "", "", "",
-                       "random",
-                       2, "Private",
-                       False]
+    default_content = {"id": None, "Selected": True,
+                       "User": app_settings_uploaders.def_account,
+                       "Title": "", "Publish": "Now", "Video": "select video",
+                       "Description": "", "Playlist": "", "Preview": "",
+                       "Tags": "", "Ends": "random", "Cards": 2,
+                       "Access": "Private", "Save filename?": False}
 
     def __init__(self, data=None):
         QtCore.QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=UploadModel.columns)
         self._data = data
+        self.paths = []
+
+    def update(self):
+        self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
         if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Save filename?":
@@ -76,7 +88,7 @@ class UploadModel(QtCore.QAbstractTableModel):
 
                 elif column == "Tags":
                     return self.get_data().loc[index.row(), column]
-                elif column == "Cards":
+                elif column == "Cards" or column == "id":
                     return str(self.get_data().loc[index.row(), column])
 
                 else:
@@ -94,26 +106,21 @@ class UploadModel(QtCore.QAbstractTableModel):
             return True
         return False
 
-    def insertRow(self, row: list, index: QModelIndex = None):
-        self.insertRows()
-        self.beginInsertRows()
-        if not index:
-            index = self.rowCount()
-        else:
-            index = index.row()
-        self._data.loc[index] = [str(index) if i is None else i for i in row]
-        self.endInsertRows()
-        return True
-
     def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
-        for i in range(count):
-            UploadModel.default_content[2] = app_settings_uploaders.def_account
-            self._data.loc[row_count + i] = [str(row_count + i + 1) if j is None else j for j in
-                                             UploadModel.default_content]
+        for col in self.get_data().columns:
+            if col == "id":
+                self._data.loc[row_count, col] = row_count + 1
+                continue
+            if col in kwargs.keys() and kwargs[col] is not None:
+                self._data.loc[row_count, col] = kwargs[col]
+            else:
+                self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
         self.endInsertRows()
+        self.paths.append(kwargs["Url"])
+        self.update()
         return True
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
@@ -127,7 +134,7 @@ class UploadModel(QtCore.QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i + 1 for i in range(self.rowCount())]
+            new_list = [i for i in range(self.rowCount())]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -239,7 +246,7 @@ class HeaderView(QtWidgets.QHeaderView):
         super().mouseReleaseEvent(e)
         if [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != self.visualIndexes:
             self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]
-            self.parent().model().reset_ids(self.visualIndexes)
+            self.parent().model().reset_ids(map(lambda x: x + 1, self.visualIndexes))
 
 
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
@@ -312,10 +319,10 @@ def table_universal(table):
     table.setFrameShadow(QtWidgets.QFrame.Sunken)
     table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
     table.setAlternatingRowColors(False)
-    table.setTextElideMode(Qt.ElideRight)
+    table.setTextElideMode(QtCore.Qt.ElideRight)
     table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
     table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-    table.setGridStyle(Qt.SolidLine)
+    table.setGridStyle(QtCore.Qt.SolidLine)
     table.horizontalHeader().setCascadingSectionResizes(False)
     table.horizontalHeader().setStretchLastSection(False)
     table.verticalHeader().setCascadingSectionResizes(False)
@@ -327,6 +334,40 @@ def table_universal(table):
     table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
     table.viewport().setAcceptDrops(True)
     table.setDragDropOverwriteMode(False)
-    table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter)
-    table.horizontalHeader().setDefaultAlignment(Qt.AlignHCenter)
+    table.verticalHeader().setDefaultAlignment(QtCore.Qt.AlignVCenter)
+    table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignHCenter)
     return table
+
+
+def add_video_for_uploading(table: QtWidgets.QTableView, path, user=None):
+    if path in table.model().paths:
+        return
+    if user is None:
+        user = OutsideYT.app_settings_uploaders.def_account
+    video = find_files(video_extensions, folder=path)
+    title = find_files(text_extensions, folder=path, name="Title")
+    description = find_files(text_extensions, folder=path, name="Description")
+    playlist = find_files(text_extensions, folder=path, name="Playlist")
+    preview = find_files(image_extensions, folder=path)
+    tags = find_files(text_extensions, folder=path, name="Tags")
+    table.model().insertRows(User=user,
+                             Video=video,
+                             Title=title,
+                             Description=description,
+                             Playlist=playlist,
+                             Preview=preview,
+                             Tags=tags,
+                             Url=path)
+
+
+def find_files(args: list, folder: str, name: str = ""):
+    for file in os.listdir(folder):
+        if file.endswith(tuple(args)) and file.startswith(name):
+            if ".txt" in args:
+                with open(os.path.join(folder, file), "r", encoding="UTF-8") as f:
+                    if name == "Playlist":
+                        return f.read().split("\n")
+                    return f.read()
+            return file
+    print("File not founded")
+    return None
