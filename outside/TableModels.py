@@ -106,6 +106,9 @@ class UploadModel(QtCore.QAbstractTableModel):
             return True
         return False
 
+    def setDataFuncs(self, id, column, value):
+        self._data[self._data.id == id][column] = value
+
     def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
@@ -119,7 +122,8 @@ class UploadModel(QtCore.QAbstractTableModel):
                 self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
         self.endInsertRows()
-        self.paths.append(kwargs["Url"])
+        if "Url" in kwargs.keys():
+            self.paths.append(kwargs["Url"])
         self.update()
         return True
 

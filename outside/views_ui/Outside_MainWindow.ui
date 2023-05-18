@@ -8,7 +8,7 @@
     <x>0</x>
     <y>0</y>
     <width>1031</width>
-    <height>650</height>
+    <height>634</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -236,6 +236,29 @@ selection-background-color: rgb(15, 15, 15);</string>
             </property>
             <property name="text">
              <string>  Upload Time  </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>10</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="Upload_ClearUTime_Button">
+            <property name="text">
+             <string> Clear Upload Time </string>
             </property>
            </widget>
           </item>
@@ -963,7 +986,6 @@ selection-background-color: rgb(15, 15, 15);</string>
     <property name="title">
      <string>Shortcuts</string>
     </property>
-    <addaction name="actionUpdate_sheet"/>
     <addaction name="separator"/>
     <addaction name="actionOpen_Main_Folder"/>
    </widget>
