@@ -6,7 +6,7 @@ from functools import partial
 import OutsideYT
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
 from outside.views_py import UsersList_Dialog, AddAccount_Dialog
-from outside.oyt_info import settings
+from outside.oyt_info import settings, ContextMenu
 from outside import TableModels, YT_Uploader, Dialogs
 
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -77,7 +77,7 @@ def update_upload():
     access_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["Private", "On link", "Public"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
                                           access_combo_del)
-
+    Upload_table.setItemDelegateForColumn(5, TableModels.SearchFileDelegate(OutsideYT.video_extensions, Upload_table))
     ends_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["random", "import"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
 
@@ -87,7 +87,14 @@ def update_upload():
     ui.Upload_SelectVideos_Button.clicked.connect(
         partial(Dialogs.open_upload_select_videos, parent=YouTubeOutside, table=Upload_table))
     ui.Upload_Check_Button.clicked.connect(partial(Dialogs.scan_videos_folder, table=Upload_table))
-    ui.Upload_UploadTime_Button.clicked.connect(partial(Dialogs.set_upload_time, parent=YouTubeOutside, table=Upload_table))
+    ui.Upload_UploadTime_Button.clicked.connect(
+        partial(Dialogs.set_upload_time, parent=YouTubeOutside, table=Upload_table))
+    Upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    Upload_table.customContextMenuRequested.connect(
+        lambda pos: ContextMenu.upload_context_menu(pos, parent=YouTubeOutside, table=Upload_table))
+    ui.Upload_ClearUTime_Button.clicked.connect(
+        partial(Dialogs.clear_upload_time, parent=YouTubeOutside, table=Upload_table))
+
 
 def update_watch():
     global Watch_table

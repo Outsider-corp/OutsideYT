@@ -257,6 +257,12 @@ selection-background-color: rgb(15, 15, 15);</string>
           </item>
           <item>
            <widget class="QPushButton" name="Upload_ClearUTime_Button">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string> Clear Upload Time </string>
             </property>
@@ -322,6 +328,9 @@ selection-background-color: rgb(15, 15, 15);</string>
             <family>Arial</family>
             <pointsize>11</pointsize>
            </font>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::ClickFocus</enum>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>

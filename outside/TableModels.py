@@ -41,6 +41,8 @@ class UploadModel(QtCore.QAbstractTableModel):
     def flags(self, index: QModelIndex):
         if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Save filename?":
             flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable
+        elif self._data.columns[index.column()] == "Publish":
+            flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
         else:
             flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
         return flags
@@ -75,7 +77,9 @@ class UploadModel(QtCore.QAbstractTableModel):
                     return self.get_data().loc[index.row(), column]
 
                 elif column == "Video":
-                    return self.get_data().loc[index.row(), column]
+                    v = self.get_data().loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column].split("/")[-1] \
+                        if len(v.split("/")) > 1 else v
 
                 elif column == "Description":
                     return self.get_data().loc[index.row(), column]
@@ -102,6 +106,7 @@ class UploadModel(QtCore.QAbstractTableModel):
                 self.dataChanged.emit(index, index, [role])
                 return True
             self._data.loc[index.row(), column] = value
+            print(index)
             self.dataChanged.emit(index, index, [role])
             return True
         return False
@@ -119,6 +124,7 @@ class UploadModel(QtCore.QAbstractTableModel):
             if col in kwargs.keys() and kwargs[col] is not None:
                 self._data.loc[row_count, col] = kwargs[col]
             else:
+                UploadModel.default_content["User"] = app_settings_uploaders.def_account
                 self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
         self.endInsertRows()
@@ -128,12 +134,12 @@ class UploadModel(QtCore.QAbstractTableModel):
         return True
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
-        row_count = self.rowCount()
-        row_count -= 1
-        self.beginRemoveRows(QModelIndex(), row_count, row_count)
-        self._data.drop(index=self._data.loc[row])
+        self.beginRemoveRows(QModelIndex(), row, row)
+        self._data = self._data.drop(index=row)
+        self._data.reset_index(drop=True, inplace=True)
         self.reset_ids()
         self.endRemoveRows()
+        self.update()
         return True
 
     def reset_ids(self, new_list=None):
@@ -211,10 +217,12 @@ class UsersModel(QtCore.QAbstractTableModel):
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
         row_count = self.rowCount()
         row_count -= 1
-        self.beginRemoveRows(QModelIndex(), row_count, row_count)
-        self._data.drop(index=self._data.loc[row])
+        self.beginRemoveRows(QModelIndex(), row, row)
+        self._data.drop(index=row)
+        self._data.reset_index(drop=True, inplace=True)
         self.reset_ids()
         self.endRemoveRows()
+        self.update()
         return True
 
     def reset_ids(self, new_list):
@@ -307,6 +315,30 @@ class SpinBoxDelegate(QtWidgets.QItemDelegate):
         editor = self.sender()
         self.commitData.emit(editor)
         self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
+
+
+class SearchFileDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, exes, parent=None):
+        super().__init__(parent)
+        self.pparent = parent
+        self.exes = exes
+        self.file = None
+
+    def createEditor(self, parent, option, index):
+        # editor = QWidget()
+        self.file, _ = QtWidgets.QFileDialog().getOpenFileName(None, "Select Video", "",
+                                                               "Video Files ({})".format(
+                                                                   " ".join("*{}".format(ext) for ext in self.exes)))
+        if self.file:
+            self.setModelData(None, self.pparent.model(), index)
+        return None
+
+    def setModelData(self, editor, model, index):
+        # file, _ = QtWidgets.QFileDialog().getOpenFileName(None, "Select Video", "",
+        #                        "Video Files ({})".format(
+        #                            " ".join("*{}".format(ext) for ext in self.exes)))
+        if self.file:
+            model.setData(index, self.file)
 
 
 def error_func(text):

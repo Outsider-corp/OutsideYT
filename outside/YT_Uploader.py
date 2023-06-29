@@ -17,11 +17,9 @@ from selenium.webdriver.common.by import By
 # import undetected_chromedriver as uc
 import pickle
 
-from OutsideYT import app_settings_uploaders
+from OutsideYT import *
 
-text_extensions = [".txt"]
-video_extensions = [".mp4", ".avi"]
-image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
+
 wait_time = 5
 
 
@@ -267,12 +265,8 @@ if __name__ == "__main__":
     #     f'--user-agent={user_agent}')
     # options.add_argument('--disable-web-security')
     # options.add_argument('--allow-running-insecure-content')
-    driver = webdriver.Chrome(executable_path="chromedriver111.exe",
+    driver = webdriver.Chrome(executable_path="chromedriver.exe",
                               options=driver_options)
-
-    # stealth(driver, user_agent, languages=["en-US", "en"], vendor="Google Inc.", platform="Win32",
-    #         webgl_vendor="Intel Inc.", renderer="Intel Iris OpenGL Engine", fix_hairline=True,
-    #         run_on_insecure_origins=True)
     login = "outsider.deal3"
     # google_login(login, driver)
     # upload_video(driver, login, "1", ends="import")

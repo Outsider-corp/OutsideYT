@@ -3,3 +3,4 @@ python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\AddAccount_D
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UsersList_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\UsersList_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectVideos_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UpdateTime_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\UpdateTime_Dialog.py
+python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UploadTime_for_Video_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\UploadTime_for_Video_Dialog.py

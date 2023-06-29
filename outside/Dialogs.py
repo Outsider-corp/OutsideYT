@@ -3,9 +3,10 @@ import os
 from functools import partial
 
 from outside import TableModels, YT_Uploader
-from PyQt5 import QtWidgets, QtGui, QtCore, Qt
+from PyQt5 import QtWidgets, QtGui, QtCore
 import OutsideYT
-from outside.views_py import UsersList_Dialog, AddAccount_Dialog, SelectVideos_Dialog, UpdateTime_Dialog
+from outside.views_py import UsersList_Dialog, AddAccount_Dialog, SelectVideos_Dialog, UpdateTime_Dialog, \
+    UploadTime_for_Video_Dialog
 
 
 def open_UsersList_Dialog(parent):
@@ -159,6 +160,8 @@ def open_upload_select_videos(parent, table):
             next_func(path=path)
             dialog.accept()
         except Exception as e:
+            if path == "":
+                return
             TableModels.error_func(f"Error.\n {e}")
 
     def del_vids_folder():
@@ -204,6 +207,8 @@ def update_combobox(combobox, items):
 
 
 def change_def_folder(path):
+    if path == "":
+        return
     if os.path.isdir(path):
         OutsideYT.app_settings_uploaders.add_vids_folder(path)
     else:
@@ -249,6 +254,9 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
         font.setFamily("Arial")
         font.setPointSize(16)
         row = dialog_settings.gridLayout.rowCount()
+        if row > 8:
+            TableModels.error_func("Too many loops!")
+            return
         start = QtWidgets.QDateTimeEdit(dialog)
         start.setFont(font)
         start.setCalendarPopup(True)
@@ -338,3 +346,39 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
     dialog.exec_()
+
+
+def set_upload_time_for_video(parent, table, video_id):
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
+    dialog_settings = UploadTime_for_Video_Dialog.Ui_Upload_Time_for_video()
+    dialog_settings.setupUi(dialog)
+    dialog_settings.Video_label.setText(table.model().get_data().at[video_id, 'Title'])
+    dialog_settings.Day.setDateTime(QtCore.QDateTime(QtCore.QDate.currentDate().addDays(1), QtCore.QTime(0, 0, 0)))
+    dialog_settings.Day.setMinimumDateTime(
+        QtCore.QDateTime(QtCore.QDate.currentDate(), QtCore.QTime.currentTime().addSecs(60 * 60)))
+
+    def ok():
+        time = dialog_settings.Time.text()
+        if len(time.split(":")[0]) == 1:
+            time = "0" + time
+        date = " ".join([dialog_settings.Day.text(), time])
+        table.model()._data.at[video_id, "Publish"] = date
+        table.update()
+        dialog.accept()
+
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
+    dialog.exec_()
+
+def clear_upload_time(parent, table: QtWidgets.QTableView):
+    message_box = QtWidgets.QMessageBox(parent)
+    message_box.setIcon(QtWidgets.QMessageBox.Question)
+    message_box.setWindowTitle("Confirmation")
+    message_box.setText("Are you sure?\nAll upload times will be deleted!")
+    message_box.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+    message_box.setDefaultButton(QtWidgets.QMessageBox.No)
+    res = message_box.exec_()
+    if res == QtWidgets.QMessageBox.Yes:
+        table.model()._data["Publish"] = "Now"
+        table.update()
