@@ -8,7 +8,6 @@ from outside import Dialogs
 
 def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
     menu = QtWidgets.QMenu(parent)
-    print(pos)
     ind = table.indexAt(pos)
     if ind.isValid() and table.selectedIndexes() and table.currentIndex().column() == 4:
         set_time = menu.addAction("Set Publish Time")

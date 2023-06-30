@@ -317,30 +317,6 @@ class SpinBoxDelegate(QtWidgets.QItemDelegate):
         self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
 
 
-class SearchFileDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, exes, parent=None):
-        super().__init__(parent)
-        self.pparent = parent
-        self.exes = exes
-        self.file = None
-
-    def createEditor(self, parent, option, index):
-        # editor = QWidget()
-        self.file, _ = QtWidgets.QFileDialog().getOpenFileName(None, "Select Video", "",
-                                                               "Video Files ({})".format(
-                                                                   " ".join("*{}".format(ext) for ext in self.exes)))
-        if self.file:
-            self.setModelData(None, self.pparent.model(), index)
-        return None
-
-    def setModelData(self, editor, model, index):
-        # file, _ = QtWidgets.QFileDialog().getOpenFileName(None, "Select Video", "",
-        #                        "Video Files ({})".format(
-        #                            " ".join("*{}".format(ext) for ext in self.exes)))
-        if self.file:
-            model.setData(index, self.file)
-
-
 def error_func(text):
     error_dialog = QtWidgets.QMessageBox()
     error_dialog.setIcon(QtWidgets.QMessageBox.Critical)

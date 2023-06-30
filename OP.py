@@ -36,7 +36,6 @@ class QMainWindowPlus(QMainWindow):
     def table_update(cls):
         current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
         table = globals()[f'Upload_table']
-        print(table.model().get_data().iloc[0])
         table.update()
 
     @classmethod
