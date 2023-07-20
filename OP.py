@@ -76,7 +76,9 @@ def update_upload():
     access_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["Private", "On link", "Public"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
                                           access_combo_del)
-    Upload_table.setItemDelegateForColumn(5, TableModels.SearchFileDelegate(OutsideYT.video_extensions, Upload_table))
+    Upload_table.setItemDelegateForColumn(4, Dialogs.SetPublishTimeDelegate(parent=YouTubeOutside, table=Upload_table))
+    Upload_table.setItemDelegateForColumn(5, TableModels.OpenFileLocationDelegate(parent=YouTubeOutside, table=Upload_table, ext="Video"))
+    Upload_table.setItemDelegateForColumn(8, TableModels.OpenFileLocationDelegate(parent=YouTubeOutside, table=Upload_table, ext="Preview"))
     ends_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["random", "import"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
 

@@ -143,6 +143,16 @@ def open_addUser_Dialog(parent: QtWidgets.QTableView, parent_settings):
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
     dialog.exec_()
 
+class SetPublishTimeDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, parent=None, table=None):
+        self.table = table
+        super().__init__(parent)
+
+    def editorEvent(self, event, model, option, index):
+        if event.type() in [event.MouseButtonDblClick, event.MouseButtonDblClick, event.MouseButtonDblClick,
+                            event.MouseButtonDblClick]:
+            set_upload_time_for_video(self.parent(), self.table, index.row())
+        return super().editorEvent(event, model, option, index)
 
 def open_upload_select_videos(parent, table):
     dialog = QtWidgets.QDialog(parent)

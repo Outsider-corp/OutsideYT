@@ -9,11 +9,7 @@ from PyQt5 import QtCore, QtWidgets, Qt, QtGui
 from PyQt5.QtCore import QModelIndex
 from PyQt5.QtWidgets import QWidget, QStyleOptionViewItem, QStyleFactory
 import pandas as pd
-from OutsideYT import app_settings_uploaders
-
-text_extensions = [".txt"]
-video_extensions = [".mp4", ".avi"]
-image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
+from OutsideYT import *
 
 
 class UploadModel(QtCore.QAbstractTableModel):
@@ -41,7 +37,7 @@ class UploadModel(QtCore.QAbstractTableModel):
     def flags(self, index: QModelIndex):
         if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Save filename?":
             flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable
-        elif self._data.columns[index.column()] == "Publish":
+        elif self._data.columns[index.column()] in ["Publish", "Video", "Preview"]:
             flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
         else:
             flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
@@ -88,7 +84,9 @@ class UploadModel(QtCore.QAbstractTableModel):
                     return self.get_data().loc[index.row(), column]
 
                 elif column == "Preview":
-                    return self.get_data().loc[index.row(), column]
+                    v = self.get_data().loc[index.row(), column]
+                    return self.get_data().loc[index.row(), column].split("/")[-1] \
+                        if len(v.split("/")) > 1 else v
 
                 elif column == "Tags":
                     return self.get_data().loc[index.row(), column]
@@ -317,6 +315,19 @@ class SpinBoxDelegate(QtWidgets.QItemDelegate):
         self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
 
 
+class OpenFileLocationDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, parent=None, table=None, ext=None):
+        self.table = table
+        self.ext = ext
+        super().__init__(parent)
+
+    def editorEvent(self, event, model, option, index):
+        if event.type() in [event.MouseButtonDblClick, event.MouseButtonDblClick, event.MouseButtonDblClick,
+                            event.MouseButtonDblClick]:
+            open_location(table=self.table, index=self.table.currentIndex().row(), ext=self.ext)
+        return super().editorEvent(event, model, option, index)
+
+
 def error_func(text):
     error_dialog = QtWidgets.QMessageBox()
     error_dialog.setIcon(QtWidgets.QMessageBox.Critical)
@@ -324,6 +335,18 @@ def error_func(text):
     error_dialog.setStyle(QStyleFactory.create("Fusion"))
     error_dialog.setWindowTitle("Error")
     error_dialog.exec_()
+
+
+def open_location(table, index, ext: str):
+    exts = {
+        "Video": video_extensions,
+        "Preview": image_extensions,
+        "Text": text_extensions
+    }
+    file, _ = QtWidgets.QFileDialog.getOpenFileName(None, f"Select {ext.capitalize()}", "",
+                                                    f"{ext.capitalize()} Files ({' '.join('*' + ex for ex in exts[ext.capitalize()])})")
+    table.model()._data.at[index, ext.capitalize()] = file
+    table.update()
 
 
 def table_universal(table):
