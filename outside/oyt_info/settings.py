@@ -37,6 +37,9 @@ class SettingsUploaders:
         self.update_settings()
         return
 
+    def find_account(self, login):
+        return login in self.accounts.keys()
+
     def update_accounts(self, accs):
         self._accounts = accs
         self.update_settings()
@@ -102,6 +105,108 @@ class SettingsUploaders:
             self.del_def_account()
         else:
             self.update_settings()
+
+class SettingsWatchers:
+
+    def __init__(self, file):
+        self._groups = dict()
+        self._def_group = ""
+        self.file = file
+        if file:
+            self.read_settings()
+            self.check_cookies()
+
+    @property
+    def accounts(self):
+        all_accs = []
+        for accs in self.groups.values():
+            all_accs.extend(accs.keys())
+        return all_accs
+
+    @property
+    def groups(self):
+        return self._groups
+
+    @property
+    def def_group(self):
+        return self._def_group\
+
+    @property
+    def def_account(self):
+        return self._def_group
+
+    def add_account(self, group, acc: dict):
+        if list(acc.keys())[0] not in self.groups[group].keys():
+            self._groups[group].update(acc)
+            self.update_settings()
+        else:
+            print("Аккаунт с таким именем уже существует в данной группе")
+        return
+
+    def del_account(self, group, login):
+        self._groups[group].pop(login)
+        self.update_settings()
+        return
+
+    def find_account(self, login):
+        for group in self.groups.values():
+            if login in group.keys():
+                return True
+        return False
+    def update_groups(self, groups):
+        self._groups = groups
+        self.update_settings()
+    def update_accounts_in_group(self, group, accs):
+        self._groups[group] = accs
+        self.update_settings()
+
+    def add_def_group(self, group):
+        if group in self.groups:
+            self._def_group = group
+            self.update_settings()
+        return
+
+    def del_def_group(self):
+        self._def_group = ""
+        self.update_settings()
+        return
+
+    def update_settings(self):
+        with open(self.file, "w") as f:
+            data = dict()
+            data["groups"] = self.groups
+            data["def_group"] = self.def_group
+            json.dump(data, f)
+
+    def read_settings(self):
+        if not os.path.exists(self.file):
+            self.update_settings()
+            return
+        with open(self.file, "r") as file:
+            data = json.load(file)
+            self._groups = data["groups"]
+            self._def_group = data["def_group"]
+        return
+
+    def check_cookies(self):
+        folder = os.path.dirname(self.file)
+        to_del = []
+        os.makedirs(os.path.join(folder, "watchers"), exist_ok=True)
+        for group_name, group in self.groups.items():
+            for acc_name in group.keys():
+                if not os.path.isfile(os.path.join(folder, "watchers", f'{acc_name}_cookies')):
+                    to_del.append((group_name, acc_name))
+        for acc in to_del:
+            self._groups[acc[0]].pop(acc[1])
+        to_del = []
+        for group_name, group in self.groups.items():
+            if len(group) == 0:
+                to_del.append(group_name)
+        for group in to_del:
+            self._groups.pop(group)
+        if self.def_group not in self.groups.keys():
+            self.del_def_group()
+        self.update_settings()
 
 
 # class AccountSettings:
@@ -286,5 +391,4 @@ class SettingsUploaders:
 #     @property
 #     def def_publ_time(self):
 #         return self._def_publ_time
-
 

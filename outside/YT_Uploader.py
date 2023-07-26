@@ -19,7 +19,6 @@ import pickle
 
 from OutsideYT import *
 
-
 wait_time = 5
 
 
@@ -265,7 +264,7 @@ if __name__ == "__main__":
     #     f'--user-agent={user_agent}')
     # options.add_argument('--disable-web-security')
     # options.add_argument('--allow-running-insecure-content')
-    driver = webdriver.Chrome(executable_path="chromedriver.exe",
+    driver = webdriver.Chrome(executable_path="bin/chromedriver.exe",
                               options=driver_options)
     login = "outsider.deal3"
     # google_login(login, driver)

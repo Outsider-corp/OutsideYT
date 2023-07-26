@@ -51,8 +51,8 @@ def update_ui():
     update_upload()
     update_watch()
     update_download()
-    ui.actionUploaders_2.triggered.connect(partial(Dialogs.open_UsersList_Dialog, parent=YouTubeOutside))
-    ui.actionWatchers_2.triggered.connect(partial(Dialogs.open_Watchers_List_Dialog, parent=YouTubeOutside))
+    ui.actionUploaders_2.triggered.connect(partial(Dialogs.open_Uploaders_List_Dialog, parent=YouTubeOutside, table="Uploaders"))
+    ui.actionWatchers_2.triggered.connect(partial(Dialogs.open_Uploaders_List_Dialog, parent=YouTubeOutside, table="Watchers"))
     ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
 
 
