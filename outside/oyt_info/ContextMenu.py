@@ -84,12 +84,40 @@ def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
             select_video.triggered.connect(
                 partial(open_location, table=table, index=table.currentIndex().row(), ext="Preview"))
         menu.addSeparator()
+    add_remove_row(menu, ind, table)
+    cursor = QtGui.QCursor()
+    menu.exec_(cursor.pos())
+
+
+def watchers_dialogs_menu(pos, parent, table: QtWidgets.QAbstractItemView):
+    menu = QtWidgets.QMenu(parent)
+    ind = table.indexAt(pos)
+    add_remove_row(menu, ind, table)
+    cursor = QtGui.QCursor()
+    menu.exec_(cursor.pos())
+
+
+def remove_row(table):
+    table.model().removeRow(table.currentIndex().row())
+    table.update()
+
+
+def uploaders_dialogs_menu(pos, parent, table: QtWidgets.QAbstractItemView):
+    menu = QtWidgets.QMenu(parent)
+    ind = table.indexAt(pos)
+    if ind.isValid() and table.selectedIndexes():
+        remove_data = menu.addAction("Remove Row")
+        remove_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
+        remove_data.triggered.connect(partial(remove_row, table=table))
+    cursor = QtGui.QCursor()
+    menu.exec_(cursor.pos())
+
+
+def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView):
     add_data = menu.addAction("Add New Row")
     add_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_ArrowDown))
     add_data.triggered.connect(lambda: table.model().insertRows())
     if ind.isValid() and table.selectedIndexes():
         remove_data = menu.addAction("Remove Row")
         remove_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
-        remove_data.triggered.connect(lambda: table.model().removeRow(table.currentIndex().row()))
-    cursor = QtGui.QCursor()
-    menu.exec_(cursor.pos())
+        remove_data.triggered.connect(partial(remove_row, table=table))

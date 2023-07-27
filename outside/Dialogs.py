@@ -5,31 +5,47 @@ from functools import partial
 from outside import TableModels, YT_Uploader
 from PyQt5 import QtWidgets, QtGui, QtCore
 import OutsideYT
-from outside.views_py import UsersList_Dialog, AddAccount_Dialog, SelectVideos_Dialog, UpdateTime_Dialog, \
-    UploadTime_for_Video_Dialog, AddWatcher_Dialog
+from outside.oyt_info import ContextMenu
+from outside.views_py import UsersList_Dialog, WatchersList_Dialog, AddAccount_Dialog, SelectVideos_Dialog, \
+    UpdateTime_Dialog, UploadTime_for_Video_Dialog, AddWatcher_Dialog, EditWatchersGroups_Dialog
 
 
-def open_Uploaders_List_Dialog(parent):
-    cookies_dir = os.path.join(os.path.dirname(OutsideYT.app_settings_uploaders.file), "uploaders")
-    dialog, dialog_settings = userslist(parent)
-    dialog.setWindowTitle(f"Uploaders List")
-    dialog_model = TableModels.UploadersUsersModel()
+def open_UsersList_Dialog(parent, table_settings, table_name: str, all_accounts: list, combo_items_default: list,
+                          def_type: str,
+                          add_table_class):
+    cookies_dir = os.path.join(os.path.dirname(OutsideYT.app_settings_uploaders.file), table_name.lower())
+    dialog, dialog_settings = userslist(parent, table_name)
+    dialog.setWindowTitle(f"{table_name.capitalize()} List")
+    dialog_model = add_table_class()
     dialog_settings.Users_Table.setModel(dialog_model)
     dialog_settings.Users_Table.setItemDelegate(TableModels.InLineEditDelegate())
     dialog_settings.Users_Table = TableModels.table_universal(dialog_settings.Users_Table)
     width = dialog.width() - 30
-    dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.1))
-    dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
-    dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.1) - int(width * 0.3))
+    if table_name.lower() == "uploaders":
+        dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.1))
+        dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
+        dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.1) - int(width * 0.3))
+    else:
+        dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.05))
+        dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
+        dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.05) - int(width * 0.3) - int(width * 0.2))
+        dialog_settings.Users_Table.setColumnWidth(3, int(width * 0.2))
     dialog_settings.Users_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
     dialog_settings.DefUser_ComboBox = update_combobox(
         dialog_settings.DefUser_ComboBox,
-        ["No default account",
-         *OutsideYT.app_settings_uploaders.accounts.keys()])
-    adduser = partial(open_addUploader_Dialog, parent=dialog, parent_settings=dialog_settings)
+        [f"No default {def_type}",
+         *combo_items_default])
+    adduser = partial(open_addUsers_Dialog, parent=dialog, parent_settings=dialog_settings,
+                      table_settings=table_settings,
+                      def_type=def_type, combo_items_default=combo_items_default,
+                      dialog_ui=AddAccount_Dialog.Ui_AddUser_Dialog if table_name.lower() == "uploaders"
+                      else AddWatcher_Dialog.Ui_AddUser_Dialog)
     dialog_settings.addUser_Button.clicked.connect(adduser)
     dialog_settings.primary_state = [dialog_settings.DefUser_ComboBox.currentText(),
                                      dialog_settings.Users_Table.model().get_data().copy()]
+    dialog_settings.Users_Table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    dialog_settings.Users_Table.customContextMenuRequested.connect(
+        lambda pos: ContextMenu.uploaders_dialogs_menu(pos, parent=dialog, table=dialog_settings.Users_Table))
 
     def chk_cookies():
         files = glob.glob(f'{cookies_dir}/*_cookies')
@@ -40,12 +56,16 @@ def open_Uploaders_List_Dialog(parent):
         cook_settings.Account_textbox.setEnabled(False)
         for file in files:
             filename = os.path.basename(file).replace("_cookies", "")
-            if filename in list(OutsideYT.app_settings_uploaders.accounts.keys()):
+            if filename in all_accounts:
                 continue
             cook_settings.Account_textbox.setText(filename)
 
             def ok():
-                OutsideYT.app_settings_uploaders.add_account({filename: cook_settings.Gmail_textbox.text()})
+                if hasattr(cook_settings, "Group_comboBox"):
+                    OutsideYT.app_settings_watchers.add_account(cook_settings.Group_comboBox.currentText(),
+                                                                {filename: cook_settings.Gmail_textbox.text()})
+                else:
+                    OutsideYT.app_settings_uploaders.add_account({filename: cook_settings.Gmail_textbox.text()})
 
             cook_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(cook.reject)
             cook_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
@@ -53,13 +73,31 @@ def open_Uploaders_List_Dialog(parent):
         dialog_settings.Users_Table.model().update()
         dialog_settings.DefUser_ComboBox = update_combobox(
             dialog_settings.DefUser_ComboBox,
-            [f"No default account",
-             *OutsideYT.app_settings_uploaders.group.keys()])
+            [f"No default {def_type}",
+             *combo_items_default])
 
     dialog_settings.CheckCookies_Button.clicked.connect(chk_cookies)
 
-    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(
-        partial(cancel_list_dialog, dialog=dialog, dialog_settings=dialog_settings))
+    def cancel():
+        if ([dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
+             range(dialog_settings.Users_Table.model().rowCount())]
+            != list(dialog_settings.primary_state[1].index)) or \
+                (dialog_settings.primary_state[0] != dialog_settings.DefUser_ComboBox.currentText()) or \
+                not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
+            confirm = QtWidgets.QMessageBox()
+            confirm.setText(f"Are you sure you want to cancel?\n"
+                            f"All changes will be lost!")
+            confirm.setWindowTitle("Confirmation")
+            confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            confirm.setDefaultButton(QtWidgets.QMessageBox.No)
+            result = confirm.exec_()
+            if result == QtWidgets.QMessageBox.Yes:
+                confirm.reject()
+                dialog.reject()
+        else:
+            dialog.reject()
+
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(partial(cancel))
 
     def save():
         if ([dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
@@ -68,52 +106,77 @@ def open_Uploaders_List_Dialog(parent):
                 (dialog_settings.primary_state[0] != dialog_settings.DefUser_ComboBox.currentText()) or \
                 not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
             def_user = dialog_settings.DefUser_ComboBox.currentText()
-            if def_user == f"No default account":
+            if def_user == f"No default {def_type}":
                 def_user = ""
-            if def_user != OutsideYT.app_settings_uploaders.def_account:
-                OutsideYT.app_settings_uploaders.add_def_account(def_user)
+            if def_user != getattr(table_settings, f'def_{def_type}'):
+                getattr(table_settings, f'def_{def_type}')(def_user)
             for ind, file in dialog_settings.primary_state[1].iterrows():
                 old = file.Account
-                new = dialog_settings.Users_Table.model().get_data().loc[ind, "Account"]
-                if old != new:
-                    os.rename(os.path.join(cookies_dir, f'{old}_cookies'), os.path.join(cookies_dir, f'{new}_cookies'))
-                    if old == OutsideYT.app_settings_uploaders.def_account:
-                        OutsideYT.app_settings_uploaders.add_def_account(new)
+                old_group = file.Group if "Group" in file.columns else None
+                if ind in dialog_settings.Users_Table.model().get_data().index:
+                    new = dialog_settings.Users_Table.model().get_data().loc[ind, "Account"]
+                    if table_name.lower() == "uploaders":
+                        table_settings.edit_account(old, new)
+                    else:
+                        table_settings.edit_account(old_group, old,
+                                                    dialog_settings.Users_Table.model().get_data().loc[ind, "Group"],
+                                                    new)
+                else:
+                    table_settings.del_account(old_group, old)
             dialog_settings.Users_Table.model().reset_ids(
                 [dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
                  range(dialog_settings.Users_Table.model().rowCount())])
-            dialog_settings.Users_Table.model()._data = dialog_settings.Users_Table.model().get_data().sort_values(
-                by="id")
-            accs = dialog_settings.Users_Table.model().get_data().set_index("Account")["Gmail"].to_dict()
-            OutsideYT.app_settings_uploaders.update_accounts(accs)
+            if table_name.lower() == "uploaders":
+                dialog_settings.Users_Table.model()._data = dialog_settings.Users_Table.model().get_data().sort_values(
+                    by="id")
+                accs = dialog_settings.Users_Table.model().get_data().set_index("Account")["Gmail"].to_dict()
+                OutsideYT.app_settings_uploaders.update_accounts(accs)
+            else:
+                dialog_settings.Users_Table.model()._data = dialog_settings.Users_Table.model().get_data().sort_values(
+                    by="Group")
+                data = {}
+                for _, row in dialog_settings.Users_Table.model().get_data().iterrows():
+                    group = row["Group"]
+                    account = row["Account"]
+                    gmail = row["Gmail"]
+                    if group not in data:
+                        data[group] = {}
+                    data[group][account] = gmail
+                OutsideYT.app_settings_watchers.update_accounts(data)
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
+    if table_name.lower() == "watchers":
+        dialog_settings.EditGroups_Button.clicked.connect(partial(edit_watchers_groups, parent=dialog))
+        dialog_settings.Users_Table.model().update()
+        dialog.parent().update()
     dialog.exec_()
 
 
-def open_addUploader_Dialog(parent: QtWidgets.QTableView, parent_settings):
+def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_settings, def_type: str,
+                         dialog_ui, combo_items_default: list):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
-    dialog_settings = AddAccount_Dialog.Ui_AddUser_Dialog()
+    dialog_settings = dialog_ui()
     dialog_settings.setupUi(dialog)
 
     def ok():
         login = dialog_settings.Account_textbox.text()
         mail = dialog_settings.Gmail_textbox.text()
+        group = dialog_settings.Group_comboBox.currentText() if hasattr(dialog_settings, "Group_comboBox") else None
         if OutsideYT.app_settings_uploaders.find_account(login):
-            TableModels.error_func("This account name is already used!")
+            TableModels.error_func(f"This account name is already used!")
         else:
             try:
                 dialog.close()
-                added = YT_Uploader.google_login(login, mail)
+                added = google_login(login, mail, parent=dialog, table_settings=table_settings)
                 if added:
-                    OutsideYT.app_settings_uploaders.add_account({login: mail})
+                    table_settings.add_account(acc={login: mail}, group=group)
                     parent_settings.primary_state[1] = parent_settings.Users_Table.model().get_data().copy()
                     parent_settings.Users_Table.model().update()
                     parent_settings.DefUser_ComboBox = update_combobox(
                         parent_settings.DefUser_ComboBox,
-                        [f"No default account",
-                         *OutsideYT.app_settings_uploaders.accounts.keys()])
+                        [f"No default {def_type}",
+                         *combo_items_default])
             except Exception as e:
                 TableModels.error_func(f"Error. \n{e}")
 
@@ -122,146 +185,64 @@ def open_addUploader_Dialog(parent: QtWidgets.QTableView, parent_settings):
     dialog.exec_()
 
 
-def cancel_list_dialog(dialog, dialog_settings):
-    if ([dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
-         range(dialog_settings.Users_Table.model().rowCount())]
-        != list(dialog_settings.primary_state[1].index)) or \
-            (dialog_settings.primary_state[0] != dialog_settings.DefUser_ComboBox.currentText()) or \
-            not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
-        confirm = QtWidgets.QMessageBox()
-        confirm.setText(f"Are you sure you want to cancel?\n"
-                        f"All changes will be lost!")
-        confirm.setWindowTitle("Confirmation")
-        confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        confirm.setDefaultButton(QtWidgets.QMessageBox.No)
-        result = confirm.exec_()
-        if result == QtWidgets.QMessageBox.Yes:
-            confirm.reject()
-            dialog.reject()
-    else:
-        dialog.reject()
-
-
-def open_Watchers_List_Dialog(parent):
-    dialog_model = TableModels.WatchersUsersModel()
-    cookies_dir = os.path.join(os.path.dirname(OutsideYT.app_settings_watchers.file), 'watchers')
-    dialog, dialog_settings = userslist(parent)
-    dialog.setWindowTitle(f"Watchers List")
-    dialog_settings.Users_Table.setModel(dialog_model)
-    dialog_settings.Users_Table.setItemDelegate(TableModels.InLineEditDelegate())
-    dialog_settings.Users_Table = TableModels.table_universal(dialog_settings.Users_Table)
+def edit_watchers_groups(parent):
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
+    dialog_settings = EditWatchersGroups_Dialog.Ui_GroupsList_Dialog()
+    dialog_settings.setupUi(dialog)
+    dialog_model = TableModels.WatchersGroupsModel()
+    dialog_settings.Groups_Table.setModel(dialog_model)
+    dialog_settings.Groups_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
     width = dialog.width() - 30
-    dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.05))
-    dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
-    dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.05) - int(width * 0.3) - int(width * 0.2))
-    dialog_settings.Users_Table.setColumnWidth(3, int(width * 0.2))
-    dialog_settings.Users_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
-    dialog_settings.DefUser_ComboBox = update_combobox(
-        dialog_settings.DefUser_ComboBox,
-        [f"No default group",
-         *OutsideYT.app_settings_watchers.group.keys()])
-    adduser = partial(open_addWatcher_Dialog, parent=dialog, parent_settings=dialog_settings)
-    dialog_settings.addUser_Button.clicked.connect(adduser)
-    dialog_settings.primary_state = [dialog_settings.DefUser_ComboBox.currentText(),
-                                     dialog_settings.Users_Table.model().get_data().copy()]
+    dialog_settings.Groups_Table.setColumnWidth(0, int(width * 0.1))
+    dialog_settings.Groups_Table.setColumnWidth(1, width - int(width * 0.1))
+    dialog_settings.primary_state = dialog_settings.Groups_Table.model().get_data().copy()
+    dialog_settings.Groups_Table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    dialog_settings.Groups_Table.customContextMenuRequested.connect(
+        lambda pos: ContextMenu.watchers_dialogs_menu(pos, parent=dialog, table=dialog_settings.Groups_Table))
 
-    def chk_cookies():
-        files = glob.glob(f'{cookies_dir}/*_cookies')
-        cook = QtWidgets.QDialog(dialog)
-        cook.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
-        cook_settings = AddAccount_Dialog.Ui_AddUser_Dialog()
-        cook_settings.setupUi(cook)
-        cook_settings.Account_textbox.setEnabled(False)
-        for file in files:
-            filename = os.path.basename(file).replace("_cookies", "")
-            if filename in list(OutsideYT.app_settings_watchers.accounts.keys()):
-                continue
-            cook_settings.Account_textbox.setText(filename)
+    def cancel():
+        if ([dialog_settings.Groups_Table.verticalHeader().visualIndex(i) for i in
+             range(dialog_settings.Groups_Table.model().rowCount())]
+            != list(dialog_settings.primary_state.index)) or \
+                not (dialog_settings.primary_state.equals(dialog_settings.Groups_Table.model().get_data().copy())):
+            confirm = QtWidgets.QMessageBox()
+            confirm.setText(f"Are you sure you want to cancel?\n"
+                            f"All changes will be lost!")
+            confirm.setWindowTitle("Confirmation")
+            confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            confirm.setDefaultButton(QtWidgets.QMessageBox.No)
+            result = confirm.exec_()
+            if result == QtWidgets.QMessageBox.Yes:
+                confirm.reject()
+                dialog.reject()
+        else:
+            dialog.reject()
 
-            def ok():
-                OutsideYT.app_settings_watchers.add_account({filename: cook_settings.Gmail_textbox.text()})
+    def add_group():
+        dialog_settings.Groups_Table.model().insertRows()
+        dialog_settings.Groups_Table.update()
 
-            cook_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(cook.reject)
-            cook_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
-            cook.exec_()
-        dialog_settings.Users_Table.model().update()
-        dialog_settings.DefUser_ComboBox = update_combobox(
-            dialog_settings.DefUser_ComboBox,
-            [f"No default group",
-             *OutsideYT.app_settings_watchers.group.keys()])
-
-    dialog_settings.CheckCookies_Button.clicked.connect(chk_cookies)
-
-    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(
-        partial(cancel_list_dialog, dialog=dialog, dialog_settings=dialog_settings))
+    dialog_settings.addGroup_Button.clicked.connect(add_group)
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(partial(cancel))
 
     def save():
-        if ([dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
-             range(dialog_settings.Users_Table.model().rowCount())]
-            != list(dialog_settings.primary_state[1].index)) or \
-                (dialog_settings.primary_state[0] != dialog_settings.DefUser_ComboBox.currentText()) or \
-                not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
-            def_group = dialog_settings.DefUser_ComboBox.currentText()
-            if def_group == "No default group":
-                def_group = ""
-            if def_group != OutsideYT.app_settings_watchers.def_group:
-                OutsideYT.app_settings_watchers.add_def_group(def_group)
-            for ind, file in dialog_settings.primary_state[1].iterrows():
-                old = file.Account
-                new = dialog_settings.Users_Table.model().get_data().loc[ind, "Account"]
+        if ([dialog_settings.Groups_Table.verticalHeader().visualIndex(i) for i in
+             range(dialog_settings.Groups_Table.model().rowCount())]
+            != list(dialog_settings.primary_state.index)) or \
+                not (dialog_settings.primary_state.equals(dialog_settings.Groups_Table.model().get_data().copy())):
+            for ind, file in dialog_settings.primary_state.iterrows():
+                old = file.Group
+                new = dialog_settings.Groups_Table.model().get_data().loc[ind, "Group"]
                 if old != new:
-                    os.rename(os.path.join(cookies_dir, f'{old}_cookies'), os.path.join(cookies_dir, f'{new}_cookies'))
-            dialog_settings.Users_Table.model().reset_ids(
-                [dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
-                 range(dialog_settings.Users_Table.model().rowCount())])
-            dialog_settings.Users_Table.model()._data = dialog_settings.Users_Table.model().get_data().sort_values(
+                    OutsideYT.app_settings_watchers.change_group_name(old, new)
+            dialog_settings.Groups_Table.model().reset_ids(
+                [dialog_settings.Groups_Table.verticalHeader().visualIndex(i) for i in
+                 range(dialog_settings.Groups_Table.model().rowCount())])
+            dialog_settings.Groups_Table.model()._data = dialog_settings.Groups_Table.model().get_data().sort_values(
                 by="id")
-            data = {}
-            for _, row in dialog_settings.Users_Table.model().get_data().iterrows():
-                group = row["Group"]
-                account = row["Account"]
-                gmail = row["Gmail"]
-                if group not in data:
-                    data[group] = {}
-                data[group][account] = gmail
-            OutsideYT.app_settings_watchers.update_accounts(data)
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
-    dialog.exec_()
-
-
-def open_addWatcher_Dialog(parent: QtWidgets.QTableView, parent_settings, table):
-    if table.lower() == "uploaders":
-        account_settings = OutsideYT.app_settings_uploaders
-    else:
-        account_settings = OutsideYT.app_settings_watchers
-    dialog = QtWidgets.QDialog(parent)
-    dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
-    dialog_settings = AddAccount_Dialog.Ui_AddUser_Dialog()
-    dialog_settings.setupUi(dialog)
-
-    def ok():
-        login = dialog_settings.Account_textbox.text()
-        mail = dialog_settings.Gmail_textbox.text()
-        if account_settings.find_account(login):
-            TableModels.error_func("This account name is already used!")
-        else:
-            try:
-                dialog.close()
-                added = YT_Uploader.google_login(login, mail)
-                if added:
-                    account_settings.add_account({login: mail})
-                    parent_settings.primary_state[1] = parent_settings.Users_Table.model().get_data().copy()
-                    parent_settings.Users_Table.model().update()
-                    parent_settings.DefUser_ComboBox = update_combobox(
-                        parent_settings.DefUser_ComboBox,
-                        [f"No default {'account' if table.lower() == 'uploaders' else 'group'}",
-                         *account_settings.accounts.keys()])
-            except Exception as e:
-                TableModels.error_func(f"Error. \n{e}")
-
-    dialog.accept = ok
-    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
     dialog.exec_()
 
 
@@ -348,21 +329,26 @@ def change_def_folder(path):
         TableModels.error_func("This is not a directory!")
 
 
-def google_login(login, mail, parent: QtWidgets.QDialog):
-    if login in list(OutsideYT.app_settings_uploaders.accounts.keys()):
+def google_login(login, mail, parent: QtWidgets.QDialog, table_settings):
+    added = False
+    if login in list(table_settings.accounts.keys()):
         TableModels.error_func("This account name is already used!")
     else:
         try:
-            YT_Uploader.google_login(login, mail)
+            added = YT_Uploader.google_login(login, mail)
             parent.parent().update()
         except:
             TableModels.error_func("Error.")
+    return added
 
 
-def userslist(parent):
+def userslist(parent, table_name: str):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
-    dialog_settings = UsersList_Dialog.Ui_UsersList_Dialog()
+    if table_name.lower() == "uploaders":
+        dialog_settings = UsersList_Dialog.Ui_UsersList_Dialog()
+    else:
+        dialog_settings = WatchersList_Dialog.Ui_WatchersList_Dialog()
     dialog_settings.setupUi(dialog)
     return dialog, dialog_settings
 

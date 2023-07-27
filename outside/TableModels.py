@@ -2,8 +2,6 @@ import os
 import sys
 import typing
 
-import OutsideYT
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PyQt5 import QtCore, QtWidgets, Qt, QtGui
 from PyQt5.QtCore import QModelIndex
@@ -305,8 +303,10 @@ class UploadersUsersModel(QtCore.QAbstractTableModel):
         self.update()
         return True
 
-    def reset_ids(self, new_list):
-        self._data.id = list(map(str, map(lambda x: x + 1, new_list)))
+    def reset_ids(self, new_list=None):
+        if new_list is None:
+            new_list = [i for i in range(self.rowCount())]
+        self._data.id = list(map(str, new_list))
 
     def get_data(self):
         return self._data
@@ -314,6 +314,7 @@ class UploadersUsersModel(QtCore.QAbstractTableModel):
 
 class WatchersUsersModel(QtCore.QAbstractTableModel):
     columns = ['id', 'Account', 'Gmail', 'Group']
+    default_group = "No group"
 
     def __init__(self):
         QtCore.QAbstractTableModel.__init__(self)
@@ -372,9 +373,94 @@ class WatchersUsersModel(QtCore.QAbstractTableModel):
     def insertRows(self, row: tuple, parent: QModelIndex = ..., **kwargs) -> bool:
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count)
-        self._data.loc[row_count] = [str(row_count), row[0], row[1], False]
+        self._data.loc[row_count] = [str(row_count), row[0], row[1], row[2]]
         row_count += 1
         self.endInsertRows()
+        return True
+
+    def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
+        row_count = self.rowCount()
+        row_count -= 1
+        self.beginRemoveRows(QModelIndex(), row, row)
+        self._data.drop(index=row)
+        self._data.reset_index(drop=True, inplace=True)
+        self.reset_ids()
+        self.endRemoveRows()
+        self.update()
+        return True
+
+    def reset_ids(self, new_list=None):
+        if new_list is None:
+            new_list = [i for i in range(self.rowCount())]
+        self._data.id = list(map(str, new_list))
+
+    def get_data(self):
+        return self._data
+
+class WatchersGroupsModel(QtCore.QAbstractTableModel):
+    columns = ['id', 'Group']
+    def __init__(self):
+        QtCore.QAbstractTableModel.__init__(self)
+        self.update()
+
+    def update(self):
+        self._data = pd.DataFrame(columns=WatchersGroupsModel.columns)
+        self._data["id"] = list(map(str, map(lambda x: x + 1, self._data.index)))
+        self._data["Group"] = app_settings_watchers.groups.keys()
+        self.layoutChanged.emit()
+
+    def flags(self, index: QModelIndex):
+        if self._data.columns[index.column()] == "id":
+            flags = QtCore.Qt.ItemIsEnabled
+        else:
+            flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+        return flags
+
+    def rowCount(self, parent: QModelIndex = ...) -> int:
+        return len(self._data.index)
+
+    def columnCount(self, parent: QModelIndex = ...) -> int:
+        return len(self._data.columns)
+
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = ...) -> typing.Any:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self._data.columns[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return ">"
+
+    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+        if index.isValid():
+            column = self._data.columns[index.column()]
+            if role == QtCore.Qt.DisplayRole:
+                return self.get_data().loc[index.row(), column]
+
+    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+        if index.isValid():
+            column = list(self._data.keys())[index.column()]
+            if column == "Groups" and value != self._data.loc[index.row(), column]:
+                if value not in list(self.get_data()["Groups"]):
+                    self._data.loc[index.row(), column] = value
+                    self.dataChanged.emit(index, index, [role])
+                    return True
+                else:
+                    error_func("This group name is already used")
+        return False
+
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+        row_count = self.rowCount()
+        self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
+        for col in self.get_data().columns:
+            if col == "id":
+                self._data.loc[row_count, col] = row_count + 1
+                continue
+            if col in kwargs.keys() and kwargs[col] is not None:
+                self._data.loc[row_count, col] = kwargs[col]
+            else:
+                self._data.loc[row_count, col] = WatchersUsersModel.default_group
+        row_count += count
+        self.endInsertRows()
+        self.update()
         return True
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
@@ -393,7 +479,6 @@ class WatchersUsersModel(QtCore.QAbstractTableModel):
 
     def get_data(self):
         return self._data
-
 
 class InLineEditDelegate(QtWidgets.QItemDelegate):
     def createEditor(self, parent: QWidget, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> QWidget:
@@ -543,7 +628,7 @@ def add_video_for_uploading(table: QtWidgets.QTableView, path, user=None):
     if path in table.model().paths:
         return
     if user is None:
-        user = OutsideYT.app_settings_uploaders.def_account
+        user = app_settings_uploaders.def_account
     video = find_files(video_extensions, folder=path)
     title = find_files(text_extensions, folder=path, name="Title")
     description = find_files(text_extensions, folder=path, name="Description")

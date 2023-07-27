@@ -24,7 +24,7 @@ class SettingsUploaders:
     def def_account(self):
         return self._def_account
 
-    def add_account(self, acc: dict):
+    def add_account(self, acc: dict, **kwargs):
         if list(acc.keys())[0] not in self.accounts.keys():
             self._accounts.update(acc)
             self.update_settings()
@@ -32,10 +32,23 @@ class SettingsUploaders:
             print("Аккаунт с таким именем уже существует")
         return
 
-    def del_account(self, login):
+    def del_account(self, group, login):
         self._accounts.pop(login)
+        if self.def_account == login:
+            self.del_def_account()
+        os.remove(os.path.join(os.path.dirname(self.file), "uploaders", f'{login}_cookies'))
         self.update_settings()
         return
+
+    def edit_account(self, old_name, new_name):
+        if new_name not in self.accounts.keys() and old_name != new_name:
+            self._accounts[new_name] = self.accounts[old_name]
+            del self._accounts[old_name]
+            if self.def_account == old_name:
+                self._def_account = new_name
+            os.rename(os.path.join(os.path.dirname(self.file), "uploaders", f'{old_name}_cookies'),
+                      os.path.join(os.path.dirname(self.file), "uploaders", f'{new_name}_cookies'))
+            self.update_settings()
 
     def find_account(self, login):
         return login in self.accounts.keys()
@@ -106,6 +119,7 @@ class SettingsUploaders:
         else:
             self.update_settings()
 
+
 class SettingsWatchers:
 
     def __init__(self, file):
@@ -118,9 +132,9 @@ class SettingsWatchers:
 
     @property
     def accounts(self):
-        all_accs = []
+        all_accs = {}
         for accs in self.groups.values():
-            all_accs.extend(accs.keys())
+            all_accs.update(accs)
         return all_accs
 
     @property
@@ -129,19 +143,29 @@ class SettingsWatchers:
 
     @property
     def def_group(self):
-        return self._def_group\
-
-    @property
-    def def_account(self):
         return self._def_group
 
-    def add_account(self, group, acc: dict):
+    def add_account(self, group, acc: dict, **kwargs):
         if list(acc.keys())[0] not in self.groups[group].keys():
             self._groups[group].update(acc)
             self.update_settings()
         else:
             print("Аккаунт с таким именем уже существует в данной группе")
         return
+
+    def edit_account(self, group, old_name, new_group=None, new_name=None):
+        name = old_name
+        if new_name and new_name not in self.accounts.keys():
+            if old_name != new_name:
+                self._groups[group][new_name] = self.groups[group][old_name]
+            del self._groups[group][old_name]
+            os.rename(os.path.join(os.path.dirname(self.file), "uploaders", f'{old_name}_cookies'),
+                      os.path.join(os.path.dirname(self.file), "uploaders", f'{new_name}_cookies'))
+            name = new_name
+        if group != new_group and new_group in self.groups.keys():
+            self._groups[new_group][name] = self.groups[group][name]
+            del self._groups[group][name]
+        self.update_settings()
 
     def del_account(self, group, login):
         self._groups[group].pop(login)
@@ -153,12 +177,21 @@ class SettingsWatchers:
             if login in group.keys():
                 return True
         return False
-    def update_groups(self, groups):
+
+    def _update_groups(self, groups):
         self._groups = groups
         self.update_settings()
-    def update_accounts_in_group(self, group, accs):
+
+    def _update_accounts_in_group(self, group, accs):
         self._groups[group] = accs
         self.update_settings()
+
+    def change_group_name(self, old_name, new_name):
+        if new_name not in self.groups.keys():
+            self._groups[new_name] = self.groups[old_name]
+            if old_name == self.def_group:
+                self.add_def_group(new_name)
+            del self._groups[old_name]
 
     def add_def_group(self, group):
         if group in self.groups:
@@ -207,7 +240,6 @@ class SettingsWatchers:
         if self.def_group not in self.groups.keys():
             self.del_def_group()
         self.update_settings()
-
 
 # class AccountSettings:
 #
@@ -391,4 +423,3 @@ class SettingsWatchers:
 #     @property
 #     def def_publ_time(self):
 #         return self._def_publ_time
-
