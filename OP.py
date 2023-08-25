@@ -1,19 +1,19 @@
-import glob
 import sys
 import os
 from functools import partial
 
 import OutsideYT
+import outside.Upload.TableModels
+import outside.Upload.context_menu
+import outside.Upload.dialogs
+import outside.Watch.TableModels
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
-from outside.views_py import UsersList_Dialog, AddAccount_Dialog
-from outside.oyt_info import settings, ContextMenu
-from outside import TableModels, YT_Uploader, Dialogs
+from outside import TableModels, main_dialogs
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QStyleFactory, QMainWindow, QShortcut
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidgetItem
 
 
 class QMainWindowPlus(QMainWindow):
@@ -51,27 +51,29 @@ def update_ui():
     update_upload()
     update_watch()
     update_download()
-    ui.actionUploaders_2.triggered.connect(partial(Dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
+    ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
                                                    table_settings=OutsideYT.app_settings_uploaders,
                                                    table_name="Uploaders",
                                                    all_accounts=OutsideYT.app_settings_uploaders.accounts.keys(),
                                                    combo_items_default=OutsideYT.app_settings_uploaders.accounts.keys(),
-                                                   def_type="account", add_table_class=TableModels.UploadersUsersModel
+                                                   def_type="account",
+                                                   add_table_class=outside.Upload.TableModels.UploadersUsersModel
                                                    ))
-    ui.actionWatchers_2.triggered.connect(partial(Dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
-                                                   table_settings=OutsideYT.app_settings_watchers,
-                                                   table_name="Watchers",
-                                                   all_accounts=OutsideYT.app_settings_watchers.accounts,
-                                                   combo_items_default=OutsideYT.app_settings_watchers.groups.keys(),
-                                                   def_type="group", add_table_class=TableModels.WatchersUsersModel
-                                                   ))
+    ui.actionWatchers_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
+                                                  table_settings=OutsideYT.app_settings_watchers,
+                                                  table_name="Watchers",
+                                                  all_accounts=OutsideYT.app_settings_watchers.accounts,
+                                                  combo_items_default=OutsideYT.app_settings_watchers.groups.keys(),
+                                                  def_type="group",
+                                                  add_table_class=outside.Watch.TableModels.WatchersUsersModel
+                                                  ))
     ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
 
 
 def update_upload():
     global Upload_table
     Upload_table = ui.Upload_Table
-    Upload_model = TableModels.UploadModel()
+    Upload_model = outside.Upload.TableModels.UploadModel()
     Upload_table.setModel(Upload_model)
     Upload_table.setItemDelegate(TableModels.InLineEditDelegate())
     font = QtGui.QFont()
@@ -88,9 +90,14 @@ def update_upload():
     access_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["Private", "On link", "Public"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
                                           access_combo_del)
-    Upload_table.setItemDelegateForColumn(4, Dialogs.SetPublishTimeDelegate(parent=YouTubeOutside, table=Upload_table))
-    Upload_table.setItemDelegateForColumn(5, TableModels.OpenFileLocationDelegate(parent=YouTubeOutside, table=Upload_table, ext="Video"))
-    Upload_table.setItemDelegateForColumn(8, TableModels.OpenFileLocationDelegate(parent=YouTubeOutside, table=Upload_table, ext="Preview"))
+    Upload_table.setItemDelegateForColumn(4, outside.Upload.dialogs.SetPublishTimeDelegate(parent=YouTubeOutside,
+                                                                                                  table=Upload_table))
+    Upload_table.setItemDelegateForColumn(5, outside.Upload.TableModels.OpenFileLocationDelegate(parent=YouTubeOutside,
+                                                                                                 table=Upload_table,
+                                                                                                 ext="Video"))
+    Upload_table.setItemDelegateForColumn(8, outside.Upload.TableModels.OpenFileLocationDelegate(parent=YouTubeOutside,
+                                                                                                 table=Upload_table,
+                                                                                                 ext="Preview"))
     ends_combo_del = TableModels.ComboBoxDelegate(Upload_table, ["random", "import"])
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
 
@@ -98,15 +105,16 @@ def update_upload():
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Cards"), cards_spin_del)
 
     ui.Upload_SelectVideos_Button.clicked.connect(
-        partial(Dialogs.open_upload_select_videos, parent=YouTubeOutside, table=Upload_table))
-    ui.Upload_Check_Button.clicked.connect(partial(Dialogs.scan_videos_folder, table=Upload_table))
+        partial(outside.Upload.dialogs.open_upload_select_videos, parent=YouTubeOutside, table=Upload_table))
+    ui.Upload_Check_Button.clicked.connect(
+        partial(outside.Upload.dialogs.scan_videos_folder, table=Upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
-        partial(Dialogs.set_upload_time, parent=YouTubeOutside, table=Upload_table))
+        partial(outside.Upload.dialogs.set_upload_time, parent=YouTubeOutside, table=Upload_table))
     Upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     Upload_table.customContextMenuRequested.connect(
-        lambda pos: ContextMenu.upload_context_menu(pos, parent=YouTubeOutside, table=Upload_table))
+        lambda pos: outside.Upload.context_menu.upload_context_menu(pos, parent=YouTubeOutside, table=Upload_table))
     ui.Upload_ClearUTime_Button.clicked.connect(
-        partial(Dialogs.clear_upload_time, parent=YouTubeOutside, table=Upload_table))
+        partial(outside.Upload.dialogs.clear_upload_time, parent=YouTubeOutside, table=Upload_table))
 
 
 def update_watch():

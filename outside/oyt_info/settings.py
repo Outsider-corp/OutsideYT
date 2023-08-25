@@ -1,6 +1,8 @@
 import os
 import json
 
+from outside.errors import error_func
+
 
 class SettingsUploaders:
     def __init__(self, file):
@@ -29,10 +31,10 @@ class SettingsUploaders:
             self._accounts.update(acc)
             self.update_settings()
         else:
-            print("Аккаунт с таким именем уже существует")
+            error_func("Аккаунт с таким именем уже существует")
         return
 
-    def del_account(self, group, login):
+    def del_account(self, login):
         self._accounts.pop(login)
         if self.def_account == login:
             self.del_def_account()
@@ -145,12 +147,21 @@ class SettingsWatchers:
     def def_group(self):
         return self._def_group
 
+    def add_group(self, group):
+        if group not in self.groups.keys():
+            self._groups[group] = dict()
+            self.update_settings()
+            return True
+        else:
+            error_func(f"Группа с таким названием уже существует - {group}")
+            return False
+
     def add_account(self, group, acc: dict, **kwargs):
         if list(acc.keys())[0] not in self.groups[group].keys():
             self._groups[group].update(acc)
             self.update_settings()
         else:
-            print("Аккаунт с таким именем уже существует в данной группе")
+            error_func(f"Аккаунт с таким именем уже существует в данной группе - {group}: {acc}")
         return
 
     def edit_account(self, group, old_name, new_group=None, new_name=None):
@@ -172,14 +183,22 @@ class SettingsWatchers:
         self.update_settings()
         return
 
+    def del_group(self, group):
+        self._groups.pop(group)
+        if group == self.def_group:
+            self.del_def_group()
+        self.update_settings()
+        return
+
     def find_account(self, login):
         for group in self.groups.values():
             if login in group.keys():
                 return True
         return False
 
-    def _update_groups(self, groups):
-        self._groups = groups
+    def update_groups(self, groups):
+        for g, accs in groups.items():
+            self._groups[g] = accs
         self.update_settings()
 
     def _update_accounts_in_group(self, group, accs):
@@ -192,6 +211,9 @@ class SettingsWatchers:
             if old_name == self.def_group:
                 self.add_def_group(new_name)
             del self._groups[old_name]
+            self.update_settings()
+        else:
+            error_func("Группа с таким именем уже существует!")
 
     def add_def_group(self, group):
         if group in self.groups:
@@ -215,7 +237,7 @@ class SettingsWatchers:
         if not os.path.exists(self.file):
             self.update_settings()
             return
-        with open(self.file, "r") as file:
+        with open(self.file, "r", encoding="UTF-8") as file:
             data = json.load(file)
             self._groups = data["groups"]
             self._def_group = data["def_group"]
@@ -232,11 +254,11 @@ class SettingsWatchers:
         for acc in to_del:
             self._groups[acc[0]].pop(acc[1])
         to_del = []
-        for group_name, group in self.groups.items():
-            if len(group) == 0:
-                to_del.append(group_name)
-        for group in to_del:
-            self._groups.pop(group)
+        # for group_name, group in self.groups.items():
+        #     if len(group) == 0:
+        #         to_del.append(group_name)
+        # for group in to_del:
+        #     self._groups.pop(group)
         if self.def_group not in self.groups.keys():
             self.del_def_group()
         self.update_settings()

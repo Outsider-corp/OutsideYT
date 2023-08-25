@@ -1,26 +1,30 @@
 import os
 from functools import partial
 
-from PyQt5 import QtWidgets, QtGui, QtCore, Qt
-from PyQt5.QtWidgets import QApplication
-from OutsideYT import video_extensions
-from outside import Dialogs
-from outside.TableModels import UploadModel, error_func, open_location
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QApplication, QAbstractItemView, QMenu, QStyle
+
+import OutsideYT
+from outside.TableModels import remove_row
+from outside.Upload import dialogs
+from outside.Upload.TableModels import UploadModel, open_location
+from outside.errors import error_func
+from outside.context_menu import add_remove_row
 
 
-def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
-    menu = QtWidgets.QMenu(parent)
+def upload_context_menu(pos, parent, table: QAbstractItemView):
+    menu = QMenu(parent)
     ind = table.indexAt(pos)
     if ind.isValid() and table.selectedIndexes():
         if table.currentIndex().column() == 4:
             set_time = menu.addAction("Set Publish Time")
-            set_time.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileDialogDetailedView))
+            set_time.setIcon(QApplication.style().standardIcon(QStyle.SP_FileDialogDetailedView))
             set_time.triggered.connect(
-                partial(Dialogs.set_upload_time_for_video, parent=parent, table=table,
+                partial(dialogs.set_upload_time_for_video, parent=parent, table=table,
                         video_id=table.currentIndex().row()))
             if table.model().get_data().at[table.currentIndex().row(), "Publish"] != "Now":
                 remove_time = menu.addAction("Remove Publish Time")
-                remove_time.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_BrowserReload))
+                remove_time.setIcon(QApplication.style().standardIcon(QStyle.SP_BrowserReload))
 
                 def remove_time_func():
                     table.model()._data.at[table.currentIndex().row(), "Publish"] = "Now"
@@ -32,8 +36,8 @@ def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
             if path not in ["", UploadModel.default_content["Video"]]:
                 start_video = menu.addAction("Start Video in Player")
                 open_video_folder = menu.addAction("Open Video folder")
-                open_video_folder.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileIcon))
-                start_video.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay))
+                open_video_folder.setIcon(QApplication.style().standardIcon(QStyle.SP_FileIcon))
+                start_video.setIcon(QApplication.style().standardIcon(QStyle.SP_MediaPlay))
 
                 def open_folder():
                     fpath = os.path.dirname(path)
@@ -52,7 +56,7 @@ def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
                 start_video.triggered.connect(play)
                 menu.addSeparator()
             select_video = menu.addAction("Select Video")
-            select_video.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileDialogDetailedView))
+            select_video.setIcon(QApplication.style().standardIcon(QStyle.SP_FileDialogDetailedView))
             select_video.triggered.connect(
                 partial(open_location, table=table, index=table.currentIndex().row(), ext="Video"))
         elif table.currentIndex().column() == 8:
@@ -60,8 +64,8 @@ def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
             if path not in ["", UploadModel.default_content["Preview"]]:
                 start_video = menu.addAction("Show Preview")
                 open_video_folder = menu.addAction("Open Preview folder")
-                open_video_folder.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileIcon))
-                start_video.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+                open_video_folder.setIcon(QApplication.style().standardIcon(QStyle.SP_FileIcon))
+                start_video.setIcon(QApplication.style().standardIcon(QStyle.SP_ComputerIcon))
 
                 def open_folder():
                     fpath = os.path.dirname(path)
@@ -80,44 +84,25 @@ def upload_context_menu(pos, parent, table: QtWidgets.QAbstractItemView):
                 start_video.triggered.connect(play)
                 menu.addSeparator()
             select_video = menu.addAction("Select Preview")
-            select_video.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_FileDialogDetailedView))
+            select_video.setIcon(QApplication.style().standardIcon(QStyle.SP_FileDialogDetailedView))
             select_video.triggered.connect(
                 partial(open_location, table=table, index=table.currentIndex().row(), ext="Preview"))
         menu.addSeparator()
-    add_remove_row(menu, ind, table)
+    del_val = table.model().get_data().loc[table.currentIndex().row(), "Account"]
+    add_remove_row(menu, ind, table, partial(OutsideYT.app_settings_uploaders.del_account, login=del_val))
     cursor = QtGui.QCursor()
     menu.exec_(cursor.pos())
 
 
-def watchers_dialogs_menu(pos, parent, table: QtWidgets.QAbstractItemView):
-    menu = QtWidgets.QMenu(parent)
+def uploaders_dialogs_menu(pos, parent, table: QAbstractItemView):
+    menu = QMenu(parent)
     ind = table.indexAt(pos)
-    add_remove_row(menu, ind, table)
-    cursor = QtGui.QCursor()
-    menu.exec_(cursor.pos())
-
-
-def remove_row(table):
-    table.model().removeRow(table.currentIndex().row())
-    table.update()
-
-
-def uploaders_dialogs_menu(pos, parent, table: QtWidgets.QAbstractItemView):
-    menu = QtWidgets.QMenu(parent)
-    ind = table.indexAt(pos)
+    acc = table.model().get_data().loc[ind, "Account"]
     if ind.isValid() and table.selectedIndexes():
         remove_data = menu.addAction("Remove Row")
-        remove_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
-        remove_data.triggered.connect(partial(remove_row, table=table))
-    cursor = QtGui.QCursor()
-    menu.exec_(cursor.pos())
-
-
-def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView):
-    add_data = menu.addAction("Add New Row")
-    add_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_ArrowDown))
-    add_data.triggered.connect(lambda: table.model().insertRows())
-    if ind.isValid() and table.selectedIndexes():
-        remove_data = menu.addAction("Remove Row")
-        remove_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
-        remove_data.triggered.connect(partial(remove_row, table=table))
+        remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
+        remove_data.triggered.connect(partial(remove_row, table=table,
+                                              del_from_settings=partial(OutsideYT.app_settings_uploaders.del_account,
+                                                                        login=acc)))
+        cursor = QtGui.QCursor()
+        menu.exec_(cursor.pos())

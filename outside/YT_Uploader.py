@@ -35,7 +35,7 @@ def get_driver():
     return driver
 
 
-def google_login(login: str, mail: str):
+def get_google_login(login: str, mail: str):
     added = False
     try:
         driver = get_driver()
