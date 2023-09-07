@@ -30,7 +30,7 @@ def get_driver():
         f"user-agent={user_agent}")
     driver_options.add_argument("--disable-blink-features=AutomationControlled")
     driver = webdriver.Chrome(executable_path=
-                              os.path.join(OutsideYT.project_folder, "outside", "bin", "chromedriver111.exe"),
+                              os.path.join(OutsideYT.project_folder, "outside", "bin", "chromedriver.exe"),
                               options=driver_options)
     return driver
 

@@ -78,8 +78,12 @@ def open_UsersList_Dialog(parent, table_settings, table_name: str, all_accounts:
             cook.exec_()
         dialog_settings.Users_Table.model().update()
         items = [f"No default {def_type}", *combo_items_default]
-        dialog_settings.DefUser_ComboBox = update_combobox(
-            dialog_settings.DefUser_ComboBox, items, OutsideYT.app_settings_watchers.def_group)
+        if table_name.lower() == "uploaders":
+            dialog_settings.DefUser_ComboBox = update_combobox(
+                dialog_settings.DefUser_ComboBox, items, OutsideYT.app_settings_uploaders.def_group)
+        else:
+            dialog_settings.Group_comboBox = update_combobox(
+                dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
 
     dialog_settings.CheckCookies_Button.clicked.connect(chk_cookies)
 
@@ -164,12 +168,14 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
     dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
     dialog_settings = dialog_ui()
     dialog_settings.setupUi(dialog)
+    items = [f"No default {def_type}", *combo_items_default]
+    dialog_settings = update_settings_combobox_with_type(dialog_settings, items)
 
     def ok():
         login = dialog_settings.Account_textbox.text()
         mail = dialog_settings.Gmail_textbox.text()
         group = dialog_settings.Group_comboBox.currentText() if hasattr(dialog_settings, "Group_comboBox") else None
-        if OutsideYT.app_settings_uploaders.find_account(login):
+        if table_settings.find_account(login):
             error_func(f"This account name is already used!")
         else:
             try:
@@ -180,8 +186,8 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
                     parent_settings.primary_state[1] = parent_settings.Users_Table.model().get_data().copy()
                     parent_settings.Users_Table.model().update()
                     items = [f"No default {def_type}", *combo_items_default]
-                    dialog_settings.DefUser_ComboBox = update_combobox(
-                        dialog_settings.DefUser_ComboBox, items, OutsideYT.app_settings_uploaders.def_account)
+                    parent_settings = update_settings_combobox_with_type(settings=parent_settings,
+                                                                         items=items)
             except Exception as e:
                 error_func(f"Error. \n{e}")
 
@@ -199,3 +205,12 @@ def userslist(parent, table_name: str):
         dialog_settings = WatchersList_Dialog.Ui_WatchersList_Dialog()
     dialog_settings.setupUi(dialog)
     return dialog, dialog_settings
+
+def update_settings_combobox_with_type(settings, items):
+    if hasattr(settings, "DefUser_ComboBox"):
+        settings.DefUser_ComboBox = update_combobox(
+            settings.DefUser_ComboBox, items, OutsideYT.app_settings_uploaders.def_account)
+    else:
+        settings.Group_comboBox = update_combobox(
+            settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
+    return settings
