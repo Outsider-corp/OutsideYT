@@ -414,15 +414,17 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QCheckBox" name="Upload_delete_after_upload_checkBox">
             <property name="font">
              <font>
               <family>Arial</family>
-              <pointsize>10</pointsize>
+              <pointsize>9</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
              </font>
             </property>
             <property name="text">
-             <string>Delete Uploaded</string>
+             <string>Delete after upload</string>
             </property>
            </widget>
           </item>
@@ -543,57 +545,6 @@ selection-background-color: rgb(15, 15, 15);</string>
             </property>
            </spacer>
           </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <widget class="QLabel" name="Watch_SelectGroup_Label">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <family>Arial</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Select Watchers Group</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="Watch_SelectGroup_Button">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>250</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="baseSize">
-               <size>
-                <width>250</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <family>Arial</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
          </layout>
         </item>
         <item>
@@ -613,7 +564,7 @@ selection-background-color: rgb(15, 15, 15);</string>
          </spacer>
         </item>
         <item>
-         <widget class="QTableWidget" name="Watch_Table">
+         <widget class="QTableView" name="Watch_Table">
           <property name="font">
            <font>
             <family>Arial</family>

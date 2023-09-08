@@ -9,13 +9,12 @@ from outside.errors import error_func
 
 
 class WatchModel(QAbstractTableModel):
-    columns = ["id", "Selected", "Watcher's Group", "Video", "Channel",
-               "Link", "Count of watchers"]
+    columns = ["id", "Selected", "Watchers Group", "Count of watchers", "Video", "Channel", "Link"]
 
     default_content = {"id": None, "Selected": True,
-                       "Watcher's Group": app_settings_watchers.def_group,
-                       "Video": "", "Channel": "", "Link": "",
-                       "Count of watchers": ""}
+                       "Watchers Group": app_settings_watchers.def_group,
+                       "Count of watchers": "",
+                       "Video": "", "Channel": "", "Link": ""}
 
     def __init__(self, data=None):
         QAbstractTableModel.__init__(self)
@@ -32,7 +31,7 @@ class WatchModel(QAbstractTableModel):
             flags = Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
         elif self._data.columns[index.column()] == "Link":
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
-        elif self._data.columns[index.column()] in ["Watcher's Group", "Count of watchers"]:
+        elif self._data.columns[index.column()] in ["Watchers Group", "Count of watchers"]:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         else:
             flags = Qt.ItemIsSelectable
@@ -77,6 +76,14 @@ class WatchModel(QAbstractTableModel):
 
                 else:
                     return self.get_data().loc[index.row(), column]
+
+    def reset_ids(self, new_list=None):
+        if new_list is None:
+            new_list = [i for i in range(self.rowCount())]
+        self._data.id = list(map(str, new_list))
+
+    def get_data(self):
+        return self._data
 
 
 class WatchersUsersModel(QAbstractTableModel):
@@ -159,11 +166,6 @@ class WatchersUsersModel(QAbstractTableModel):
         self.endRemoveRows()
         self.update()
         return True
-
-    def reset_ids(self, new_list=None):
-        if new_list is None:
-            new_list = [i for i in range(self.rowCount())]
-        self._data.id = list(map(str, new_list))
 
     def get_data(self):
         return self._data

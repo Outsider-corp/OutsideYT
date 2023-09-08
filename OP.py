@@ -7,6 +7,8 @@ import outside.Upload.TableModels
 import outside.Upload.context_menu
 import outside.Upload.dialogs
 import outside.Watch.TableModels
+import outside.Watch.dialogs
+import outside.Watch.context_menu
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
 from outside import TableModels, main_dialogs
 
@@ -89,7 +91,7 @@ def update_upload():
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
                                           access_combo_del)
     Upload_table.setItemDelegateForColumn(4, outside.Upload.dialogs.SetPublishTimeDelegate(parent=YouTubeOutside,
-                                                                                                  table=Upload_table))
+                                                                                           table=Upload_table))
     Upload_table.setItemDelegateForColumn(5, outside.Upload.TableModels.OpenFileLocationDelegate(parent=YouTubeOutside,
                                                                                                  table=Upload_table,
                                                                                                  ext="Video"))
@@ -118,11 +120,28 @@ def update_upload():
 def update_watch():
     global Watch_table
 
+    Watch_table = ui.Watch_Table
+    Watch_model = outside.Watch.TableModels.WatchModel()
+    Watch_table.setModel(Watch_model)
+
     ui.Watch_Progress_Bar.setVisible(False)
 
-    Watch_table = ui.Watch_Table
-    Watch_table.setColumnCount(5)
-    Watch_table.setHorizontalHeaderLabels(["Watchers Group", "Video", "Channel", "Delete", "Select"])
+    font = QtGui.QFont()
+    font.setFamily("Arial")
+    font.setPointSize(11)
+    Watch_table.setFont(font)
+    Watch_table = TableModels.table_universal(Watch_table)
+    Watch_table.hideColumn(list(Watch_table.model().get_data().columns).index("Selected"))
+    Watch_table.setVerticalHeader(TableModels.HeaderView(Watch_table))
+    Watch_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
+    group_combo_del = TableModels.ComboBoxDelegate(Watch_table, OutsideYT.app_settings_watchers.groups.keys())
+    Watch_table.setItemDelegateForColumn(list(Watch_table.model().get_data().columns).index("Watchers Group"),
+                                         group_combo_del)
+    ui.Watch_SelectVideos_Button.clicked.connect(
+        partial(outside.Watch.dialogs.open_watch_select_videos, parent=YouTubeOutside, table=Upload_table))
+    Watch_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    Watch_table.customContextMenuRequested.connect(
+        lambda pos: outside.Watch.context_menu.watch_context_menu(pos, parent=YouTubeOutside, table=Upload_table))
 
 
 def update_download():

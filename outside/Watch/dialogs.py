@@ -71,3 +71,7 @@ def edit_watchers_groups(parent, parent_settings):
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
     dialog.exec_()
+
+
+def open_watch_select_videos():
+    pass

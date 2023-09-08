@@ -12,13 +12,13 @@ class InLineEditDelegate(QtWidgets.QItemDelegate):
 
 
 class HeaderView(QtWidgets.QHeaderView):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, def_size=50):
         super().__init__(QtCore.Qt.Vertical, parent)
         self.setSectionsClickable(True)
         self.setDragEnabled(True)
         self.setDragDropMode(QtWidgets.QHeaderView.InternalMove)
         self.setCascadingSectionResizes(False)
-        self.setDefaultSectionSize(50)
+        self.setDefaultSectionSize(def_size)
         self.setMinimumSectionSize(40)
         self.setStretchLastSection(False)
         self.setSectionsMovable(True)
