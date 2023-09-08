@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QStyleOptionViewItem
 
 
@@ -19,7 +20,7 @@ class HeaderView(QtWidgets.QHeaderView):
         self.setDragDropMode(QtWidgets.QHeaderView.InternalMove)
         self.setCascadingSectionResizes(False)
         self.setDefaultSectionSize(def_size)
-        self.setMinimumSectionSize(40)
+        self.setMinimumSectionSize(30)
         self.setStretchLastSection(False)
         self.setSectionsMovable(True)
         self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]

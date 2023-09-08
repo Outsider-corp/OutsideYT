@@ -83,6 +83,7 @@ def update_upload():
     Upload_table = TableModels.table_universal(Upload_table)
     Upload_table.hideColumn(list(Upload_table.model().get_data().columns).index("Selected"))
     Upload_table.setVerticalHeader(TableModels.HeaderView(Upload_table))
+    Upload_table.setColumnWidth(0, 50)
     Upload_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
     user_combo_del = TableModels.ComboBoxDelegate(Upload_table, OutsideYT.app_settings_uploaders.accounts.keys())
     Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("User"), user_combo_del)
@@ -134,6 +135,9 @@ def update_watch():
     Watch_table.hideColumn(list(Watch_table.model().get_data().columns).index("Selected"))
     Watch_table.setVerticalHeader(TableModels.HeaderView(Watch_table))
     Watch_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
+    width = YouTubeOutside.width()
+    for i, size in enumerate([50, 150, 70, 350, 150, int(width)-800]):
+        Watch_table.setColumnWidth(i, size)
     group_combo_del = TableModels.ComboBoxDelegate(Watch_table, OutsideYT.app_settings_watchers.groups.keys())
     Watch_table.setItemDelegateForColumn(list(Watch_table.model().get_data().columns).index("Watchers Group"),
                                          group_combo_del)

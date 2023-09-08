@@ -9,12 +9,11 @@ from outside.errors import error_func
 
 
 class WatchModel(QAbstractTableModel):
-    columns = ["id", "Selected", "Watchers Group", "Count of watchers", "Video", "Channel", "Link"]
+    columns = ["id", "Watchers Group", "Count", "Video", "Channel", "Link", "Selected"]
 
-    default_content = {"id": None, "Selected": True,
-                       "Watchers Group": app_settings_watchers.def_group,
-                       "Count of watchers": "",
-                       "Video": "", "Channel": "", "Link": ""}
+    default_content = {"id": None,
+                       "Watchers Group": app_settings_watchers.def_group, "Count": "",
+                       "Video": "", "Channel": "", "Link": "", "Selected": True}
 
     def __init__(self, data=None):
         QAbstractTableModel.__init__(self)
@@ -31,7 +30,7 @@ class WatchModel(QAbstractTableModel):
             flags = Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
         elif self._data.columns[index.column()] == "Link":
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
-        elif self._data.columns[index.column()] in ["Watchers Group", "Count of watchers"]:
+        elif self._data.columns[index.column()] in ["Watchers Group", "Count"]:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         else:
             flags = Qt.ItemIsSelectable
@@ -71,7 +70,7 @@ class WatchModel(QAbstractTableModel):
                 elif column == "Link":
                     return self.get_data().loc[index.row(), column]
 
-                elif column == "Count of watchers":
+                elif column == "Count":
                     return self.get_data().loc[index.row(), column]
 
                 else:
