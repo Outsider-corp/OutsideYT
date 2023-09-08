@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>591</width>
+    <width>650</width>
     <height>299</height>
    </rect>
   </property>
@@ -125,7 +125,7 @@ selection-background-color: rgb(15, 15, 15);</string>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="DefUser_ComboBox">
+        <widget class="QComboBox" name="Group_comboBox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>

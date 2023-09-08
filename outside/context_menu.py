@@ -14,3 +14,4 @@ def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView, del_from_setti
         remove_data = menu.addAction("Remove Row")
         remove_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
         remove_data.triggered.connect(partial(remove_row, table=table, del_from_settings=del_from_settings))
+        table.update()

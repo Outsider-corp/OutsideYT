@@ -112,7 +112,9 @@ def table_universal(table):
     return table
 
 
-def remove_row(table, del_from_settings):
+def remove_row(table, del_from_settings=None):
+    if del_from_settings:
+        del_from_settings()
     table.model().removeRow(table.currentIndex().row())
     table.update()
-    del_from_settings()
+    table.parent().update()

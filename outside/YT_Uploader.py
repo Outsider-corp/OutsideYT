@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions
 
 import OutsideYT
 from outside import TableModels
+from outside.errors import error_func
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -35,7 +36,7 @@ def get_driver():
     return driver
 
 
-def get_google_login(login: str, mail: str):
+def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
         driver = get_driver()
@@ -45,21 +46,24 @@ def get_google_login(login: str, mail: str):
         driver.get(url)
         driver.implicitly_wait(7)
         print("start hearing...")
-        time.sleep(20)
+        time.sleep(15)
         while True:
             time.sleep(1)
             if "www.youtube.com/watch" in driver.current_url:
                 break
-        pickle.dump(driver.get_cookies(),
-                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", "uploaders", filename), "wb"))
+        cookies = driver.get_cookies()
+        pickle.dump(cookies,
+                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
         added = True
     except Exception as e:
-        TableModels.error_func("An error occurred while trying to login")
+        error_func("An error occurred while trying to login")
         print("Error!\n", e)
     finally:
-        # driver.close()
-        driver.quit()
+        try:
+            driver.quit()
+        except:
+            pass
         return added
 
 

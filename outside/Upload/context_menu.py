@@ -88,8 +88,7 @@ def upload_context_menu(pos, parent, table: QAbstractItemView):
             select_video.triggered.connect(
                 partial(open_location, table=table, index=table.currentIndex().row(), ext="Preview"))
         menu.addSeparator()
-    del_val = table.model().get_data().loc[table.currentIndex().row(), "Account"]
-    add_remove_row(menu, ind, table, partial(OutsideYT.app_settings_uploaders.del_account, login=del_val))
+    add_remove_row(menu, ind, table, None)
     cursor = QtGui.QCursor()
     menu.exec_(cursor.pos())
 
@@ -97,8 +96,8 @@ def upload_context_menu(pos, parent, table: QAbstractItemView):
 def uploaders_dialogs_menu(pos, parent, table: QAbstractItemView):
     menu = QMenu(parent)
     ind = table.indexAt(pos)
-    acc = table.model().get_data().loc[ind, "Account"]
     if ind.isValid() and table.selectedIndexes():
+        acc = table.model().get_data().loc[ind.row(), "Account"]
         remove_data = menu.addAction("Remove Row")
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
         remove_data.triggered.connect(partial(remove_row, table=table,

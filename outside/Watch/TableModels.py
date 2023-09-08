@@ -3,6 +3,7 @@ import typing
 import pandas as pd
 from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 
+import OutsideYT
 from OutsideYT import app_settings_watchers
 from outside.errors import error_func
 
@@ -84,14 +85,14 @@ class WatchersUsersModel(QAbstractTableModel):
 
     def __init__(self):
         QAbstractTableModel.__init__(self)
+        self._data = pd.DataFrame(columns=WatchersUsersModel.columns)
         self.update()
 
     def update(self):
-        self._data = pd.DataFrame(columns=WatchersUsersModel.columns)
         temp_df = pd.DataFrame([(acc, mail, group) for group, accounts in
                                 app_settings_watchers.groups.items() for
                                 acc, mail in accounts.items()], columns=["Account", "Gmail", "Group"])
-        temp_df["id"] = list(map(str, map(lambda x: x + 1, self._data.index)))
+        temp_df["id"] = list(map(lambda x: str(x + 1), temp_df.index))
         self._data = temp_df.reindex(columns=WatchersUsersModel.columns)
         self.layoutChanged.emit()
 
@@ -134,12 +135,16 @@ class WatchersUsersModel(QAbstractTableModel):
                     return True
                 else:
                     error_func("This Account name is already used")
+            else:
+                self._data.loc[index.row(), column] = value
+                self.dataChanged.emit(index, index, [role])
+                return True
         return False
 
     def insertRows(self, row: tuple, parent: QModelIndex = ..., **kwargs) -> bool:
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count)
-        self._data.loc[row_count] = [str(row_count), row[0], row[1], row[2]]
+        self._data.loc[row_count] = [str(row_count), *row]
         row_count += 1
         self.endInsertRows()
         return True
@@ -202,8 +207,6 @@ class WatchersGroupsModel(QAbstractTableModel):
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.DisplayRole:
-                # if column == "Group" and self.get_data().loc[index.row(), "Group"] == "DELETED":
-                #     return None
                 return self.get_data().loc[index.row(), column]
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
@@ -218,10 +221,19 @@ class WatchersGroupsModel(QAbstractTableModel):
                     error_func("This group name is already used")
         return False
 
-    def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+    def insertRows(self, group: str = None, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+        if group is None:
+            groupname = "New Group"
+            num = 0
+            while True:
+                if OutsideYT.app_settings_watchers.add_group(f"{groupname} {num}", error_ignore=True):
+                    group = f"{groupname} {num}"
+                    break
+                num += 1
+
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
-        self._data.loc[row_count] = [row_count + 1, WatchersUsersModel.default_group, ""]
+        self._data.loc[row_count] = [row_count + 1, group, ""]
         if kwargs:
             for col in self.get_data().columns:
                 if col == "id":
@@ -240,7 +252,6 @@ class WatchersGroupsModel(QAbstractTableModel):
         self.reset_ids()
         self.endRemoveRows()
         self.update()
-        print(self.get_data())
         return True
 
     def reset_ids(self, new_list=None):

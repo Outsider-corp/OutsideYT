@@ -1,7 +1,7 @@
 import os
 import json
 
-from outside.errors import error_func
+from outside.errors import error_func, warning_func
 
 
 class SettingsUploaders:
@@ -13,6 +13,9 @@ class SettingsUploaders:
         if file:
             self.read_settings()
             self.check_cookies()
+
+    def __str__(self):
+        return "uploaders"
 
     @property
     def accounts(self):
@@ -34,11 +37,11 @@ class SettingsUploaders:
             error_func("Аккаунт с таким именем уже существует")
         return
 
-    def del_account(self, login):
+    def del_account(self, login, **kwargs):
         self._accounts.pop(login)
         if self.def_account == login:
             self.del_def_account()
-        os.remove(os.path.join(os.path.dirname(self.file), "uploaders", f'{login}_cookies'))
+        os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f'{login}_cookies'))
         self.update_settings()
         return
 
@@ -110,13 +113,13 @@ class SettingsUploaders:
     def check_cookies(self):
         folder = os.path.dirname(self.file)
         to_del = []
-        os.makedirs(os.path.join(folder, "uploaders"), exist_ok=True)
+        os.makedirs(os.path.join(folder, self.__str__()), exist_ok=True)
         for acc in self.accounts.keys():
-            if not os.path.isfile(os.path.join(folder, "uploaders", f'{acc}_cookies')):
+            if not os.path.isfile(os.path.join(folder, self.__str__(), f'{acc}_cookies')):
                 to_del.append(acc)
         for acc in to_del:
             self._accounts.pop(acc)
-        if not os.path.isfile(os.path.join(folder, "uploaders", f'{self.def_account}_cookies')):
+        if not os.path.isfile(os.path.join(folder, self.__str__(), f'{self.def_account}_cookies')):
             self.del_def_account()
         else:
             self.update_settings()
@@ -125,12 +128,15 @@ class SettingsUploaders:
 class SettingsWatchers:
 
     def __init__(self, file):
-        self._groups = dict()
-        self._def_group = ""
+        self._groups = {"No group": {}}
+        self._def_group = "No group"
         self.file = file
         if file:
             self.read_settings()
             self.check_cookies()
+
+    def __str__(self):
+        return "watchers"
 
     @property
     def accounts(self):
@@ -147,31 +153,40 @@ class SettingsWatchers:
     def def_group(self):
         return self._def_group
 
-    def add_group(self, group):
+    def add_group(self, group, error_ignore=False):
         if group not in self.groups.keys():
             self._groups[group] = dict()
             self.update_settings()
             return True
         else:
-            error_func(f"Группа с таким названием уже существует - {group}")
+            if not error_ignore:
+                error_func(f"Группа с таким названием уже существует - {group}")
             return False
 
-    def add_account(self, group, acc: dict, **kwargs):
-        if list(acc.keys())[0] not in self.groups[group].keys():
+    def add_account(self, acc: dict, group: str = "", **kwargs):
+        if not group:
+            group = self.def_group
+        if list(acc.keys())[0] not in self.accounts.keys():
             self._groups[group].update(acc)
             self.update_settings()
         else:
-            error_func(f"Аккаунт с таким именем уже существует в данной группе - {group}: {acc}")
+            error_func(f"Аккаунт с таким именем уже существует в группе {group}: {acc}")
         return
 
     def edit_account(self, group, old_name, new_group=None, new_name=None):
         name = old_name
+        if group not in self.groups.keys():
+            for key in self.groups.keys():
+                if old_name in self.groups[key].keys():
+                    group = key
+                    break
         if new_name and new_name not in self.accounts.keys():
-            if old_name != new_name:
-                self._groups[group][new_name] = self.groups[group][old_name]
+            if old_name == new_name:
+                return
+            self._groups[group][new_name] = self.groups[group][old_name]
             del self._groups[group][old_name]
-            os.rename(os.path.join(os.path.dirname(self.file), "uploaders", f'{old_name}_cookies'),
-                      os.path.join(os.path.dirname(self.file), "uploaders", f'{new_name}_cookies'))
+            os.rename(os.path.join(os.path.dirname(self.file), self.__str__(), f'{old_name}_cookies'),
+                      os.path.join(os.path.dirname(self.file), self.__str__(), f'{new_name}_cookies'))
             name = new_name
         if group != new_group and new_group in self.groups.keys():
             self._groups[new_group][name] = self.groups[group][name]
@@ -179,14 +194,20 @@ class SettingsWatchers:
         self.update_settings()
 
     def del_account(self, group, login):
-        self._groups[group].pop(login)
-        self.update_settings()
+        if warning_func(f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})"):
+            self._groups[group].pop(login)
+            os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f"{login}_cookies"))
+            self.update_settings()
         return
 
     def del_group(self, group):
-        self._groups.pop(group)
+        if group == "No group":
+            return
         if group == self.def_group:
             self.del_def_group()
+        for acc, mail in self.groups[group].items():
+            self._groups[self.def_group].update({acc: mail})
+        self._groups.pop(group)
         self.update_settings()
         return
 
@@ -208,9 +229,12 @@ class SettingsWatchers:
     def change_group_name(self, old_name, new_name):
         if new_name not in self.groups.keys():
             self._groups[new_name] = self.groups[old_name]
-            if old_name == self.def_group:
-                self.add_def_group(new_name)
-            del self._groups[old_name]
+            if old_name == "No group":
+                self._groups[old_name] = {}
+            else:
+                del self._groups[old_name]
+                if old_name == self.def_group:
+                    self.add_def_group(new_name)
             self.update_settings()
         else:
             error_func("Группа с таким именем уже существует!")
@@ -222,7 +246,7 @@ class SettingsWatchers:
         return
 
     def del_def_group(self):
-        self._def_group = ""
+        self._def_group = "No group"
         self.update_settings()
         return
 
@@ -239,8 +263,10 @@ class SettingsWatchers:
             return
         with open(self.file, "r", encoding="UTF-8") as file:
             data = json.load(file)
-            self._groups = data["groups"]
-            self._def_group = data["def_group"]
+            if "No group" not in data["groups"]:
+                self._groups = {"No group": {}}
+            self._groups.update(data["groups"])
+            self._def_group = data["def_group"] if data["def_group"] else "No group"
         return
 
     def check_cookies(self):

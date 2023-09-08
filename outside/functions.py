@@ -7,7 +7,7 @@ def update_combobox(combobox, items: list, def_value: str):
     combobox.clear()
     combobox.addItems(items)
     if def_value != "":
-        index = items.index(def_value)
+        index = list(items).index(def_value)
         combobox.setCurrentIndex(index)
     else:
         combobox.setCurrentIndex(0)

@@ -90,7 +90,7 @@ def google_login(login, mail, parent: QtWidgets.QDialog, table_settings):
         error_func("This account name is already used!")
     else:
         try:
-            added = YT_Uploader.get_google_login(login, mail)
+            added = YT_Uploader.get_google_login(login, mail, str(table_settings))
             parent.parent().update()
         except Exception as e:
             error_func(f"Error. \n{e}")

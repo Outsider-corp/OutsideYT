@@ -101,7 +101,6 @@ class UploadModel(QAbstractTableModel):
                 self.dataChanged.emit(index, index, [role])
                 return True
             self._data.loc[index.row(), column] = value
-            print(index)
             self.dataChanged.emit(index, index, [role])
             return True
         return False

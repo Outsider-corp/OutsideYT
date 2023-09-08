@@ -24,7 +24,7 @@ def edit_watchers_groups(parent, parent_settings):
     dialog_settings.primary_state = dialog_settings.Groups_Table.model().get_data().copy()
     dialog_settings.Groups_Table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     dialog_settings.Groups_Table.customContextMenuRequested.connect(
-        lambda pos: outside.Watch.context_menu.watchers_dialogs_menu(pos, parent=dialog,
+        lambda pos: outside.Watch.context_menu.watchers_group_dialogs_menu(pos, parent=dialog,
                                                                      table=dialog_settings.Groups_Table))
 
     def cancel():
@@ -46,9 +46,8 @@ def edit_watchers_groups(parent, parent_settings):
             dialog.reject()
 
     def add_group():
-        if OutsideYT.app_settings_watchers.add_group(outside.Watch.TableModels.WatchersUsersModel.default_group):
-            dialog_settings.Groups_Table.model().insertRows()
-            dialog_settings.Groups_Table.update()
+        dialog_settings.Groups_Table.model().insertRows()
+        dialog_settings.Groups_Table.update()
 
     dialog_settings.addGroup_Button.clicked.connect(add_group)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(partial(cancel))
@@ -65,9 +64,9 @@ def edit_watchers_groups(parent, parent_settings):
         dialog_settings.Groups_Table.model()._data = dialog_settings.Groups_Table.model().get_data().sort_values(
             by="id")
         parent_settings.Users_Table.model().update()
-        items = [f"No default group", *list(OutsideYT.app_settings_watchers.groups.keys())]
-        parent_settings.DefUser_ComboBox = update_combobox(
-            parent_settings.DefUser_ComboBox, items, OutsideYT.app_settings_watchers.def_group)
+        items = [*list(OutsideYT.app_settings_watchers.groups.keys())]
+        parent_settings.Group_comboBox = update_combobox(
+            parent_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
         dialog.accept()
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)

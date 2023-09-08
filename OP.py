@@ -53,7 +53,6 @@ def update_ui():
     update_download()
     ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
                                                    table_settings=OutsideYT.app_settings_uploaders,
-                                                   table_name="Uploaders",
                                                    all_accounts=OutsideYT.app_settings_uploaders.accounts.keys(),
                                                    combo_items_default=OutsideYT.app_settings_uploaders.accounts.keys(),
                                                    def_type="account",
@@ -61,7 +60,6 @@ def update_ui():
                                                    ))
     ui.actionWatchers_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog, parent=YouTubeOutside,
                                                   table_settings=OutsideYT.app_settings_watchers,
-                                                  table_name="Watchers",
                                                   all_accounts=OutsideYT.app_settings_watchers.accounts,
                                                   combo_items_default=OutsideYT.app_settings_watchers.groups.keys(),
                                                   def_type="group",
