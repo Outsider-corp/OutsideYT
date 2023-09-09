@@ -8,7 +8,7 @@ import OutsideYT
 from outside.TableModels import remove_row
 from outside.Upload import dialogs
 from outside.Upload.TableModels import UploadModel, open_location
-from outside.errors import error_func
+from outside.message_boxes import error_func
 from outside.context_menu import add_remove_row
 
 
@@ -102,6 +102,6 @@ def uploaders_dialogs_menu(pos, parent, table: QAbstractItemView):
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
         remove_data.triggered.connect(partial(remove_row, table=table,
                                               del_from_settings=partial(OutsideYT.app_settings_uploaders.del_account,
-                                                                        login=acc)))
+                                                                        login=acc, parent=parent)))
         cursor = QtGui.QCursor()
         menu.exec_(cursor.pos())

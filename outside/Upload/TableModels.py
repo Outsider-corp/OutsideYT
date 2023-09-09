@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QStyledItemDelegate, QTableView, QFileDialog
 
 from OutsideYT import app_settings_uploaders, video_extensions, image_extensions, text_extensions
 from outside.functions import find_files
-from outside.errors import error_func
+from outside.message_boxes import error_func
 
 
 class UploadModel(QAbstractTableModel):
@@ -111,6 +111,7 @@ class UploadModel(QAbstractTableModel):
     def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
+        UploadModel.default_content["User"] = app_settings_uploaders.def_account
         for col in self.get_data().columns:
             if col == "id":
                 self._data.loc[row_count, col] = row_count + 1
@@ -118,7 +119,6 @@ class UploadModel(QAbstractTableModel):
             if col in kwargs.keys() and kwargs[col] is not None:
                 self._data.loc[row_count, col] = kwargs[col]
             else:
-                UploadModel.default_content["User"] = app_settings_uploaders.def_account
                 self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
         self.endInsertRows()

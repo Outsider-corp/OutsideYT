@@ -3,19 +3,13 @@ import random
 import time
 import sys
 
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions
-
 import OutsideYT
-from outside import TableModels
-from outside.errors import error_func
+from outside.message_boxes import error_func
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-# from selenium_stealth import stealth
-# import undetected_chromedriver as uc
 import pickle
 
 from OutsideYT import *
@@ -45,7 +39,6 @@ def get_google_login(login: str, mail: str, folder: str):
         url_log = "https://accounts.google.com/"
         driver.get(url)
         driver.implicitly_wait(7)
-        print("start hearing...")
         time.sleep(15)
         while True:
             time.sleep(1)
@@ -57,8 +50,7 @@ def get_google_login(login: str, mail: str, folder: str):
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
         added = True
     except Exception as e:
-        error_func("An error occurred while trying to login")
-        print("Error!\n", e)
+        error_func(f"An error occurred while trying to login.\n\n{e}")
     finally:
         try:
             driver.quit()

@@ -24,7 +24,7 @@ def watchers_dialogs_menu(pos, parent, table: QAbstractItemView):
         account = table.model().get_data().loc[table.currentIndex().row(), "Account"]
         group = table.model().get_data().loc[table.currentIndex().row(), "Group"]
         add_remove_row(menu, ind, table, partial(OutsideYT.app_settings_watchers.del_account, group=group,
-                                                 login=account))
+                                                 login=account, parent=parent))
         cursor = QtGui.QCursor()
         menu.exec_(cursor.pos())
 

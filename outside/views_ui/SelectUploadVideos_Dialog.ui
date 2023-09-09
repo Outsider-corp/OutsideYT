@@ -486,7 +486,7 @@ selection-background-color: rgb(15, 15, 15);</string>
         </font>
        </property>
        <property name="text">
-        <string>Set Default Videos Folder</string>
+        <string>  Delete Default Videos Folder  </string>
        </property>
       </widget>
      </item>

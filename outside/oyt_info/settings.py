@@ -1,7 +1,7 @@
 import os
 import json
 
-from outside.errors import error_func, warning_func
+from outside.message_boxes import error_func, warning_func
 
 
 class SettingsUploaders:
@@ -193,8 +193,8 @@ class SettingsWatchers:
             del self._groups[group][name]
         self.update_settings()
 
-    def del_account(self, group, login):
-        if warning_func(f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})"):
+    def del_account(self, group, login, parent=None):
+        if warning_func(parent, f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})"):
             self._groups[group].pop(login)
             os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f"{login}_cookies"))
             self.update_settings()

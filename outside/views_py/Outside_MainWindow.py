@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\Outside_MainWindow.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/Outside_MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -235,6 +235,13 @@ class Ui_YouTubeOutside(object):
         self.horizontalLayout_4.addWidget(self.Watch_SelectVideos_Button, 0, QtCore.Qt.AlignLeft)
         spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem9)
+        self.Watch_advanced_settings_Button = QtWidgets.QPushButton(self.WatchPage)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        self.Watch_advanced_settings_Button.setFont(font)
+        self.Watch_advanced_settings_Button.setObjectName("Watch_advanced_settings_Button")
+        self.horizontalLayout_4.addWidget(self.Watch_advanced_settings_Button)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         spacerItem10 = QtWidgets.QSpacerItem(11, 3, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.verticalLayout.addItem(spacerItem10)
@@ -367,14 +374,12 @@ class Ui_YouTubeOutside(object):
         self.verticalLayout_6.addLayout(self.horizontalLayout_8)
         spacerItem15 = QtWidgets.QSpacerItem(11, 3, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.verticalLayout_6.addItem(spacerItem15)
-        self.Download_Table = QtWidgets.QTableWidget(self.DownloadPage)
+        self.Download_Table = QtWidgets.QTableView(self.DownloadPage)
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(11)
         self.Download_Table.setFont(font)
         self.Download_Table.setObjectName("Download_Table")
-        self.Download_Table.setColumnCount(0)
-        self.Download_Table.setRowCount(0)
         self.verticalLayout_6.addWidget(self.Download_Table)
         self.horizontalLayout_10 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_10.setSpacing(10)
@@ -415,7 +420,7 @@ class Ui_YouTubeOutside(object):
         self.gridLayout.addWidget(self.OutsideYT, 1, 0, 1, 1)
         YouTubeOutside.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(YouTubeOutside)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 21))
         self.menubar.setObjectName("menubar")
         self.menuOutside_YouTube = QtWidgets.QMenu(self.menubar)
         font = QtGui.QFont()
@@ -505,6 +510,7 @@ class Ui_YouTubeOutside(object):
         self.Upload_Start.setText(_translate("YouTubeOutside", "      Start      "))
         self.OutsideYT.setTabText(self.OutsideYT.indexOf(self.UploadPage), _translate("YouTubeOutside", "Upload"))
         self.Watch_SelectVideos_Button.setText(_translate("YouTubeOutside", "  Select Videos  "))
+        self.Watch_advanced_settings_Button.setText(_translate("YouTubeOutside", "  Advanced Settings  "))
         self.Watch_Threads_Label.setText(_translate("YouTubeOutside", "Thread count"))
         self.Watch_UseProxy_CheckBox.setText(_translate("YouTubeOutside", "Use proxy"))
         self.Watch_ShowBrowsers_CheckBox.setText(_translate("YouTubeOutside", "Show Browsers"))

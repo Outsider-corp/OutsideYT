@@ -13,7 +13,8 @@ class InLineEditDelegate(QtWidgets.QItemDelegate):
 
 
 class HeaderView(QtWidgets.QHeaderView):
-    def __init__(self, parent=None, def_size=50):
+    def __init__(self, parent=None, def_size=30, replace=True):
+        self.replace = replace
         super().__init__(QtCore.Qt.Vertical, parent)
         self.setSectionsClickable(True)
         self.setDragEnabled(True)
@@ -27,7 +28,7 @@ class HeaderView(QtWidgets.QHeaderView):
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         super().mouseReleaseEvent(e)
-        if [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != self.visualIndexes:
+        if self.replace and [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != self.visualIndexes:
             self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]
             self.parent().model().reset_ids(map(lambda x: x + 1, self.visualIndexes))
 

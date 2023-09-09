@@ -1,12 +1,13 @@
 import glob
 from functools import partial
+from PyQt5 import QtWidgets, QtGui, QtCore
 
+import OutsideYT
 import outside.Watch.TableModels
 import outside.Watch.context_menu
-from PyQt5 import QtWidgets, QtGui, QtCore
-import OutsideYT
+from outside.message_boxes import warning_func
 from outside.functions import update_combobox
-from outside.views_py import EditWatchersGroups_Dialog
+from outside.views_py import EditWatchersGroups_Dialog, SelectWatchVideos_Dialog
 
 
 def edit_watchers_groups(parent, parent_settings):
@@ -25,22 +26,15 @@ def edit_watchers_groups(parent, parent_settings):
     dialog_settings.Groups_Table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     dialog_settings.Groups_Table.customContextMenuRequested.connect(
         lambda pos: outside.Watch.context_menu.watchers_group_dialogs_menu(pos, parent=dialog,
-                                                                     table=dialog_settings.Groups_Table))
+                                                                           table=dialog_settings.Groups_Table))
 
     def cancel():
         if ([dialog_settings.Groups_Table.verticalHeader().visualIndex(i) for i in
              range(dialog_settings.Groups_Table.model().rowCount())]
             != list(dialog_settings.primary_state.index)) or \
                 not (dialog_settings.primary_state.equals(dialog_settings.Groups_Table.model().get_data().copy())):
-            confirm = QtWidgets.QMessageBox()
-            confirm.setText(f"Are you sure you want to cancel?\n"
-                            f"All changes will be lost!")
-            confirm.setWindowTitle("Confirmation")
-            confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            confirm.setDefaultButton(QtWidgets.QMessageBox.No)
-            result = confirm.exec_()
-            if result == QtWidgets.QMessageBox.Yes:
-                confirm.reject()
+            if warning_func(parent=parent, text=f"Are you sure you want to cancel?\n"
+                                                f"All changes will be lost!"):
                 dialog.reject()
         else:
             dialog.reject()
@@ -64,7 +58,7 @@ def edit_watchers_groups(parent, parent_settings):
         dialog_settings.Groups_Table.model()._data = dialog_settings.Groups_Table.model().get_data().sort_values(
             by="id")
         parent_settings.Users_Table.model().update()
-        items = [*list(OutsideYT.app_settings_watchers.groups.keys())]
+        items = list(OutsideYT.app_settings_watchers.groups.keys())
         parent_settings.Group_comboBox = update_combobox(
             parent_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
         dialog.accept()
@@ -73,5 +67,20 @@ def edit_watchers_groups(parent, parent_settings):
     dialog.exec_()
 
 
-def open_watch_select_videos():
+def open_watch_select_videos(parent):
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
+    dialog_settings = SelectWatchVideos_Dialog.Ui_SelectVideos_Dialog()
+    dialog_settings.setupUi(dialog)
+
+    items = list(OutsideYT.app_settings_watchers.groups.keys())
+    dialog_settings.Group_comboBox = update_combobox(
+        dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
+
+
+
+    dialog.exec_()
+
+
+def open_advanced_settings(parent, table):
     pass

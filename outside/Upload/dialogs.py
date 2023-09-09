@@ -6,9 +6,9 @@ import outside.Upload.TableModels
 from outside import YT_Uploader
 from PyQt5 import QtWidgets, QtGui, QtCore
 import OutsideYT
-from outside.errors import error_func
+from outside.message_boxes import error_func, warning_func
 from outside.functions import update_combobox
-from outside.views_py import SelectVideos_Dialog, UpdateTime_Dialog, UploadTime_for_Video_Dialog
+from outside.views_py import SelectUploadVideos_Dialog, UpdateTime_Dialog, UploadTime_for_Video_Dialog
 
 
 class SetPublishTimeDelegate(QtWidgets.QStyledItemDelegate):
@@ -25,7 +25,7 @@ class SetPublishTimeDelegate(QtWidgets.QStyledItemDelegate):
 
 def open_upload_select_videos(parent, table):
     dialog = QtWidgets.QDialog(parent)
-    dialog_settings = SelectVideos_Dialog.Ui_SelectVideos_Dialog()
+    dialog_settings = SelectUploadVideos_Dialog.Ui_SelectVideos_Dialog()
     dialog_settings.setupUi(dialog)
     items = ["No default account", *OutsideYT.app_settings_uploaders.accounts.keys()]
     dialog_settings.Users_ComboBox = update_combobox(dialog_settings.Users_ComboBox, items,
@@ -154,7 +154,8 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
         combo = QtWidgets.QComboBox(dialog)
         combo.setFont(font)
         combo.setObjectName(f"User_ComboBox_{row}")
-        combo = update_combobox(combo, ["All accounts", *OutsideYT.app_settings_uploaders.accounts.keys()])
+        combo = update_combobox(combo, ["All accounts", *OutsideYT.app_settings_uploaders.accounts.keys()],
+                                OutsideYT.app_settings_uploaders.def_account)
         combo.setCurrentIndex(0)
         dialog_settings.gridLayout.addWidget(combo, row, 2, 1, 1)
         setattr(dialog_settings, f"User_ComboBox_{row}", combo)
@@ -236,13 +237,6 @@ def set_upload_time_for_video(parent, table, video_id):
 
 
 def clear_upload_time(parent, table: QtWidgets.QTableView):
-    message_box = QtWidgets.QMessageBox(parent)
-    message_box.setIcon(QtWidgets.QMessageBox.Question)
-    message_box.setWindowTitle("Confirmation")
-    message_box.setText("Are you sure?\nAll upload times will be deleted!")
-    message_box.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    message_box.setDefaultButton(QtWidgets.QMessageBox.No)
-    res = message_box.exec_()
-    if res == QtWidgets.QMessageBox.Yes:
+    if warning_func(parent, "Are you sure?\nAll upload times will be deleted!"):
         table.model()._data["Publish"] = "Now"
         table.update()

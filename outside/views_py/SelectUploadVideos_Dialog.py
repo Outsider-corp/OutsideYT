@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\SelectVideos_Dialog.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/SelectUploadVideos_Dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -212,7 +212,7 @@ class Ui_SelectVideos_Dialog(object):
         SelectVideos_Dialog.setWindowTitle(_translate("SelectVideos_Dialog", "Select Videos"))
         self.SelectVideo_Button.setText(_translate("SelectVideos_Dialog", "Select Video"))
         self.SelectFolderForUser_Button.setText(_translate("SelectVideos_Dialog", "  Select Folder For User  "))
-        self.SetDefFolder_Button.setText(_translate("SelectVideos_Dialog", "Set Default Videos Folder"))
+        self.SetDefFolder_Button.setText(_translate("SelectVideos_Dialog", "  Delete Default Videos Folder  "))
         self.ChangeDefFolder_Button.setText(_translate("SelectVideos_Dialog", "Change Default Videos Folder"))
 
 

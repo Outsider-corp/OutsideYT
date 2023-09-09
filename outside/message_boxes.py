@@ -10,8 +10,8 @@ def error_func(text):
     error_dialog.setWindowTitle("Error")
     error_dialog.exec_()
 
-def warning_func(text):
-    dialog = QMessageBox()
+def warning_func(parent, text):
+    dialog = QMessageBox(parent) if parent else QMessageBox()
     dialog.setIcon(QtWidgets.QMessageBox.Question)
     dialog.setText(text)
     dialog.setStyle(QStyleFactory.create("Fusion"))

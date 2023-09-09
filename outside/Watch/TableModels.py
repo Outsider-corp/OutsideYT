@@ -5,14 +5,14 @@ from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
 
 import OutsideYT
 from OutsideYT import app_settings_watchers
-from outside.errors import error_func
+from outside.message_boxes import error_func
 
 
 class WatchModel(QAbstractTableModel):
     columns = ["id", "Watchers Group", "Count", "Video", "Channel", "Link", "Selected"]
 
     default_content = {"id": None,
-                       "Watchers Group": app_settings_watchers.def_group, "Count": "",
+                       "Watchers Group": app_settings_watchers.def_group, "Count": 0,
                        "Video": "", "Channel": "", "Link": "", "Selected": True}
 
     def __init__(self, data=None):
@@ -30,7 +30,7 @@ class WatchModel(QAbstractTableModel):
             flags = Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
         elif self._data.columns[index.column()] == "Link":
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
-        elif self._data.columns[index.column()] in ["Watchers Group", "Count"]:
+        elif self._data.columns[index.column()] == "Watchers Group":
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         else:
             flags = Qt.ItemIsSelectable
@@ -58,7 +58,7 @@ class WatchModel(QAbstractTableModel):
             if role == Qt.DisplayRole:
                 if column == "Selected":
                     return
-                if column == "Watcher's Group":
+                if column == "Watchers Group":
                     return self.get_data().loc[index.row(), column]
 
                 elif column == "Video":
@@ -71,10 +71,40 @@ class WatchModel(QAbstractTableModel):
                     return self.get_data().loc[index.row(), column]
 
                 elif column == "Count":
-                    return self.get_data().loc[index.row(), column]
+                    return len(app_settings_watchers.groups[self.get_data().loc[index.row(), "Watchers Group"]])
 
                 else:
                     return self.get_data().loc[index.row(), column]
+
+    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+        if index.isValid():
+            column = list(self._data.keys())[index.column()]
+            self._data.loc[index.row(), column] = value
+            self.dataChanged.emit(index, index, [role])
+            return True
+        return False
+
+    def setDataFuncs(self, id, column, value):
+        self._data[self._data.id == id][column] = value
+
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+        row_count = self.rowCount()
+        self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
+        WatchModel.default_content["Watchers Group"] = app_settings_watchers.def_group
+        for col in self.get_data().columns:
+            if col == "id":
+                self._data.loc[row_count, col] = row_count + 1
+                continue
+            if col in kwargs.keys() and kwargs[col] is not None:
+                self._data.loc[row_count, col] = kwargs[col]
+            else:
+                self._data.loc[row_count, col] = WatchModel.default_content[col]
+        row_count += count
+        self.endInsertRows()
+        if "Url" in kwargs.keys():
+            self.paths.append(kwargs["Url"])
+        self.update()
+        return True
 
     def reset_ids(self, new_list=None):
         if new_list is None:
@@ -165,6 +195,11 @@ class WatchersUsersModel(QAbstractTableModel):
         self.endRemoveRows()
         self.update()
         return True
+
+    def reset_ids(self, new_list=None):
+        if new_list is None:
+            new_list = [i for i in range(self.rowCount())]
+        self._data.id = list(map(str, new_list))
 
     def get_data(self):
         return self._data

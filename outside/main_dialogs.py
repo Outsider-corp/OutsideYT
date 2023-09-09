@@ -8,14 +8,14 @@ from outside import TableModels
 from PyQt5 import QtWidgets, QtGui, QtCore
 import OutsideYT
 from outside.functions import update_combobox
-from outside.errors import error_func
+from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
 from outside.views_py import UsersList_Dialog, WatchersList_Dialog, AddWatcher_Dialog, \
     AddUploader_Dialog
 from outside.Watch.dialogs import edit_watchers_groups
 
 
-def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_items_default: list,
+def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
                           def_type: str,
                           add_table_class):
     cookies_dir = os.path.join(os.path.dirname(OutsideYT.app_settings_uploaders.file), str(table_settings).lower())
@@ -23,9 +23,14 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
     dialog.setWindowTitle(f"{str(table_settings).capitalize()} List")
     dialog_model = add_table_class()
     dialog_settings.Users_Table.setModel(dialog_model)
-    dialog_settings.Users_Table.setItemDelegate(TableModels.InLineEditDelegate())
+    font = QtGui.QFont()
+    font.setFamily("Arial")
+    font.setPointSize(12)
+    dialog_settings.Users_Table.setFont(font)
     dialog_settings.Users_Table = TableModels.table_universal(dialog_settings.Users_Table)
-    dialog_settings.Users_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
+    dialog_settings.Users_Table.setItemDelegate(TableModels.InLineEditDelegate())
+    dialog_settings.Users_Table.setVerticalHeader(TableModels.HeaderView(dialog_settings.Users_Table, replace=False))
+
     width = dialog.width() - 50
     if str(table_settings).lower() == "uploaders":
         dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.1))
@@ -39,7 +44,7 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
     else:
         dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.05))
         dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.25))
-        dialog_settings.Users_Table.setColumnWidth(2, int(width * 0.40))
+        dialog_settings.Users_Table.setColumnWidth(2, int(width * 0.45))
         dialog_settings.Users_Table.setColumnWidth(3, int(width * 0.25))
         dialog_settings.Group_comboBox = update_combobox(
             dialog_settings.Group_comboBox, combo_items_default, OutsideYT.app_settings_watchers.def_group)
@@ -50,6 +55,8 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
             groups_combo_del)
         dialog_settings.primary_state = [dialog_settings.Group_comboBox.currentText(),
                                          dialog_settings.Users_Table.model().get_data().copy()]
+
+    dialog_settings.Users_Table.horizontalHeader().setFont(QtGui.QFont("Arial", 14))
 
     adduser = partial(open_addUsers_Dialog, parent=dialog, parent_settings=dialog_settings,
                       table_settings=table_settings,
@@ -89,6 +96,7 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
             cook_settings.Group_comboBox = update_combobox(cook_settings.Group_comboBox, combo_items_default,
                                                            OutsideYT.app_settings_watchers.def_group)
         cook_settings.Account_textbox.setEnabled(False)
+        all_accounts = table_settings.accounts
         for file in files:
             filename = os.path.basename(file).replace("_cookies", "")
             if filename in all_accounts:
@@ -115,15 +123,8 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
             != list(dialog_settings.primary_state[1].index)) or \
                 (dialog_settings.primary_state[0] != box.currentText()) or \
                 not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
-            confirm = QtWidgets.QMessageBox()
-            confirm.setText(f"Are you sure you want to cancel?\n"
-                            f"All changes will be lost!")
-            confirm.setWindowTitle("Confirmation")
-            confirm.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            confirm.setDefaultButton(QtWidgets.QMessageBox.No)
-            result = confirm.exec_()
-            if result == QtWidgets.QMessageBox.Yes:
-                confirm.reject()
+            if warning_func(parent, f"Are you sure you want to cancel?\n"
+                                    f"All changes will be lost! (except add/remove"):
                 dialog.reject()
         else:
             dialog.reject()
@@ -157,7 +158,7 @@ def open_UsersList_Dialog(parent, table_settings, all_accounts: list, combo_item
                                                     dialog_settings.Users_Table.model().get_data().loc[ind, "Group"],
                                                     new)
                 else:
-                    table_settings.del_account(group=old_group, login=old)
+                    table_settings.del_account(group=old_group, login=old, parent=parent)
             dialog_settings.Users_Table.model().reset_ids(
                 [dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
                  range(dialog_settings.Users_Table.model().rowCount())])
