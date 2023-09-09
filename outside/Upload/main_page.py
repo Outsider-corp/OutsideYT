@@ -9,53 +9,56 @@ from outside import TableModels as CommonTables
 
 
 def update_upload(ui, parent):
-    Upload_table = ui.Upload_Table
+    upload_table = ui.Upload_Table
     Upload_model = TableModels.UploadModel()
-    Upload_table.setModel(Upload_model)
-    Upload_table.setItemDelegate(CommonTables.InLineEditDelegate())
+    upload_table.setModel(Upload_model)
+
     font = QtGui.QFont()
     font.setFamily("Arial")
     font.setPointSize(11)
-    Upload_table.setFont(font)
-    Upload_table = CommonTables.table_universal(Upload_table)
-    Upload_table.hideColumn(list(Upload_table.model().get_data().columns).index("Selected"))
-    Upload_table.setVerticalHeader(CommonTables.HeaderView(Upload_table))
+    upload_table.setFont(font)
+    
+    upload_table = CommonTables.table_universal(upload_table)
+    upload_table.hideColumn(list(upload_table.model().get_data().columns).index("Selected"))
+    upload_table.setVerticalHeader(CommonTables.HeaderView(upload_table))
+    upload_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
     for i, size in enumerate([50, 0, 100, 250, 150]):
-        Upload_table.setColumnWidth(i, size)
-    Upload_table.setColumnWidth(11, 70)
-    Upload_table.setColumnWidth(12, 70)
-    Upload_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
-    user_combo_del = CommonTables.ComboBoxDelegate(Upload_table, OutsideYT.app_settings_uploaders.accounts.keys())
-    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("User"), user_combo_del)
+        upload_table.setColumnWidth(i, size)
+    upload_table.setColumnWidth(11, 70)
+    upload_table.setColumnWidth(12, 70)
 
-    access_combo_del = CommonTables.ComboBoxDelegate(Upload_table, ["Private", "On link", "Public"])
-    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Access"),
+    user_combo_del = CommonTables.ComboBoxDelegate(upload_table, OutsideYT.app_settings_uploaders.accounts.keys())
+    upload_table.setItemDelegateForColumn(list(upload_table.model().get_data().columns).index("User"), user_combo_del)
+
+    access_combo_del = CommonTables.ComboBoxDelegate(upload_table, ["Private", "On link", "Public"])
+    upload_table.setItemDelegateForColumn(list(upload_table.model().get_data().columns).index("Access"),
                                           access_combo_del)
-    Upload_table.setItemDelegateForColumn(4, dialogs.SetPublishTimeDelegate(parent=parent,
-                                                                            table=Upload_table))
-    Upload_table.setItemDelegateForColumn(5, TableModels.OpenFileLocationDelegate(parent=parent,
-                                                                                  table=Upload_table,
+    upload_table.setItemDelegateForColumn(4, dialogs.SetPublishTimeDelegate(parent=parent,
+                                                                            table=upload_table))
+    upload_table.setItemDelegateForColumn(5, TableModels.OpenFileLocationDelegate(parent=parent,
+                                                                                  table=upload_table,
                                                                                   ext="Video"))
-    Upload_table.setItemDelegateForColumn(8, TableModels.OpenFileLocationDelegate(parent=parent,
-                                                                                  table=Upload_table,
+    upload_table.setItemDelegateForColumn(8, TableModels.OpenFileLocationDelegate(parent=parent,
+                                                                                  table=upload_table,
                                                                                   ext="Preview"))
-    ends_combo_del = CommonTables.ComboBoxDelegate(Upload_table, ["random", "import"])
-    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
+    ends_combo_del = CommonTables.ComboBoxDelegate(upload_table, ["random", "import"])
+    upload_table.setItemDelegateForColumn(list(upload_table.model().get_data().columns).index("Ends"), ends_combo_del)
 
-    cards_spin_del = CommonTables.SpinBoxDelegate(Upload_table)
-    Upload_table.setItemDelegateForColumn(list(Upload_table.model().get_data().columns).index("Cards"), cards_spin_del)
+    cards_spin_del = CommonTables.SpinBoxDelegate(upload_table)
+    upload_table.setItemDelegateForColumn(list(upload_table.model().get_data().columns).index("Cards"), cards_spin_del)
 
     ui.Upload_SelectVideos_Button.clicked.connect(
-        partial(dialogs.open_upload_select_videos, parent=parent, table=Upload_table))
+        partial(dialogs.open_upload_select_videos, parent=parent, table=upload_table))
     ui.Upload_Check_Button.clicked.connect(
-        partial(dialogs.scan_videos_folder, table=Upload_table))
+        partial(dialogs.scan_videos_folder, table=upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
-        partial(dialogs.set_upload_time, parent=parent, table=Upload_table))
-    Upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-    Upload_table.customContextMenuRequested.connect(
-        lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=Upload_table))
+        partial(dialogs.set_upload_time, parent=parent, table=upload_table))
+
+    upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    upload_table.customContextMenuRequested.connect(
+        lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=upload_table))
     ui.Upload_ClearUTime_Button.clicked.connect(
-        partial(dialogs.clear_upload_time, parent=parent, table=Upload_table))
+        partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
 
     ui.actionUploaders_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent,
                                                    table_settings=OutsideYT.app_settings_uploaders,
@@ -64,4 +67,4 @@ def update_upload(ui, parent):
                                                    add_table_class=TableModels.UploadersUsersModel
                                                    ))
 
-    return Upload_table, ui
+    return upload_table, ui

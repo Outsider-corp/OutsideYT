@@ -1,5 +1,7 @@
+import json
 import os
 import random
+import re
 import time
 import sys
 
@@ -11,6 +13,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pickle
+import requests
+from bs4 import BeautifulSoup as bs
 
 from OutsideYT import *
 
@@ -227,6 +231,37 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
     except Exception as e:
         print("Error!")
         print(e)
+
+
+def get_video_info(link):
+    """
+    Функция для получения информации о видео (название и канал)
+    """
+    response = requests.get(link)
+    if response.status_code == 200:
+        soup = bs(response.text, "html.parser")
+        script_tags = soup.find_all('script', {'nonce': True})
+
+        for script_tag in script_tags:
+            script_text = script_tag.get_text()
+            if 'ytInitialData' in script_text:
+                ytInitialData = json.loads(script_text.replace('var ytInitialData = ', '')[:-1])
+                video_info = ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
+                    'playerOverlayVideoDetailsRenderer']
+                video = video_info['title']['simpleText']
+                channel = video_info['subtitle']['runs'][0]['text']
+                return video, channel
+    else:
+        error_func("Нет подключения к сайту")
+        return
+    error_func("Не удалось получить информацию о видео...")
+
+
+def get_playlist_info(link):
+    """
+    Функция для получения информации о всех видео в плейлисте
+    """
+    pass
 
 
 if __name__ == "__main__":

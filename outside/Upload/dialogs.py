@@ -1,11 +1,11 @@
-import glob
 import os
 from functools import partial
-
-import outside.Upload.TableModels
-from outside import YT_Uploader
 from PyQt5 import QtWidgets, QtGui, QtCore
+
+from outside.Upload import TableModels
+from outside.YT_functions import get_google_login
 import OutsideYT
+from outside.YT_functions import get_google_login
 from outside.message_boxes import error_func, warning_func
 from outside.functions import update_combobox
 from outside.views_py import SelectUploadVideos_Dialog, UpdateTime_Dialog, UploadTime_for_Video_Dialog
@@ -36,7 +36,6 @@ def open_upload_select_videos(parent, table):
         try:
             path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Video", ".",
                                                               QtWidgets.QFileDialog.ShowDirsOnly)
-            print(path)
             next_func(path=path)
             dialog.accept()
         except Exception as e:
@@ -57,10 +56,10 @@ def open_upload_select_videos(parent, table):
             user = ""
         for smth in os.scandir(path):
             if smth.is_dir():
-                outside.Upload.TableModels.add_video_for_uploading(table, path=os.path.abspath(smth), user=user)
+                TableModels.add_video_for_uploading(table, path=os.path.abspath(smth), user=user)
 
     dialog_settings.SelectVideo_Button.clicked.connect(
-        partial(select_video, partial(outside.Upload.TableModels.add_video_for_uploading, table=table)))
+        partial(select_video, partial(TableModels.add_video_for_uploading, table=table)))
     dialog_settings.SelectFolderForUser_Button.clicked.connect(partial(select_video, select_folder))
     dialog_settings.ChangeDefFolder_Button.clicked.connect(partial(select_video, change_def_folder))
     dialog_settings.SetDefFolder_Button.clicked.connect(del_vids_folder)
@@ -72,7 +71,7 @@ def scan_videos_folder(table):
     for user in users:
         for vid in os.scandir(os.path.join(OutsideYT.app_settings_uploaders.vids_folder, user)):
             if vid.is_dir():
-                outside.Upload.TableModels.add_video_for_uploading(table, os.path.abspath(vid), user)
+                TableModels.add_video_for_uploading(table, os.path.abspath(vid), user)
 
 
 def change_def_folder(path):
@@ -90,7 +89,7 @@ def google_login(login, mail, parent: QtWidgets.QDialog, table_settings):
         error_func("This account name is already used!")
     else:
         try:
-            added = YT_Uploader.get_google_login(login, mail, str(table_settings))
+            added = get_google_login(login, mail, str(table_settings))
             parent.parent().update()
         except Exception as e:
             error_func(f"Error. \n{e}")

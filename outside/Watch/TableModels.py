@@ -26,14 +26,13 @@ class WatchModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
+        flags = Qt.ItemIsEnabled
         if self._data.columns[index.column()] == "id":
-            flags = Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
-        elif self._data.columns[index.column()] == "Link":
-            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
-        elif self._data.columns[index.column()] == "Watchers Group":
-            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+            flags |= Qt.ItemIsUserCheckable
         else:
-            flags = Qt.ItemIsSelectable
+            flags |= Qt.ItemIsSelectable
+            if self._data.columns[index.column()] in ["Link", "Watchers Group"]:
+                flags |= Qt.ItemIsEditable
         return flags
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
@@ -79,6 +78,10 @@ class WatchModel(QAbstractTableModel):
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
+            if role == Qt.CheckStateRole and column == "id":
+                self._data.loc[index.row(), "Selected"] = value
+                self.dataChanged.emit(index, index, [role])
+                return True
             self._data.loc[index.row(), column] = value
             self.dataChanged.emit(index, index, [role])
             return True
@@ -87,7 +90,9 @@ class WatchModel(QAbstractTableModel):
     def setDataFuncs(self, id, column, value):
         self._data[self._data.id == id][column] = value
 
-    def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None, **kwargs) -> bool:
+        if not row_content:
+            row_content = {}
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
         WatchModel.default_content["Watchers Group"] = app_settings_watchers.def_group
@@ -95,8 +100,8 @@ class WatchModel(QAbstractTableModel):
             if col == "id":
                 self._data.loc[row_count, col] = row_count + 1
                 continue
-            if col in kwargs.keys() and kwargs[col] is not None:
-                self._data.loc[row_count, col] = kwargs[col]
+            if col in row_content.keys() and row_content[col] is not None:
+                self._data.loc[row_count, col] = row_content[col]
             else:
                 self._data.loc[row_count, col] = WatchModel.default_content[col]
         row_count += count
@@ -106,9 +111,18 @@ class WatchModel(QAbstractTableModel):
         self.update()
         return True
 
+    def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
+        self.beginRemoveRows(QModelIndex(), row, row)
+        self._data = self._data.drop(index=row)
+        self._data.reset_index(drop=True, inplace=True)
+        self.reset_ids()
+        self.endRemoveRows()
+        self.update()
+        return True
+
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(self.rowCount())]
+            new_list = [i for i in range(1, self.rowCount()+1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -181,13 +195,10 @@ class WatchersUsersModel(QAbstractTableModel):
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count)
         self._data.loc[row_count] = [str(row_count), *row]
-        row_count += 1
         self.endInsertRows()
         return True
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
-        row_count = self.rowCount()
-        row_count -= 1
         self.beginRemoveRows(QModelIndex(), row, row)
         self._data.drop(index=row)
         self._data.reset_index(drop=True, inplace=True)
@@ -198,7 +209,7 @@ class WatchersUsersModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(self.rowCount())]
+            new_list = [i for i in range(1, self.rowCount()+1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -292,7 +303,7 @@ class WatchersGroupsModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i + 1 for i in range(self.rowCount())]
+            new_list = [i for i in range(1, self.rowCount()+1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):

@@ -458,7 +458,7 @@ selection-background-color: rgb(15, 15, 15);</string>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QPushButton" name="ChangeDefFolder_Button">
+      <widget class="QPushButton" name="Import_links_Button">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -513,7 +513,7 @@ selection-background-color: rgb(15, 15, 15);</string>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="Select_channel_Button">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -538,15 +538,12 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLineEdit" name="channel_link_textBox">
        <property name="font">
         <font>
          <family>Arial</family>
          <pointsize>12</pointsize>
         </font>
-       </property>
-       <property name="text">
-        <string/>
        </property>
       </widget>
      </item>
@@ -587,7 +584,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </spacer>
      </item>
      <item>
-      <widget class="QRadioButton" name="radioButton">
+      <widget class="QRadioButton" name="Last_video_radioButton">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -603,7 +600,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="radioButton_2">
+      <widget class="QRadioButton" name="Random_video_radioButton">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -616,7 +613,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="radioButton_3">
+      <widget class="QRadioButton" name="Period_radioButton">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -681,7 +678,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="Count_label">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -694,7 +691,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spinBox">
+      <widget class="QSpinBox" name="Count_videos_spinBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -718,7 +715,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="Start_label">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -731,7 +728,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QDateEdit" name="dateEdit">
+      <widget class="QDateEdit" name="Start_date">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -757,7 +754,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label_4">
+      <widget class="QLabel" name="End_label">
        <property name="font">
         <font>
          <family>Arial</family>
@@ -770,7 +767,7 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </item>
      <item>
-      <widget class="QDateEdit" name="dateEdit_2">
+      <widget class="QDateEdit" name="End_date">
        <property name="font">
         <font>
          <family>Arial</family>

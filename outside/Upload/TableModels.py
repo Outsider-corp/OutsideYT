@@ -108,7 +108,9 @@ class UploadModel(QAbstractTableModel):
     def setDataFuncs(self, id, column, value):
         self._data[self._data.id == id][column] = value
 
-    def insertRows(self, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None, **kwargs) -> bool:
+        if not row_content:
+            row_content = {}
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
         UploadModel.default_content["User"] = app_settings_uploaders.def_account
@@ -116,8 +118,8 @@ class UploadModel(QAbstractTableModel):
             if col == "id":
                 self._data.loc[row_count, col] = row_count + 1
                 continue
-            if col in kwargs.keys() and kwargs[col] is not None:
-                self._data.loc[row_count, col] = kwargs[col]
+            if col in row_content.keys() and row_content[col] is not None:
+                self._data.loc[row_count, col] = row_content[col]
             else:
                 self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
@@ -138,7 +140,7 @@ class UploadModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(self.rowCount())]
+            new_list = [i for i in range(1, self.rowCount()+1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -221,7 +223,7 @@ class UploadersUsersModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(self.rowCount())]
+            new_list = [i for i in range(1, self.rowCount()+1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -264,11 +266,11 @@ def add_video_for_uploading(table: QTableView, path, user=None):
     playlist = find_files(text_extensions, folder=path, name="Playlist")
     preview = find_files(image_extensions, folder=path)
     tags = find_files(text_extensions, folder=path, name="Tags")
-    table.model().insertRows(User=user,
-                             Video=video,
-                             Title=title,
-                             Description=description,
-                             Playlist=playlist,
-                             Preview=preview,
-                             Tags=tags,
+    table.model().insertRows(row_content={"User": user,
+                                          "Video": video,
+                                          "Title": title,
+                                          "Description": description,
+                                          "Playlist": playlist,
+                                          "Preview": preview,
+                                          "Tags": tags},
                              Url=path)

@@ -111,6 +111,8 @@ def table_universal(table):
     table.setDragDropOverwriteMode(False)
     table.verticalHeader().setDefaultAlignment(QtCore.Qt.AlignVCenter)
     table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignHCenter)
+
+    table.setItemDelegate(InLineEditDelegate())
     return table
 
 
