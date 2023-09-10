@@ -5,18 +5,18 @@ import re
 import time
 import sys
 
-import OutsideYT
-from outside.message_boxes import error_func
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+import selenium.common.exceptions
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pickle
 import requests
 from bs4 import BeautifulSoup as bs
 
-from OutsideYT import *
+import OutsideYT
+from outside.message_boxes import error_func, waiting_func
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 wait_time = 5
 
@@ -28,6 +28,9 @@ def get_driver():
     driver_options.add_argument(
         f"user-agent={user_agent}")
     driver_options.add_argument("--disable-blink-features=AutomationControlled")
+    driver_options.add_argument("--disable-gpu")
+    driver_options.add_argument("--disable-software-rasterizer")
+    driver_options.add_argument("--blink-settings=imagesEnabled=false")
     driver = webdriver.Chrome(executable_path=
                               os.path.join(OutsideYT.project_folder, "outside", "bin", "chromedriver.exe"),
                               options=driver_options)
@@ -82,6 +85,7 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
     :return:
     """
     try:
+        driver = get_driver()
         url = "https://youtube.com"
         url2 = "https://studio.youtube.com/"
         driver.get(url)
@@ -261,7 +265,47 @@ def get_playlist_info(link):
     """
     Функция для получения информации о всех видео в плейлисте
     """
-    pass
+    error_func("This action will be update latter...")
+    return None
+
+
+def select_page(type_add: str):
+    """
+    Функция для получения ссылки на канал (channel), видео (video) или всех видео в плейлисте (playlist)
+    """
+    ans = None
+    try:
+        yt_url = "https://www.youtube.com/"
+        not_add_urls = []
+        driver = get_driver()
+        driver.get(yt_url)
+        driver.implicitly_wait(3)
+        if type_add == "video":
+            url_search = "www.youtube.com/watch"
+        elif type_add == "channel":
+            url_search = "www.youtube.com/@"
+        elif type_add == "playlist":
+            url_search = "www.youtube.com/playlist"
+        else:
+            raise "Not valid type."
+        while True:
+            time.sleep(2)
+            if url_search in driver.current_url and driver.current_url not in not_add_urls:
+                if waiting_func(f"This is {type_add} you want to add?", 3):
+                    ans = driver.current_url
+                    driver.close()
+                    break
+                not_add_urls.append(driver.current_url)
+    except selenium.common.exceptions.NoSuchWindowException:
+        pass
+    except Exception as e:
+        error_func(f"Error.\n{e}")
+    finally:
+        try:
+            driver.close()
+        except:
+            pass
+        return ans
 
 
 if __name__ == "__main__":

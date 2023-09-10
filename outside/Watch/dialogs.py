@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import OutsideYT
 import outside.Watch.TableModels
 import outside.Watch.context_menu
-from outside.YT_functions import get_video_info, get_playlist_info
+from outside.YT_functions import get_video_info, get_playlist_info, select_page
 from outside.message_boxes import warning_func, error_func
 from outside.functions import update_combobox
 from outside.views_py import EditWatchersGroups_Dialog, SelectWatchVideos_Dialog
@@ -81,10 +81,24 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
             dialog_settings.End_date]
 
     def add_video():
-        pass
+        text = select_page("video")
+        if text:
+            group = dialog_settings.Group_comboBox.currentText()
+            add_video_to_table(table, text, group)
+            dialog.accept()
+        else:
+            error_func("Not valid link.", dialog)
 
     def add_playlist():
-        pass
+        error_func("This action will be add later...")
+        return
+        # text = select_page("playlist")
+        # if text:
+        #     group = dialog_settings.Group_comboBox.currentText()
+        #     add_video_to_table(table, text, group)
+        #     dialog.accept()
+        # else:
+        #     error_func("Not valid link.", dialog)
 
     def import_links_from_file():
         file = ""
@@ -104,7 +118,13 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
             error_func(f"Error.\n {e}")
 
     def select_channel():
-        pass
+        text = select_page("channel")
+        if text:
+            dialog_settings.channel_link_textBox.setText(text)
+        else:
+            error_func("Not valid link.", dialog)
+
+
 
     def show_elements(group):
         """
@@ -175,7 +195,7 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
 
 
 def open_advanced_settings(parent, table):
-    pass
+    error_func("This action will be add later...")
 
 
 def add_video_to_table(table, link: str = "", group=None, textbox: QtWidgets.QLineEdit = None):
@@ -193,11 +213,12 @@ def add_video_to_table(table, link: str = "", group=None, textbox: QtWidgets.QLi
                                               "Link": link})
     elif "youtube.com/playlist" in link:
         videos = get_playlist_info(link)
-        for video, channel, video_link in videos:
-            table.model().insertRows(row_content={"Watchers Group": group,
-                                                  "Video": video,
-                                                  "Channel": channel,
-                                                  "Link": video_link})
+        if videos:
+            for video, channel, video_link in videos:
+                table.model().insertRows(row_content={"Watchers Group": group,
+                                                      "Video": video,
+                                                      "Channel": channel,
+                                                      "Link": video_link})
     else:
         return
     if textbox is not None:

@@ -194,7 +194,7 @@ class SettingsWatchers:
         self.update_settings()
 
     def del_account(self, group, login, parent=None):
-        if warning_func(parent, f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})"):
+        if warning_func(f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})", parent):
             self._groups[group].pop(login)
             os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f"{login}_cookies"))
             self.update_settings()

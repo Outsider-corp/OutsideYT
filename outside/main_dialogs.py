@@ -14,7 +14,6 @@ from outside.views_py import UsersList_Dialog, WatchersList_Dialog, AddWatcher_D
     AddUploader_Dialog
 from outside.Watch.dialogs import edit_watchers_groups
 
-
 def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
                           def_type: str,
                           add_table_class):
@@ -123,8 +122,8 @@ def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
             != list(dialog_settings.primary_state[1].index)) or \
                 (dialog_settings.primary_state[0] != box.currentText()) or \
                 not (dialog_settings.primary_state[1].equals(dialog_settings.Users_Table.model().get_data().copy())):
-            if warning_func(parent, f"Are you sure you want to cancel?\n"
-                                    f"All changes will be lost! (except add/remove"):
+            if warning_func(f"Are you sure you want to cancel?\n"
+                            f"All changes will be lost! (except add/remove", parent):
                 dialog.reject()
         else:
             dialog.reject()

@@ -236,6 +236,6 @@ def set_upload_time_for_video(parent, table, video_id):
 
 
 def clear_upload_time(parent, table: QtWidgets.QTableView):
-    if warning_func(parent, "Are you sure?\nAll upload times will be deleted!"):
+    if warning_func("Are you sure?\nAll upload times will be deleted!", parent):
         table.model()._data["Publish"] = "Now"
         table.update()
