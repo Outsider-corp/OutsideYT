@@ -6,18 +6,22 @@ import OutsideYT
 from . import context_menu, dialogs, TableModels
 from outside import main_dialogs as MainDialogs
 from outside import TableModels as CommonTables
+from .dialogs import google_login
+from ..YT_functions import get_google_login, async_get_google_login
+from ..asinc_functions import start_operation
+from ..functions import update_checkbox_select_all
 
 
 def update_upload(ui, parent):
     upload_table = ui.Upload_Table
-    Upload_model = TableModels.UploadModel()
+    Upload_model = TableModels.UploadModel(oldest_settings=ui)
     upload_table.setModel(Upload_model)
 
     font = QtGui.QFont()
     font.setFamily("Arial")
     font.setPointSize(11)
     upload_table.setFont(font)
-    
+
     upload_table = CommonTables.table_universal(upload_table)
     upload_table.hideColumn(list(upload_table.model().get_data().columns).index("Selected"))
     upload_table.setVerticalHeader(CommonTables.HeaderView(upload_table))
@@ -53,6 +57,10 @@ def update_upload(ui, parent):
         partial(dialogs.scan_videos_folder, table=upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
         partial(dialogs.set_upload_time, parent=parent, table=upload_table))
+    ui.Upload_Start.clicked.connect(partial(start_upload, dialog=parent, dialog_settings=ui))
+    ui.Upload_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
+                                                         checkbox=ui.Upload_SelectAll_CheckBox,
+                                                         table=upload_table))
 
     upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     upload_table.customContextMenuRequested.connect(
@@ -60,11 +68,19 @@ def update_upload(ui, parent):
     ui.Upload_ClearUTime_Button.clicked.connect(
         partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
 
-    ui.actionUploaders_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent,
-                                                   table_settings=OutsideYT.app_settings_uploaders,
-                                                   combo_items_default=OutsideYT.app_settings_uploaders.accounts.keys(),
-                                                   def_type="account",
-                                                   add_table_class=TableModels.UploadersUsersModel
-                                                   ))
+    ui.actionUploaders_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog,
+                                                   parent=parent,
+                                                   table_type="upload",
+                                                   add_table_class=TableModels.UploadersUsersModel))
 
     return upload_table, ui
+
+
+def start_upload(dialog, dialog_settings):
+    start_operation(dialog=dialog, dialog_settings=dialog_settings, page="UploadPage",
+                    progress_bar=dialog_settings.Upload_Progress_Bar,
+                    process=partial(get_google_login, login="test_test", mail="outside.deal1",
+                                    folder="Uploaders"),
+                    total_steps=7)
+
+    print("Start Upload!")

@@ -14,6 +14,11 @@ def update_combobox(combobox, items: list, def_value: str):
     return combobox
 
 
+def update_checkbox_select_all(checkbox, table):
+    table.model()._data["Selected"] = checkbox.isChecked()
+    table.update()
+
+
 def find_files(args: list, folder: str, name: str = ""):
     for file in os.listdir(folder):
         if file.endswith(tuple(args)) and file.startswith(name):

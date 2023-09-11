@@ -66,23 +66,7 @@ selection-background-color: rgb(61, 61, 61);</string>
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <spacer name="verticalSpacer_2">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>5</width>
-        <height>5</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QTabWidget" name="OutsideYT">
       <property name="sizePolicy">
        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
@@ -519,8 +503,8 @@ selection-background-color: rgb(15, 15, 15);</string>
         </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item alignment="Qt::AlignLeft">
-           <widget class="QPushButton" name="Watch_SelectVideos_Button">
+          <item>
+           <widget class="QCheckBox" name="Watch_SelectAll_CheckBox">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -528,7 +512,10 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>  Select Videos  </string>
+             <string>Select All</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -598,7 +585,7 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="Watch_advanced_settings_Button">
+           <widget class="QPushButton" name="Watch_SelectVideos_Button">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -606,7 +593,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>  Advanced Settings  </string>
+             <string>  Select Videos  </string>
             </property>
            </widget>
           </item>
@@ -685,65 +672,15 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="Watch_Threads_Label">
+           <widget class="QPushButton" name="Watch_advanced_settings_Button">
             <property name="font">
              <font>
               <family>Arial</family>
-              <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <pointsize>10</pointsize>
              </font>
             </property>
             <property name="text">
-             <string>Thread count</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="Watch_Threads_SpinBox">
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="value">
-             <number>1</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="Watch_UseProxy_CheckBox">
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Use proxy</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="Watch_ShowBrowsers_CheckBox">
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Show Browsers</string>
+             <string>  Advanced Settings  </string>
             </property>
            </widget>
           </item>
@@ -847,40 +784,36 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item alignment="Qt::AlignLeft">
-             <widget class="QLabel" name="Download_SavingPath_Label">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <family>Arial</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-            <item alignment="Qt::AlignRight">
-             <widget class="QPushButton" name="Download_ChangePath_Button">
-              <property name="font">
-               <font>
-                <family>Arial</family>
-                <pointsize>11</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string> Change Saving Path </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QLabel" name="Download_SavingPath_Label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="Download_ChangePath_Button">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string> Change Saving Path </string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -990,6 +923,22 @@ selection-background-color: rgb(15, 15, 15);</string>
       </widget>
      </widget>
     </item>
+    <item row="1" column="0">
+     <spacer name="verticalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>5</width>
+        <height>5</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -998,7 +947,7 @@ selection-background-color: rgb(15, 15, 15);</string>
      <x>0</x>
      <y>0</y>
      <width>1031</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOutside_YouTube">

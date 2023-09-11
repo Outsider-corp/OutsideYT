@@ -21,12 +21,13 @@ class UploadModel(QAbstractTableModel):
                        "Tags": "", "Ends": "random", "Cards": 2,
                        "Access": "Private", "Save filename?": False}
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, oldest_settings=None):
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=UploadModel.columns)
         self._data = data
         self.paths = []
+        self.oldest_settings = oldest_settings
 
     def update(self):
         self.layoutChanged.emit()
@@ -99,6 +100,10 @@ class UploadModel(QAbstractTableModel):
             if role == Qt.CheckStateRole and column == "id":
                 self._data.loc[index.row(), "Selected"] = value
                 self.dataChanged.emit(index, index, [role])
+                if all(self.get_data()["Selected"]):
+                    self.oldest_settings.Upload_SelectAll_CheckBox.setChecked(True)
+                else:
+                    self.oldest_settings.Upload_SelectAll_CheckBox.setChecked(False)
                 return True
             self._data.loc[index.row(), column] = value
             self.dataChanged.emit(index, index, [role])
@@ -140,7 +145,7 @@ class UploadModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount()+1)]
+            new_list = [i for i in range(1, self.rowCount() + 1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -223,7 +228,7 @@ class UploadersUsersModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount()+1)]
+            new_list = [i for i in range(1, self.rowCount() + 1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):

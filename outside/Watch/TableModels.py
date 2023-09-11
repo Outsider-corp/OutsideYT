@@ -15,12 +15,13 @@ class WatchModel(QAbstractTableModel):
                        "Watchers Group": app_settings_watchers.def_group, "Count": 0,
                        "Video": "", "Channel": "", "Link": "", "Selected": True}
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, oldest_settings=None):
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
         self.paths = []
+        self.oldest_settings = oldest_settings
 
     def update(self):
         self.layoutChanged.emit()
@@ -81,6 +82,10 @@ class WatchModel(QAbstractTableModel):
             if role == Qt.CheckStateRole and column == "id":
                 self._data.loc[index.row(), "Selected"] = value
                 self.dataChanged.emit(index, index, [role])
+                if all(self.get_data()["Selected"]):
+                    self.oldest_settings.Watch_SelectAll_CheckBox.setChecked(True)
+                else:
+                    self.oldest_settings.Watch_SelectAll_CheckBox.setChecked(False)
                 return True
             self._data.loc[index.row(), column] = value
             self.dataChanged.emit(index, index, [role])

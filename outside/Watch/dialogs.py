@@ -6,6 +6,7 @@ import OutsideYT
 import outside.Watch.TableModels
 import outside.Watch.context_menu
 from outside.YT_functions import get_video_info, get_playlist_info, select_page
+from outside.asinc_functions import start_operation
 from outside.message_boxes import warning_func, error_func
 from outside.functions import update_combobox
 from outside.views_py import EditWatchersGroups_Dialog, SelectWatchVideos_Dialog
@@ -68,7 +69,7 @@ def edit_watchers_groups(parent, parent_settings):
     dialog.exec_()
 
 
-def open_watch_select_videos(parent, table: QtWidgets.QTableView):
+def open_watch_select_videos(parent, table: QtWidgets.QTableView, parent_settings):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
     dialog_settings = SelectWatchVideos_Dialog.Ui_SelectVideos_Dialog()
@@ -101,17 +102,22 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
         #     error_func("Not valid link.", dialog)
 
     def import_links_from_file():
+        """
+        It's generator that give count of steps on first yeild
+        """
         file = ""
         try:
             exts = OutsideYT.text_extensions
             file, _ = QtWidgets.QFileDialog.getOpenFileName(None, f"Select File with Links", "",
                                                             f"Text Files ({' '.join('*' + ex for ex in exts)})")
             group = dialog_settings.Group_comboBox.currentText()
+            dialog.accept()
             with open(file, "r", encoding="UTF-8") as f:
                 links = f.readlines()
-            for link in links:
+            yield len(links)
+            for num, link in enumerate(links):
                 add_video_to_table(table=table, link=link, group=group)
-            dialog.accept()
+                yield num + 1
         except Exception as e:
             if file == "":
                 return
@@ -123,8 +129,6 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
             dialog_settings.channel_link_textBox.setText(text)
         else:
             error_func("Not valid link.", dialog)
-
-
 
     def show_elements(group):
         """
@@ -186,7 +190,12 @@ def open_watch_select_videos(parent, table: QtWidgets.QTableView):
 
     dialog_settings.AddVideo_Button.clicked.connect(add_video)
     dialog_settings.AddPlaylist_Button.clicked.connect(add_playlist)
-    dialog_settings.Import_links_Button.clicked.connect(import_links_from_file)
+    dialog_settings.Import_links_Button.clicked.connect(partial(start_operation,
+                                                                dialog=parent,
+                                                                dialog_settings=parent_settings,
+                                                                page="WatchPage",
+                                                                progress_bar=parent_settings.Watch_Progress_Bar,
+                                                                process=import_links_from_file))
     dialog_settings.Select_channel_Button.clicked.connect(select_channel)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)

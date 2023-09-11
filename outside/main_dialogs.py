@@ -14,9 +14,16 @@ from outside.views_py import UsersList_Dialog, WatchersList_Dialog, AddWatcher_D
     AddUploader_Dialog
 from outside.Watch.dialogs import edit_watchers_groups
 
-def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
-                          def_type: str,
-                          add_table_class):
+
+def open_UsersList_Dialog(parent, table_type: str, add_table_class):
+    if table_type == "upload":
+        table_settings = OutsideYT.app_settings_uploaders
+        def_type = "account"
+        combo_items_default = table_settings.accounts.keys()
+    elif table_type == "watch":
+        table_settings = OutsideYT.app_settings_watchers
+        def_type = "group"
+        combo_items_default = table_settings.groups.keys()
     cookies_dir = os.path.join(os.path.dirname(OutsideYT.app_settings_uploaders.file), str(table_settings).lower())
     dialog, dialog_settings = userslist(parent, str(table_settings))
     dialog.setWindowTitle(f"{str(table_settings).capitalize()} List")
@@ -84,22 +91,23 @@ def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
                 OutsideYT.app_settings_uploaders.add_account({filename: cook_settings.Gmail_textbox.text()})
 
         files = glob.glob(f'{cookies_dir}/*_cookies')
-        cook = QtWidgets.QDialog(dialog)
-        cook.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
-        if str(table_settings).lower() == "uploaders":
-            cook_settings = AddUploader_Dialog.Ui_AddUser_Dialog()
-            cook_settings.setupUi(cook)
-        else:
-            cook_settings = AddWatcher_Dialog.Ui_AddUser_Dialog()
-            cook_settings.setupUi(cook)
-            cook_settings.Group_comboBox = update_combobox(cook_settings.Group_comboBox, combo_items_default,
-                                                           OutsideYT.app_settings_watchers.def_group)
-        cook_settings.Account_textbox.setEnabled(False)
         all_accounts = table_settings.accounts
         for file in files:
             filename = os.path.basename(file).replace("_cookies", "")
             if filename in all_accounts:
                 continue
+
+            cook = QtWidgets.QDialog(dialog)
+            cook.setStyle(QtWidgets.QStyleFactory.create("Fusion"))
+            if str(table_settings).lower() == "uploaders":
+                cook_settings = AddUploader_Dialog.Ui_AddUser_Dialog()
+                cook_settings.setupUi(cook)
+            else:
+                cook_settings = AddWatcher_Dialog.Ui_AddUser_Dialog()
+                cook_settings.setupUi(cook)
+                cook_settings.Group_comboBox = update_combobox(cook_settings.Group_comboBox, combo_items_default,
+                                                               OutsideYT.app_settings_watchers.def_group)
+            cook_settings.Account_textbox.setEnabled(False)
             cook_settings.Account_textbox.setText(filename)
 
             cook_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(cook.reject)
@@ -150,12 +158,13 @@ def open_UsersList_Dialog(parent, table_settings, combo_items_default: list,
                 old_group = file.Group if "Group" in file.index else None
                 if ind in dialog_settings.Users_Table.model().get_data().index:
                     new = dialog_settings.Users_Table.model().get_data().loc[ind, "Account"]
-                    if str(table_settings).lower() == "uploaders":
-                        table_settings.edit_account(old, new)
-                    else:
-                        table_settings.edit_account(old_group, old,
-                                                    dialog_settings.Users_Table.model().get_data().loc[ind, "Group"],
-                                                    new)
+                    if old != new:
+                        if str(table_settings).lower() == "uploaders":
+                            table_settings.edit_account(old, new)
+                        else:
+                            table_settings.edit_account(old_group, old,
+                                                        dialog_settings.Users_Table.model().get_data().loc[
+                                                            ind, "Group"], new)
                 else:
                     table_settings.del_account(group=old_group, login=old, parent=parent)
             dialog_settings.Users_Table.model().reset_ids(

@@ -46,7 +46,10 @@ class SettingsUploaders:
         return
 
     def edit_account(self, old_name, new_name):
-        if new_name not in self.accounts.keys() and old_name != new_name:
+        if new_name in self.accounts.keys():
+            error_func(f"Account name {new_name} is already used.")
+            return
+        if old_name != new_name:
             self._accounts[new_name] = self.accounts[old_name]
             del self._accounts[old_name]
             if self.def_account == old_name:
@@ -106,7 +109,7 @@ class SettingsUploaders:
         with open(self.file, "r") as file:
             data = json.load(file)
             self._accounts = data["accs"]
-            self._def_account = data["def_acc"]
+            self._def_account = data["def_acc"] if data["def_acc"] in self.accounts else ""
             self._vids_folder = data["vids_folder"]
         return
 

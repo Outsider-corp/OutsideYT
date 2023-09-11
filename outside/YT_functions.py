@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import random
@@ -16,7 +17,6 @@ import OutsideYT
 from outside.message_boxes import error_func, waiting_func
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 
 wait_time = 5
 
@@ -306,6 +306,71 @@ def select_page(type_add: str):
         except:
             pass
         return ans
+
+
+def get_google_login_generator(login: str, mail: str, folder: str):
+    added = False
+    try:
+        driver = get_driver()
+        yield 1
+        filename = f"{login}_cookies"
+        url = "https://youtube.com"
+        url_log = "https://accounts.google.com/"
+        driver.get(url)
+        yield 2
+        driver.implicitly_wait(7)
+        time.sleep(15)
+        while True:
+            yield 3
+            time.sleep(1)
+            if "www.youtube.com/watch" in driver.current_url:
+                break
+        yield 4
+        cookies = driver.get_cookies()
+        yield 5
+        pickle.dump(cookies,
+                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
+        # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
+        yield 6
+        added = True
+    except Exception as e:
+        error_func(f"An error occurred while trying to login.\n\n{e}")
+    finally:
+        try:
+            driver.quit()
+        except:
+            pass
+        yield 7
+        return added
+
+
+async def async_get_google_login(login: str, mail: str, folder: str):
+    added = False
+    try:
+        driver = await get_driver()
+        filename = f"{login}_cookies"
+        url = "https://youtube.com"
+        url_log = "https://accounts.google.com/"
+        await driver.get(url)
+        await driver.implicitly_wait(7)
+        await asyncio.sleep(15)
+        while True:
+            await asyncio.sleep(1)
+            if "www.youtube.com/watch" in driver.current_url:
+                break
+        cookies = await driver.get_cookies()
+        pickle.dump(cookies,
+                    open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
+        # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
+        added = True
+    except Exception as e:
+        error_func(f"An error occurred while trying to login.\n\n{e}")
+    finally:
+        try:
+            await driver.quit()
+        except:
+            pass
+        return added
 
 
 if __name__ == "__main__":
