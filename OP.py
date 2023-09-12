@@ -4,6 +4,7 @@ import os
 from outside.Download.main_page import update_download
 from outside.Upload.main_page import update_upload
 from outside.Watch.main_page import update_watch
+from outside.main_dialogs import update_settings_from_file
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
 
 from PyQt5 import QtWidgets
@@ -49,7 +50,8 @@ def update_ui():
     Watch_table, ui = update_watch(ui=ui, parent=YouTubeOutside)
     Download_table, ui = update_download(ui=ui, parent=YouTubeOutside)
     ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
-
+    ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
+    ui.actionUpdate_Settings.triggered.connect(update_settings_from_file)
 
 def start_GUI():
     global app, YouTubeOutside, ui, Upload_table, Download_table, Watch_table

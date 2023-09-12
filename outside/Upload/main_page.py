@@ -17,11 +17,6 @@ def update_upload(ui, parent):
     Upload_model = TableModels.UploadModel(oldest_settings=ui)
     upload_table.setModel(Upload_model)
 
-    font = QtGui.QFont()
-    font.setFamily("Arial")
-    font.setPointSize(11)
-    upload_table.setFont(font)
-
     upload_table = CommonTables.table_universal(upload_table)
     upload_table.hideColumn(list(upload_table.model().get_data().columns).index("Selected"))
     upload_table.setVerticalHeader(CommonTables.HeaderView(upload_table))

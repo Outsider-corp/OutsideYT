@@ -18,11 +18,6 @@ def update_watch(ui, parent):
     Watch_model = TableModels.WatchModel(oldest_settings=ui)
     watch_table.setModel(Watch_model)
 
-    font = QtGui.QFont()
-    font.setFamily("Arial")
-    font.setPointSize(11)
-    watch_table.setFont(font)
-
     watch_table = CommonTables.table_universal(watch_table)
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index("Selected"))
     watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
@@ -54,7 +49,7 @@ def update_watch(ui, parent):
     watch_table.customContextMenuRequested.connect(
         lambda pos: context_menu.watch_context_menu(pos, parent=parent, table=watch_table))
 
-    ui.actionWatchers_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type="group",
+    ui.actionWatchers_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type="watch",
                                                   add_table_class=TableModels.WatchersUsersModel
                                                   ))
 

@@ -125,9 +125,16 @@ class WatchModel(QAbstractTableModel):
         self.update()
         return True
 
+    def removeAllRows(self, *args, **kwargs):
+        self.beginRemoveRows(QModelIndex(), 0, self.rowCount()-1)
+        self._data = pd.DataFrame(columns=WatchModel.columns)
+        self.endRemoveRows()
+        self.update()
+        return True
+
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount()+1)]
+            new_list = [i for i in range(1, self.rowCount() + 1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -214,7 +221,7 @@ class WatchersUsersModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount()+1)]
+            new_list = [i for i in range(1, self.rowCount() + 1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -308,7 +315,7 @@ class WatchersGroupsModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount()+1)]
+            new_list = [i for i in range(1, self.rowCount() + 1)]
         self._data.id = list(map(str, new_list))
 
     def get_data(self):

@@ -989,8 +989,15 @@ selection-background-color: rgb(15, 15, 15);</string>
     <addaction name="separator"/>
     <addaction name="actionWatchers_2"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionUpdate_Settings"/>
+   </widget>
    <addaction name="menuUsers_Lists"/>
    <addaction name="menuOutside_YouTube"/>
+   <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionAbout_Outside_YT">
@@ -1068,6 +1075,11 @@ selection-background-color: rgb(15, 15, 15);</string>
      <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
+   </property>
+  </action>
+  <action name="actionUpdate_Settings">
+   <property name="text">
+    <string>Update Settings</string>
    </property>
   </action>
  </widget>

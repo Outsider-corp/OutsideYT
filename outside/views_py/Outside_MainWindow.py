@@ -430,6 +430,8 @@ class Ui_YouTubeOutside(object):
         font.setPointSize(11)
         self.menuUsers_Lists.setFont(font)
         self.menuUsers_Lists.setObjectName("menuUsers_Lists")
+        self.menuSettings = QtWidgets.QMenu(self.menubar)
+        self.menuSettings.setObjectName("menuSettings")
         YouTubeOutside.setMenuBar(self.menubar)
         self.actionAbout_Outside_YT = QtWidgets.QAction(YouTubeOutside)
         font = QtGui.QFont()
@@ -473,14 +475,18 @@ class Ui_YouTubeOutside(object):
         font.setPointSize(10)
         self.actionWatchers_2.setFont(font)
         self.actionWatchers_2.setObjectName("actionWatchers_2")
+        self.actionUpdate_Settings = QtWidgets.QAction(YouTubeOutside)
+        self.actionUpdate_Settings.setObjectName("actionUpdate_Settings")
         self.menuOutside_YouTube.addSeparator()
         self.menuOutside_YouTube.addAction(self.actionOpen_Main_Folder)
         self.menuHelp.addAction(self.actionAbout_Outside_YT)
         self.menuUsers_Lists.addAction(self.actionUploaders_2)
         self.menuUsers_Lists.addSeparator()
         self.menuUsers_Lists.addAction(self.actionWatchers_2)
+        self.menuSettings.addAction(self.actionUpdate_Settings)
         self.menubar.addAction(self.menuUsers_Lists.menuAction())
         self.menubar.addAction(self.menuOutside_YouTube.menuAction())
+        self.menubar.addAction(self.menuSettings.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(YouTubeOutside)
@@ -513,6 +519,7 @@ class Ui_YouTubeOutside(object):
         self.menuOutside_YouTube.setTitle(_translate("YouTubeOutside", "Shortcuts"))
         self.menuHelp.setTitle(_translate("YouTubeOutside", "Help"))
         self.menuUsers_Lists.setTitle(_translate("YouTubeOutside", "Users Lists"))
+        self.menuSettings.setTitle(_translate("YouTubeOutside", "Settings"))
         self.actionAbout_Outside_YT.setText(_translate("YouTubeOutside", "About Outside YT"))
         self.actionUploaders.setText(_translate("YouTubeOutside", "Uploaders"))
         self.actionWatchers.setText(_translate("YouTubeOutside", "Watchers"))
@@ -520,6 +527,7 @@ class Ui_YouTubeOutside(object):
         self.actionUpdate_sheet.setText(_translate("YouTubeOutside", "Update Page (F5)"))
         self.actionUploaders_2.setText(_translate("YouTubeOutside", "Uploaders"))
         self.actionWatchers_2.setText(_translate("YouTubeOutside", "Watchers"))
+        self.actionUpdate_Settings.setText(_translate("YouTubeOutside", "Update Settings"))
 
 
 if __name__ == "__main__":

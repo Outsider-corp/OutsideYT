@@ -97,11 +97,11 @@ def uploaders_dialogs_menu(pos, parent, table: QAbstractItemView):
     menu = QMenu(parent)
     ind = table.indexAt(pos)
     if ind.isValid() and table.selectedIndexes():
-        acc = table.model().get_data().loc[ind.row(), "Account"]
         remove_data = menu.addAction("Remove Row")
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
+        acc = table.model().get_data().loc[ind.row(), "Account"]
         remove_data.triggered.connect(partial(remove_row, table=table,
                                               del_from_settings=partial(OutsideYT.app_settings_uploaders.del_account,
-                                                                        login=acc, parent=parent)))
+                                                                        parent=parent, login=acc)))
         cursor = QtGui.QCursor()
         menu.exec_(cursor.pos())

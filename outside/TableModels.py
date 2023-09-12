@@ -2,6 +2,8 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QStyleOptionViewItem
 
+from outside.message_boxes import warning_func
+
 
 class InLineEditDelegate(QtWidgets.QItemDelegate):
     def createEditor(self, parent: QWidget, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> QWidget:
@@ -28,7 +30,8 @@ class HeaderView(QtWidgets.QHeaderView):
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         super().mouseReleaseEvent(e)
-        if self.replace and [self.visualIndex(i) for i in range(self.parent().model().rowCount())] != self.visualIndexes:
+        if self.replace and [self.visualIndex(i) for i in
+                             range(self.parent().model().rowCount())] != self.visualIndexes:
             self.visualIndexes = [self.visualIndex(i) for i in range(self.parent().model().rowCount())]
             self.parent().model().reset_ids(map(lambda x: x + 1, self.visualIndexes))
 
@@ -89,7 +92,7 @@ class SpinBoxDelegate(QtWidgets.QItemDelegate):
         self.closeEditor.emit(editor, QtWidgets.QStyledItemDelegate.NoHint)
 
 
-def table_universal(table):
+def table_universal(table, font_size=11):
     table.setFrameShape(QtWidgets.QFrame.StyledPanel)
     table.setFrameShadow(QtWidgets.QFrame.Sunken)
     table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContentsOnFirstShow)
@@ -113,6 +116,12 @@ def table_universal(table):
     table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignHCenter)
 
     table.setItemDelegate(InLineEditDelegate())
+
+    font = QtGui.QFont()
+    font.setFamily("Arial")
+    font.setPointSize(font_size)
+    table.setFont(font)
+
     return table
 
 
@@ -122,3 +131,23 @@ def remove_row(table, del_from_settings=None):
     table.model().removeRow(table.currentIndex().row())
     table.update()
     table.parent().update()
+
+
+def remove_selected_rows(table, del_from_settings=None, type_deleting=""):
+    if warning_func("Are you sure you want to delete UNSELECTED rows?"):
+        num_rows = table.model().rowCount()
+        data = table.model().get_data()
+        for index in range(num_rows - 1, -1, -1):
+            if not data.loc[index, "Selected"]:
+                if del_from_settings and type_deleting:
+                    del_from_settings(data.loc[index, type_deleting])
+                table.model().removeRow(int(data.loc[index, "id"]) - 1)
+                table.update()
+                table.parent().update()
+
+
+def remove_all_rows(table: QtWidgets.QTableView):
+    if warning_func("Are you sure you want to delete ALL rows?"):
+        table.model().removeAllRows()
+        table.update()
+        table.parent().update()

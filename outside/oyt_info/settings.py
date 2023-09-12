@@ -37,17 +37,18 @@ class SettingsUploaders:
             error_func("Аккаунт с таким именем уже существует")
         return
 
-    def del_account(self, login, **kwargs):
-        self._accounts.pop(login)
-        if self.def_account == login:
-            self.del_def_account()
-        os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f'{login}_cookies'))
-        self.update_settings()
-        return
+    def del_account(self, login, parent=None, **kwargs):
+        if login in self.accounts.keys() and warning_func(
+                f"Are you sure you want to delete account '{login}' ({self.accounts[login]})", parent):
+            self._accounts.pop(login)
+            if self.def_account == login:
+                self.del_def_account()
+            os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f'{login}_cookies'))
+            self.update_settings()
 
     def edit_account(self, old_name, new_name):
         if new_name in self.accounts.keys():
-            error_func(f"Account name {new_name} is already used.")
+            error_func(f"Account name '{new_name}' is already used.")
             return
         if old_name != new_name:
             self._accounts[new_name] = self.accounts[old_name]
@@ -163,7 +164,7 @@ class SettingsWatchers:
             return True
         else:
             if not error_ignore:
-                error_func(f"Группа с таким названием уже существует - {group}")
+                error_func(f"Группа с таким названием уже существует - '{group}'")
             return False
 
     def add_account(self, acc: dict, group: str = "", **kwargs):
@@ -173,7 +174,7 @@ class SettingsWatchers:
             self._groups[group].update(acc)
             self.update_settings()
         else:
-            error_func(f"Аккаунт с таким именем уже существует в группе {group}: {acc}")
+            error_func(f"Аккаунт с таким именем уже существует в группе '{group}': '{acc}'")
         return
 
     def edit_account(self, group, old_name, new_group=None, new_name=None):
@@ -183,9 +184,7 @@ class SettingsWatchers:
                 if old_name in self.groups[key].keys():
                     group = key
                     break
-        if new_name and new_name not in self.accounts.keys():
-            if old_name == new_name:
-                return
+        if old_name != new_name and new_name not in self.accounts.keys():
             self._groups[group][new_name] = self.groups[group][old_name]
             del self._groups[group][old_name]
             os.rename(os.path.join(os.path.dirname(self.file), self.__str__(), f'{old_name}_cookies'),
@@ -197,15 +196,18 @@ class SettingsWatchers:
         self.update_settings()
 
     def del_account(self, group, login, parent=None):
-        if warning_func(f"Вы уверены, что хотите удалить аккаунт {login} ({self.groups[group][login]})", parent):
+        if group in self.groups and login in self.groups[group] and warning_func(
+                f"Are you sure you want to delete account '{login}'"
+                f", group '{group}' ({self.groups[group][login]})", parent):
             self._groups[group].pop(login)
             os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f"{login}_cookies"))
             self.update_settings()
         return
 
-    def del_group(self, group):
-        if group == "No group":
-            return
+    def del_group(self, group, parent=None):
+        if warning_func(f"Are you sure you want to delete group '{group}'?", parent):
+            if group == "No group":
+                return
         if group == self.def_group:
             self.del_def_group()
         for acc, mail in self.groups[group].items():
