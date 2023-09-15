@@ -19,6 +19,7 @@ from outside.message_boxes import error_func, waiting_func
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 wait_time = 5
+save_cookies_time = 60 * 60 * 24 * 30
 
 
 def get_driver():
@@ -52,6 +53,9 @@ def get_google_login(login: str, mail: str, folder: str):
             if "www.youtube.com/watch" in driver.current_url:
                 break
         cookies = driver.get_cookies()
+        for i, val in enumerate(cookies):
+            if 'expiry' in val.keys():
+                cookies[i]['expiry'] = int(time.time() + save_cookies_time)
         pickle.dump(cookies,
                     open(os.path.join(OutsideYT.project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
@@ -90,7 +94,7 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
         url2 = "https://studio.youtube.com/"
         driver.get(url)
         driver.implicitly_wait(wait_time)
-        for cookie in pickle.load(open(f"oyt_info/{User}_cookies", "rb")):
+        for cookie in pickle.load(open(f"outside/oyt_info/uploaders/{User}_cookies", "rb")):
             driver.add_cookie(cookie)
         driver.implicitly_wait(wait_time)
 
@@ -242,23 +246,31 @@ def get_video_info(link):
     Функция для получения информации о видео (название и канал)
     """
     response = requests.get(link)
+    # with open("123.html", "w", encoding="UTF-8") as f:
+    #     f.write(response.text)
+    # return
     if response.status_code == 200:
         soup = bs(response.text, "html.parser")
         script_tags = soup.find_all('script', {'nonce': True})
-
+        video = channel = duration = None
         for script_tag in script_tags:
             script_text = script_tag.get_text()
-            if 'ytInitialData' in script_text:
+            if not video and 'ytInitialData' in script_text:
                 ytInitialData = json.loads(script_text.replace('var ytInitialData = ', '')[:-1])
                 video_info = ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
                     'playerOverlayVideoDetailsRenderer']
                 video = video_info['title']['simpleText']
                 channel = video_info['subtitle']['runs'][0]['text']
-                return video, channel
+                continue
+            if not duration and 'ytInitialPlayerResponse' in script_text:
+                ytInitialPlayerResponse = json.loads(script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
+                duration = int(ytInitialPlayerResponse['streamingData']['formats'][0]['approxDurationMs']) // 1000
+        if not (video and channel and duration):
+            error_func("Не удалось получить информацию о видео...")
+        return video, channel, duration
     else:
         error_func("Нет подключения к сайту")
-        return
-    error_func("Не удалось получить информацию о видео...")
+        return None, None, None
 
 
 def get_playlist_info(link):
@@ -306,6 +318,44 @@ def select_page(type_add: str):
         except:
             pass
         return ans
+
+
+def watching(url: str, duration: int, user: str):
+    """
+    Function start watching video on url link by group watchers
+    :param url: str - link of YT video
+    :param user: str - watchers group
+    """
+    try:
+        url_yt = "https://www.youtube.com/"
+        driver = get_driver()
+        driver.get(url_yt)
+        driver.implicitly_wait(wait_time)
+        file_cookies = f"outside/oyt_info/watchers/{user}_cookies"
+        if not os.path.exists(file_cookies):
+            raise Exception(f'Cookies for {user} are not found.')
+        cookies = pickle.load(open(file_cookies, "rb"))
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+        driver.implicitly_wait(wait_time)
+        driver.get(url)
+        driver.implicitly_wait(wait_time)
+        driver.find_element(By.XPATH, '//button[@class="ytp-play-button ytp-button"]').click()
+        for i in range(duration):
+            try:
+                driver.current_url
+            except:
+                raise Exception(f"Driver was closed.")
+            time.sleep(1)
+            yield 1
+        driver.close()
+    except BaseException as e:
+        error_func(f"Error.\n{e}")
+        try:
+            driver.close()
+        except:
+            pass
+        yield "End"
 
 
 def get_google_login_generator(login: str, mail: str, folder: str):

@@ -9,11 +9,11 @@ from outside.message_boxes import error_func
 
 
 class WatchModel(QAbstractTableModel):
-    columns = ["id", "Watchers Group", "Count", "Video", "Channel", "Link", "Selected"]
+    columns = ["id", "Watchers Group", "Count", "Video", "Channel", "Duration", "Link", "Selected"]
 
     default_content = {"id": None,
                        "Watchers Group": app_settings_watchers.def_group, "Count": 0,
-                       "Video": "", "Channel": "", "Link": "", "Selected": True}
+                       "Video": "", "Channel": "", "Duration": "0", "Link": "", "Selected": True}
 
     def __init__(self, data=None, oldest_settings=None):
         QAbstractTableModel.__init__(self)
@@ -58,17 +58,14 @@ class WatchModel(QAbstractTableModel):
             if role == Qt.DisplayRole:
                 if column == "Selected":
                     return
-                if column == "Watchers Group":
-                    return self.get_data().loc[index.row(), column]
-
-                elif column == "Video":
-                    return self.get_data().loc[index.row(), column]
-
-                elif column == "Channel":
-                    return self.get_data().loc[index.row(), column]
-
-                elif column == "Link":
-                    return self.get_data().loc[index.row(), column]
+                if column == "Duration":
+                    duration = ""
+                    dur_sec = int(self.get_data().loc[index.row(), column])
+                    if dur_sec > 3600:
+                        duration += f'{dur_sec // 3600}:'
+                        dur_sec %= 3600
+                    duration += f'{dur_sec // 60}:{dur_sec % 60}'
+                    return duration
 
                 elif column == "Count":
                     return len(app_settings_watchers.groups[self.get_data().loc[index.row(), "Watchers Group"]])
@@ -126,7 +123,7 @@ class WatchModel(QAbstractTableModel):
         return True
 
     def removeAllRows(self, *args, **kwargs):
-        self.beginRemoveRows(QModelIndex(), 0, self.rowCount()-1)
+        self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self._data = pd.DataFrame(columns=WatchModel.columns)
         self.endRemoveRows()
         self.update()

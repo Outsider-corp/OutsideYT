@@ -7,6 +7,7 @@ from outside.TableModels import remove_row, remove_selected_rows, remove_all_row
 
 
 def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView, type_deleting: str = ""):
+
     add_data = menu.addAction("Add New Row")
     add_data.setIcon(QApplication.style().standardIcon(QtWidgets.QStyle.SP_ArrowDown))
     add_data.triggered.connect(lambda: table.model().insertRows())
