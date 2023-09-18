@@ -11,3 +11,6 @@ text_extensions = [".txt"]
 video_extensions = [".mp4", ".avi", ".mov", ".mpeg-1", ".mpeg-2", ".mpg", ".wmv",
                     ".mpegps", ".flv", ".3gpp", ".WebM", ".DNxHR", ".ProRes", ".CineForm", ".HEVC"]
 image_extensions = [".pjp", ".jpg", ".pjpeg", ".jpeg", ".jfif", ".png"]
+
+wait_time_url_uploads = 5
+save_cookies_time = 60 * 60 * 24 * 30

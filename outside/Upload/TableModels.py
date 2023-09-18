@@ -67,8 +67,6 @@ class UploadModel(QAbstractTableModel):
             if role == Qt.DisplayRole:
                 if column == "Selected" or column == "Save filename?":
                     return
-                if column == "Publish":
-                    return self.get_data().loc[index.row(), column]
 
                 elif column == "Video":
                     v = self.get_data().loc[index.row(), column]
@@ -88,8 +86,6 @@ class UploadModel(QAbstractTableModel):
 
                 elif column == "Tags":
                     return self.get_data().loc[index.row(), column]
-                elif column == "Cards" or column == "id":
-                    return str(self.get_data().loc[index.row(), column])
 
                 else:
                     return self.get_data().loc[index.row(), column]

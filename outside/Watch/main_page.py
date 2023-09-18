@@ -2,15 +2,16 @@ import time
 from functools import partial
 
 from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QWidget
 
-import OutsideYT
+from OutsideYT import app_settings_watchers, app_settings_uploaders, wait_time_url_uploads
 from . import dialogs
 from . import TableModels
 from . import context_menu
 from outside import TableModels as CommonTables
 from outside import main_dialogs as MainDialogs
 from ..YT_functions import watching
-from ..asinc_functions import start_operation, start_watch_operation, WatchProgress
+from ..asinc_functions import start_operation, start_watch_operation, WatchProgress, SeekThreads
 from ..functions import update_checkbox_select_all
 from ..message_boxes import error_func
 
@@ -19,18 +20,20 @@ def update_watch(ui, parent):
     watch_table = ui.Watch_Table
     Watch_model = TableModels.WatchModel(oldest_settings=ui)
     watch_table.setModel(Watch_model)
-
     watch_table = CommonTables.table_universal(watch_table)
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index("Selected"))
-    watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
+    watch_table.hideColumn(list(watch_table.model().get_data().columns).index("Progress"))
+    # watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
     watch_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
     width = parent.width()
-    for i, size in enumerate([50, 150, 70, 350, 150, 70, int(width) - 880]):
+    for i, size in enumerate([50, 150, 150, 70, 350, 150, 70, int(width) - 880]):
         watch_table.setColumnWidth(i, size)
 
-    group_combo_del = CommonTables.ComboBoxDelegate(watch_table, OutsideYT.app_settings_watchers.groups.keys())
+    group_combo_del = CommonTables.ComboBoxDelegate(watch_table, app_settings_watchers.groups.keys())
     watch_table.setItemDelegateForColumn(list(watch_table.model().get_data().columns).index("Watchers Group"),
                                          group_combo_del)
+    progress_del = TableModels.ProgressBarDelegate(parent)
+    watch_table.setItemDelegateForColumn(1, progress_del)
 
     ui.Watch_SelectVideos_Button.clicked.connect(
         partial(dialogs.open_watch_select_videos, parent=parent, table=watch_table, parent_settings=ui))
@@ -59,18 +62,46 @@ def update_watch(ui, parent):
 
 
 def start_watch(dialog, dialog_settings, table):
-    for _, video in table.model().get_data().iterrows():
+    dialog_settings.watch_threads = []
+    current_tab = dialog_settings.OutsideYT.findChild(QWidget, "WatchPage")
+    tab_elements = current_tab.findChildren(QWidget)
+
+    for num, video in table.model().get_data().iterrows():
         group = video["Watchers Group"]
-        users = OutsideYT.app_settings_watchers.groups[group].keys()
+        users = app_settings_watchers.groups[group].keys()
         if not users:
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
+        if not video["Selected"]:
+            continue
+
+        if not dialog_settings.watch_threads:
+            for el in tab_elements:
+                el.setEnabled(False)
+            dialog_settings.Watch_Table.hideColumn(
+                list(dialog_settings.Watch_Table.model().get_data().columns).index("id"))
+            dialog_settings.Watch_Table.setColumnHidden(
+                list(dialog_settings.Watch_Table.model().get_data().columns).index("Progress"), False)
+
         total_steps = video["Duration"] * len(users)
         group_progress = WatchProgress(total_steps)
+        progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num)
+
         for user in users:
-            start_watch_operation(dialog=dialog, dialog_settings=dialog_settings, page="WatchPage",
-                                  progress_bar=dialog_settings.Watch_Progress_Bar, group_progress=group_progress,
-                                  process=partial(watching, url=video["Link"], duration=video["Duration"], user=user))
+            process = partial(watching,
+                              url=video["Link"],
+                              duration=video["Duration"],
+                              user=user,
+                              driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.isChecked())
+
+            start_watch_operation(dialog_settings=dialog_settings,
+                                  progress_bar=progress_bar,
+                                  group_progress=group_progress,
+                                  process=process)
+
+    seek_threads = SeekThreads(dialog_settings.watch_threads, tab_elements, dialog_settings)
+    seek_threads.finished.connect(seek_threads.deleteLater)
+    seek_threads.start()
 
 
 def example_process():

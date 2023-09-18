@@ -39,9 +39,9 @@ class QMainWindowPlus(QMainWindow):
     def add_row(cls):
         current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
         table = globals()[f'{current_page}_table']
-        if current_page in ["Upload", "Watch"]:
+        if current_page in ["Upload", "Watch"] and table.isEnabled():
             table.model().insertRows()
-        table.update()
+            table.update()
 
 
 def update_ui():
