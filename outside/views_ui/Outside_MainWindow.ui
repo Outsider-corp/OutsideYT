@@ -672,6 +672,13 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
+           <widget class="QCheckBox" name="Watch_ShowBrowser_checkBox">
+            <property name="text">
+             <string>Show Browsers</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="Watch_advanced_settings_Button">
             <property name="font">
              <font>

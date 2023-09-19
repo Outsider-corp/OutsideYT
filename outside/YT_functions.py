@@ -47,7 +47,7 @@ def get_driver(add_args=None, gpu=False, images=False, audio=False, headless=Tru
 def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
-        driver = get_driver()
+        driver = get_driver(headless=False, images=True)
         filename = f"{login}_cookies"
         url = "https://youtube.com"
         url_log = "https://accounts.google.com/"

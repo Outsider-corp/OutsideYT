@@ -214,7 +214,7 @@ def add_video_to_table(table, link: str = "", group=None, textbox: QtWidgets.QLi
         if not textbox:
             return
         link = textbox.text()
-    if "youtube.com/watch" in link or 'youtu.be/':
+    if "youtube.com/watch" in link or 'youtu.be/' in link:
         video, channel, duration = get_video_info(link)
         if video and channel and duration:
             table.model().insertRows(row_content={"Watchers Group": group,

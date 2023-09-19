@@ -85,7 +85,8 @@ def start_watch(dialog, dialog_settings, table):
 
         total_steps = video["Duration"] * len(users)
         group_progress = WatchProgress(total_steps)
-        progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num)
+        progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num,
+                               viewport=dialog_settings.Watch_Table)
 
         for user in users:
             process = partial(watching,
@@ -99,8 +100,12 @@ def start_watch(dialog, dialog_settings, table):
                                   group_progress=group_progress,
                                   process=process)
 
+    def seek_ends(seek_thread):
+        seek_thread.deleteLater()
+        dialog_settings.Watch_Table.model().reset_progress_bars()
+
     seek_threads = SeekThreads(dialog_settings.watch_threads, tab_elements, dialog_settings)
-    seek_threads.finished.connect(seek_threads.deleteLater)
+    seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))
     seek_threads.start()
 
 

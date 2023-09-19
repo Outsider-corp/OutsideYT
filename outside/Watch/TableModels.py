@@ -1,11 +1,10 @@
 import typing
 
 import pandas as pd
-from PyQt5 import QtGui
-from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt, QObject, pyqtSignal
-from PyQt5.QtWidgets import QStyledItemDelegate, QProgressBar, QWidget, QVBoxLayout
+from PyQt5 import QtGui, QtWidgets
+from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
+from PyQt5.QtWidgets import QStyledItemDelegate, QProgressBar, QWidget, QVBoxLayout, QStyle, QStyleOptionProgressBar
 
-import OutsideYT
 from OutsideYT import app_settings_watchers
 from outside.message_boxes import error_func
 
@@ -139,8 +138,13 @@ class WatchModel(QAbstractTableModel):
     def get_data(self):
         return self._data
 
-    def update_progress_bar(self, index, value):
+    def update_progress_bar(self, index, value, viewport):
         self._data.loc[index, "Progress"] = value
+        self.update()
+        viewport.update()
+
+    def reset_progress_bars(self):
+        self._data["Progress"] = 0
         self.update()
 
 
@@ -288,7 +292,7 @@ class WatchersGroupsModel(QAbstractTableModel):
             groupname = "New Group"
             num = 0
             while True:
-                if OutsideYT.app_settings_watchers.add_group(f"{groupname} {num}", error_ignore=True):
+                if app_settings_watchers.add_group(f"{groupname} {num}", error_ignore=True):
                     group = f"{groupname} {num}"
                     break
                 num += 1
@@ -327,50 +331,22 @@ class WatchersGroupsModel(QAbstractTableModel):
 
 class ProgressBarDelegate(QStyledItemDelegate):
 
-    # def __init__(self, parent):
-    #     super().__init__(parent)
-
-    def createEditor(self, parent, option, index):
-        # progress_bar = QProgressBar(parent)
-        # progress_bar.setProperty("value", 0)
-        # progress_bar.setTextVisible(True)
-        # progress_bar.setAlignment(Qt.AlignLeft)
-        # progress_bar.setMinimum(0)
-        # progress_bar.setMaximum(100)
-        # progress_bar.setValue(0)
-        # font = QtGui.QFont()
-        # font.setFamily("Arial")
-        # font.setPointSize(9)
-        # progress_bar.setFont(font)
-
-        progress_bar = QProgressBar(parent)
-        progress_bar.setRange(0, 100)
-        progress_bar.setAlignment(Qt.AlignLeft)
-        # progress_bar = ProgressWidget(parent)
-        return progress_bar
-
-    def setEditorData(self, editor, index):
-        value = index.model().data(index, Qt.DisplayRole)
-        editor.setValue(int(value))
-
-    def setModelData(self, editor, model, index):
-        value = editor.value()
-        model.setData(index, value, Qt.DisplayRole)
-
-
-class ProgressWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(100)
-        layout.addWidget(self.progress_bar)
-        self.value_ = 0
+        self.progress_bar = QtWidgets.QStyleOptionProgressBar()
+        self.progress_bar.state = QtWidgets.QStyle.State_Enabled
+        self.progress_bar.direction = QtWidgets.QApplication.layoutDirection()
+        self.progress_bar.minimum = 0
+        self.progress_bar.maximum = 100
+        self.progress_bar.text = f"{self.progress_bar.progress}%"
+        self.progress_bar.textVisible = True
+        pal = self.progress_bar.palette
+        pal.setColor(QtGui.QPalette.Highlight, QtGui.QColor(189, 0, 0))
+        self.progress_bar.palette = pal
 
-    def value(self):
-        return self.value_
-
-    def setValue(self, value):
-        self.value_ = value
-        self.progress_bar.setValue(value)
+    def paint(self, painter, option, index):
+        self.progress_bar.rect = option.rect
+        self.progress_bar.fontMetrics = QtGui.QFontMetrics(option.font)
+        self.progress_bar.progress = int(index.data())
+        self.progress_bar.text = f"{self.progress_bar.progress}%"
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, self.progress_bar, painter)

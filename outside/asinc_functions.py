@@ -83,7 +83,6 @@ class WatchThread(QThread):
         self.group_progress = group_progress
 
     def run(self):
-        print("start progress bar...")
         for i in self.process():
             if i == "End":
                 break
@@ -117,8 +116,6 @@ def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressB
 
 def start_watch_operation(dialog_settings, progress_bar, process, group_progress):
     def finish_operation():
-        if group_progress.progress >= group_progress.total_steps:
-            progress_bar(value=0)
         try:
             worker_thread.deleteLater()
             dialog_settings.watch_threads.remove(worker_thread)
