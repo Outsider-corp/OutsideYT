@@ -1,19 +1,18 @@
 import time
 from functools import partial
 
-from PyQt5 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QWidget
 
-from OutsideYT import app_settings_watchers, app_settings_uploaders, wait_time_url_uploads
-from . import dialogs
-from . import TableModels
-from . import context_menu
 from outside import TableModels as CommonTables
 from outside import main_dialogs as MainDialogs
-from ..YT_functions import watching
-from ..asinc_functions import start_operation, start_watch_operation, WatchProgress, SeekThreads
+from OutsideYT import app_settings_watchers
+
+from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation
 from ..functions import update_checkbox_select_all
 from ..message_boxes import error_func
+from ..YT_functions import watching
+from . import TableModels, context_menu, dialogs
 
 
 def update_watch(ui, parent):
@@ -21,16 +20,16 @@ def update_watch(ui, parent):
     Watch_model = TableModels.WatchModel(oldest_settings=ui)
     watch_table.setModel(Watch_model)
     watch_table = CommonTables.table_universal(watch_table)
-    watch_table.hideColumn(list(watch_table.model().get_data().columns).index("Selected"))
-    watch_table.hideColumn(list(watch_table.model().get_data().columns).index("Progress"))
+    watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Selected'))
+    watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Progress'))
     # watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
-    watch_table.horizontalHeader().setFont(QtGui.QFont("Arial", 12))
+    watch_table.horizontalHeader().setFont(QtGui.QFont('Arial', 12))
     width = parent.width()
     for i, size in enumerate([50, 150, 150, 70, 350, 150, 70, int(width) - 880]):
         watch_table.setColumnWidth(i, size)
 
     group_combo_del = CommonTables.ComboBoxDelegate(watch_table, app_settings_watchers.groups.keys())
-    watch_table.setItemDelegateForColumn(list(watch_table.model().get_data().columns).index("Watchers Group"),
+    watch_table.setItemDelegateForColumn(list(watch_table.model().get_data().columns).index('Watchers Group'),
                                          group_combo_del)
     progress_del = TableModels.ProgressBarDelegate(parent)
     watch_table.setItemDelegateForColumn(1, progress_del)
@@ -54,8 +53,8 @@ def update_watch(ui, parent):
     watch_table.customContextMenuRequested.connect(
         lambda pos: context_menu.watch_context_menu(pos, parent=parent, table=watch_table))
 
-    ui.actionWatchers_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type="watch",
-                                                  add_table_class=TableModels.WatchersUsersModel
+    ui.actionWatchers_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type='watch',
+                                                  add_table_class=TableModels.WatchersUsersModel,
                                                   ))
 
     return watch_table, ui
@@ -63,35 +62,35 @@ def update_watch(ui, parent):
 
 def start_watch(dialog, dialog_settings, table):
     dialog_settings.watch_threads = []
-    current_tab = dialog_settings.OutsideYT.findChild(QWidget, "WatchPage")
+    current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'WatchPage')
     tab_elements = current_tab.findChildren(QWidget)
 
     for num, video in table.model().get_data().iterrows():
-        group = video["Watchers Group"]
+        group = video['Watchers Group']
         users = app_settings_watchers.groups[group].keys()
         if not users:
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
-        if not video["Selected"]:
+        if not video['Selected']:
             continue
 
         if not dialog_settings.watch_threads:
             for el in tab_elements:
                 el.setEnabled(False)
             dialog_settings.Watch_Table.hideColumn(
-                list(dialog_settings.Watch_Table.model().get_data().columns).index("id"))
+                list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
             dialog_settings.Watch_Table.setColumnHidden(
-                list(dialog_settings.Watch_Table.model().get_data().columns).index("Progress"), False)
+                list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'), False)
 
-        total_steps = video["Duration"] * len(users)
+        total_steps = video['Duration'] * len(users)
         group_progress = WatchProgress(total_steps)
         progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num,
                                viewport=dialog_settings.Watch_Table)
 
         for user in users:
             process = partial(watching,
-                              url=video["Link"],
-                              duration=video["Duration"],
+                              url=video['Link'],
+                              duration=video['Duration'],
                               user=user,
                               driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.isChecked())
 

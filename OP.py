@@ -1,20 +1,20 @@
-import sys
 import os
-
-from outside.Download.main_page import update_download
-from outside.Upload.main_page import update_upload
-from outside.Watch.main_page import update_watch
-from outside.main_dialogs import update_settings_from_file
-from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
+import sys
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QStyleFactory, QMainWindow, QShortcut
-from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QShortcut, QStyleFactory
+
+from outside.Download.main_page import update_download
+from outside.main_dialogs import update_settings_from_file
+from outside.Upload.main_page import update_upload
+from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
+from outside.Watch.main_page import update_watch
 
 
 class QMainWindowPlus(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.shortcut1 = QShortcut(QKeySequence('F5'), self)
         self.shortcut1.activated.connect(QMainWindowPlus.table_update)
@@ -31,7 +31,7 @@ class QMainWindowPlus(QMainWindow):
 
     @classmethod
     def table_update(cls):
-        current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
+        ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
         table = globals()[f'Upload_table']
         table.update()
 
@@ -39,7 +39,7 @@ class QMainWindowPlus(QMainWindow):
     def add_row(cls):
         current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
         table = globals()[f'{current_page}_table']
-        if current_page in ["Upload", "Watch"] and table.isEnabled():
+        if current_page in ['Upload', 'Watch'] and table.isEnabled():
             table.model().insertRows()
             table.update()
 
@@ -58,7 +58,7 @@ def start_GUI():
     QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyle(QStyleFactory.create("Fusion"))
+    app.setStyle(QStyleFactory.create('Fusion'))
     YouTubeOutside = QMainWindowPlus()
     ui = Ui_YouTubeOutside()
     ui.setupUi(YouTubeOutside)

@@ -1,12 +1,10 @@
 import os
 
-import OutsideYT
-
 
 def update_combobox(combobox, items: list, def_value: str):
     combobox.clear()
     combobox.addItems(items)
-    if def_value != "":
+    if def_value != '':
         index = list(items).index(def_value)
         combobox.setCurrentIndex(index)
     else:
@@ -15,18 +13,18 @@ def update_combobox(combobox, items: list, def_value: str):
 
 
 def update_checkbox_select_all(checkbox, table):
-    table.model()._data["Selected"] = checkbox.isChecked()
+    table.model()._data['Selected'] = checkbox.isChecked()
     table.update()
 
 
-def find_files(args: list, folder: str, name: str = ""):
+def find_files(args: list, folder: str, name: str = ''):
     for file in os.listdir(folder):
         if file.endswith(tuple(args)) and file.startswith(name):
-            if ".txt" in args:
-                with open(os.path.join(folder, file), "r", encoding="UTF-8") as f:
-                    if name == "Playlist":
-                        return f.read().split("\n")
+            if '.txt' in args:
+                with open(os.path.join(folder, file), 'r', encoding='UTF-8') as f:
+                    if name == 'Playlist':
+                        return f.read().split('\n')
                     return f.read()
             return file
-    print("File not founded")
+    print('File not founded')
     return None

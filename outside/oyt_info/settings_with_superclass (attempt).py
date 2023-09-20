@@ -1,11 +1,11 @@
-import os
 import json
+import os
 
 
 class SettingsAccounts:
-    def __init__(self, file):
-        self._accounts = dict()
-        self._def_account = ""
+    def __init__(self, file) -> None:
+        self._accounts = {}
+        self._def_account = ''
         self.file = file
         if file:
             self.read_settings()
@@ -20,17 +20,15 @@ class SettingsAccounts:
         return self._def_account
 
     def add_account(self, acc: dict):
-        if list(acc.keys())[0] not in self.accounts.keys():
+        if list(acc.keys())[0] not in self.accounts:
             self._accounts.update(acc)
             self.update_settings()
         else:
-            print("Аккаунт с таким именем уже существует")
-        return
+            print('Аккаунт с таким именем уже существует')
 
     def del_account(self, login):
         self._accounts.pop(login)
         self.update_settings()
-        return
 
     def update_accounts(self, accs):
         self._accounts = accs
@@ -39,49 +37,47 @@ class SettingsAccounts:
     def add_def_account(self, login):
         self._def_account = login
         self.update_settings()
-        return
 
     def del_def_account(self):
-        self._def_account = ""
+        self._def_account = ''
         self.update_settings()
-        return
 
     def update_settings(self):
-        with open(self.file, "w") as f:
-            data = dict()
-            data["accs"] = self.accounts
-            data["def_acc"] = self.def_account
+        with open(self.file, 'w') as f:
+            data = {}
+            data['accs'] = self.accounts
+            data['def_acc'] = self.def_account
             json.dump(data, f)
 
     def read_settings(self):
         if not os.path.exists(self.file):
             self.update_settings()
             return
-        with open(self.file, "r") as file:
+        with open(self.file, 'r') as file:
             data = json.load(file)
-            self._accounts = data["accs"]
-            self._def_account = data["def_acc"]
+            self._accounts = data['accs']
+            self._def_account = data['def_acc']
         return
 
     def check_cookies(self):
         folder = os.path.dirname(self.file)
         to_del = []
-        os.makedirs(os.path.join(folder, "uploaders"), exist_ok=True)
-        for acc in self.accounts.keys():
-            if not os.path.isfile(os.path.join(folder, "uploaders", f'{acc}_cookies')):
+        os.makedirs(os.path.join(folder, 'uploaders'), exist_ok=True)
+        for acc in self.accounts:
+            if not os.path.isfile(os.path.join(folder, 'uploaders', f'{acc}_cookies')):
                 to_del.append(acc)
         for acc in to_del:
             self._accounts.pop(acc)
-        if not os.path.isfile(os.path.join(folder, "uploaders", f'{self.def_account}_cookies')):
+        if not os.path.isfile(os.path.join(folder, 'uploaders', f'{self.def_account}_cookies')):
             self.del_def_account()
         else:
             self.update_settings()
 
 
 class SettingsUploaders(SettingsAccounts):
-    def __init__(self, file):
+    def __init__(self, file) -> None:
         super().__init__(file)
-        self._vids_folder = "videos"
+        self._vids_folder = 'videos'
 
     @property
     def vids_folder(self):
@@ -90,27 +86,25 @@ class SettingsUploaders(SettingsAccounts):
     def add_vids_folder(self, path):
         self._vids_folder = path
         self.update_settings()
-        return
 
     def del_vids_folder(self):
-        self._vids_folder = "videos"
+        self._vids_folder = 'videos'
         self.update_settings()
-        return
 
     def create_videos_dir(self):
         path = self.vids_folder
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-        for login in self.accounts.keys():
+        for login in self.accounts:
             if not os.path.exists(os.path.join(path, login)):
                 os.mkdir(os.path.join(path, login))
 
     def update_settings(self):
-        with open(self.file, "w") as f:
-            data = dict()
-            data["accs"] = self.accounts
-            data["def_acc"] = self.def_account
-            data["vids_folder"] = self.vids_folder
+        with open(self.file, 'w') as f:
+            data = {}
+            data['accs'] = self.accounts
+            data['def_acc'] = self.def_account
+            data['vids_folder'] = self.vids_folder
             json.dump(data, f)
         self.create_videos_dir()
 
@@ -118,16 +112,16 @@ class SettingsUploaders(SettingsAccounts):
         if not os.path.exists(self.file):
             self.update_settings()
             return
-        with open(self.file, "r") as file:
+        with open(self.file, 'r') as file:
             data = json.load(file)
-            self._accounts = data["accs"]
-            self._def_account = data["def_acc"]
-            self._vids_folder = data["vids_folder"]
+            self._accounts = data['accs']
+            self._def_account = data['def_acc']
+            self._vids_folder = data['vids_folder']
         return
 
 
 class SettingsWatchers(SettingsAccounts):
-    def __init__(self, file):
+    def __init__(self, file) -> None:
         super().__init__(file)
 
 

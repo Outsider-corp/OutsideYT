@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_GroupsList_Dialog(object):
     def setupUi(self, GroupsList_Dialog):
-        GroupsList_Dialog.setObjectName("GroupsList_Dialog")
+        GroupsList_Dialog.setObjectName('GroupsList_Dialog')
         GroupsList_Dialog.resize(498, 256)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -24,50 +24,50 @@ class Ui_GroupsList_Dialog(object):
         GroupsList_Dialog.setMaximumSize(QtCore.QSize(600, 600))
         GroupsList_Dialog.setBaseSize(QtCore.QSize(500, 250))
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(11)
         GroupsList_Dialog.setFont(font)
-        GroupsList_Dialog.setStyleSheet("background-color: rgb(39, 39, 39);\n"
-"color: rgb(255, 255, 255);\n"
-"alternate-background-color: rgb(39, 39, 39);\n"
-"selection-background-color: rgb(15, 15, 15);")
+        GroupsList_Dialog.setStyleSheet('background-color: rgb(39, 39, 39);\n'
+'color: rgb(255, 255, 255);\n'
+'alternate-background-color: rgb(39, 39, 39);\n'
+'selection-background-color: rgb(15, 15, 15);')
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(GroupsList_Dialog)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.verticalLayout_2.setObjectName('verticalLayout_2')
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.verticalLayout.setContentsMargins(6, 6, 6, 6)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout.setObjectName('verticalLayout')
         self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.horizontalLayout.setObjectName('horizontalLayout')
         self.addGroup_Button = QtWidgets.QPushButton(GroupsList_Dialog)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(11)
         self.addGroup_Button.setFont(font)
-        self.addGroup_Button.setStyleSheet("color: rgb(255, 255, 255);")
-        self.addGroup_Button.setObjectName("addGroup_Button")
+        self.addGroup_Button.setStyleSheet('color: rgb(255, 255, 255);')
+        self.addGroup_Button.setObjectName('addGroup_Button')
         self.horizontalLayout.addWidget(self.addGroup_Button)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.Groups_Table = QtWidgets.QTableView(GroupsList_Dialog)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(14)
         self.Groups_Table.setFont(font)
-        self.Groups_Table.setObjectName("Groups_Table")
+        self.Groups_Table.setObjectName('Groups_Table')
         self.verticalLayout.addWidget(self.Groups_Table)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.horizontalLayout_2.setObjectName('horizontalLayout_2')
         self.buttonBox = QtWidgets.QDialogButtonBox(GroupsList_Dialog)
         font = QtGui.QFont()
-        font.setFamily("MS Shell Dlg 2")
+        font.setFamily('MS Shell Dlg 2')
         font.setPointSize(8)
         self.buttonBox.setFont(font)
-        self.buttonBox.setStyleSheet("color: rgb(255, 255, 255);")
+        self.buttonBox.setStyleSheet('color: rgb(255, 255, 255);')
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Discard|QtWidgets.QDialogButtonBox.Save)
-        self.buttonBox.setObjectName("buttonBox")
+        self.buttonBox.setObjectName('buttonBox')
         self.horizontalLayout_2.addWidget(self.buttonBox)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.verticalLayout_2.addLayout(self.verticalLayout)
@@ -79,11 +79,11 @@ class Ui_GroupsList_Dialog(object):
 
     def retranslateUi(self, GroupsList_Dialog):
         _translate = QtCore.QCoreApplication.translate
-        GroupsList_Dialog.setWindowTitle(_translate("GroupsList_Dialog", "Groups List"))
-        self.addGroup_Button.setText(_translate("GroupsList_Dialog", " Add Group"))
+        GroupsList_Dialog.setWindowTitle(_translate('GroupsList_Dialog', 'Groups List'))
+        self.addGroup_Button.setText(_translate('GroupsList_Dialog', ' Add Group'))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
     GroupsList_Dialog = QtWidgets.QDialog()

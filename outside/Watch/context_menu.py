@@ -1,11 +1,11 @@
 from functools import partial
 
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QAbstractItemView, QMenu, QApplication, QStyle
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QMenu, QStyle
 
 import OutsideYT
-from outside.TableModels import remove_row
 from outside.context_menu import add_remove_row
+from outside.TableModels import remove_row
 
 
 def watchers_group_dialogs_menu(pos, parent, table: QAbstractItemView):
@@ -13,9 +13,9 @@ def watchers_group_dialogs_menu(pos, parent, table: QAbstractItemView):
     ind = table.indexAt(pos)
 
     if ind.isValid() and table.selectedIndexes():
-        remove_data = menu.addAction("Remove Row")
+        remove_data = menu.addAction('Remove Row')
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
-        group = table.model().get_data().loc[table.currentIndex().row(), "Group"]
+        group = table.model().get_data().loc[table.currentIndex().row(), 'Group']
         remove_data.triggered.connect(partial(remove_row, table=table,
                                               del_from_settings=partial(OutsideYT.app_settings_watchers.del_group,
                                                                         parent=parent, group=group)))
@@ -28,10 +28,10 @@ def watchers_dialogs_menu(pos, parent, table: QAbstractItemView):
     ind = table.indexAt(pos)
 
     if ind.isValid() and table.selectedIndexes():
-        remove_data = menu.addAction("Remove Row")
+        remove_data = menu.addAction('Remove Row')
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
-        account = table.model().get_data().loc[table.currentIndex().row(), "Account"]
-        group = table.model().get_data().loc[table.currentIndex().row(), "Group"]
+        account = table.model().get_data().loc[table.currentIndex().row(), 'Account']
+        group = table.model().get_data().loc[table.currentIndex().row(), 'Group']
         remove_data.triggered.connect(partial(remove_row, table=table,
                                               del_from_settings=partial(OutsideYT.app_settings_watchers.del_account,
                                                                         group=group,

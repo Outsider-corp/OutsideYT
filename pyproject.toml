@@ -1,0 +1,53 @@
+[tool.ruff.flake8-quotes]
+inline-quotes = "single"
+multiline-quotes = "double"
+
+[tool.ruff.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff]
+extend-select = [
+    "F",
+    "E",
+    "C901",
+    "I",
+    "N",
+    "D",
+    "ANN",
+    "ASYNC",
+    "BLE",
+    "A",
+    "COM",
+    "C4",
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "Q",
+    "RET",
+    "SIM",
+    "ARG",
+    "TD",
+    "PD",
+    "PLC0208",
+    "PLC0414",
+    "PLC1901",
+    "PLC3002",
+    "PLE",
+    "PLR",
+    "PERF",
+    "FURB",
+]
+ignore = [
+    "F541",
+    "F823",
+    "E266",
+    "D107",
+    "D205",
+    "D211",
+    "D212",
+    "D407"
+]
+show-fixes = true
+line-length = 100
+target-version = "py39"

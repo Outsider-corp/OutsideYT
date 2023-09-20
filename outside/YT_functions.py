@@ -1,36 +1,37 @@
-import asyncio
+import contextlib
 import json
 import os
+import pickle
 import random
-import re
-import time
 import sys
+import time
 
+import requests
 import selenium.common.exceptions
+from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import pickle
-import requests
-from bs4 import BeautifulSoup as bs
 
-from OutsideYT import save_cookies_time, wait_time_url_uploads, project_folder
 from outside.message_boxes import error_func, waiting_func
+from OutsideYT import project_folder, save_cookies_time, wait_time_url_uploads
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
-def get_driver(add_args=None, gpu=False, images=False, audio=False, headless=True):
+def get_driver(add_args: list = None, gpu: bool = False, images: bool = False, audio: bool = False,
+               headless: bool = True):
+    """Return driver for Selenium with added options."""
     driver_options = webdriver.ChromeOptions()
-    user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-                 f" AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    user_agent = (f'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                  f' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36')
     driver_options.add_argument(
-        f"user-agent={user_agent}")
-    driver_options.add_argument("--disable-blink-features=AutomationControlled")
-    driver_options.add_argument("--blink-settings=imagesEnabled=false")
+        f'user-agent={user_agent}')
+    driver_options.add_argument('--disable-blink-features=AutomationControlled')
+    driver_options.add_argument('--blink-settings=imagesEnabled=false')
     if not gpu:
-        driver_options.add_argument("--disable-gpu")
+        driver_options.add_argument('--disable-gpu')
     if not images:
-        driver_options.add_argument("--disable-software-rasterizer")
+        driver_options.add_argument('--disable-software-rasterizer')
     if not audio:
         driver_options.add_argument('--mute-audio')
     if headless:
@@ -38,45 +39,43 @@ def get_driver(add_args=None, gpu=False, images=False, audio=False, headless=Tru
     if add_args:
         for arg in add_args:
             driver_options.add_argument(arg)
-    driver = webdriver.Chrome(executable_path=
-                              os.path.join(project_folder, "outside", "bin", "chromedriver.exe"),
-                              options=driver_options)
-    return driver
+    return webdriver.Chrome(executable_path=
+                            os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe'),
+                            options=driver_options)
 
 
 def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
         driver = get_driver(headless=False, images=True)
-        filename = f"{login}_cookies"
-        url = "https://youtube.com"
-        url_log = "https://accounts.google.com/"
+        filename = f'{login}_cookies'
+        url = 'https://youtube.com'
         driver.get(url)
         driver.implicitly_wait(7)
         time.sleep(15)
         while True:
             time.sleep(1)
-            if "www.youtube.com/watch" in driver.current_url:
+            if 'www.youtube.com/watch' in driver.current_url:
                 break
         cookies = driver.get_cookies()
         for i, val in enumerate(cookies):
-            if 'expiry' in val.keys():
+            if 'expiry' in val:
                 cookies[i]['expiry'] = int(time.time() + save_cookies_time)
         pickle.dump(cookies,
-                    open(os.path.join(project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
+                    open(os.path.join(project_folder, 'outside', 'oyt_info',
+                                      folder.lower(), filename), 'wb'))
         # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
         added = True
     except Exception as e:
-        error_func(f"An error occurred while trying to login.\n\n{e}")
+        error_func(f'An error occurred while trying to login.\n\n{e}')
     finally:
-        try:
+        with contextlib.suppress(Exception):
             driver.quit()
-        except:
-            pass
         return added
 
 
-def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Tags, Ends, Cards, Access, Save_title):
+def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Tags, Ends,
+                 Cards, Access, Save_title):
     """
     :param User: Имя пользователя
     :param Title: Название
@@ -96,11 +95,11 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
     """
     try:
         driver = get_driver()
-        url = "https://youtube.com"
-        url2 = "https://studio.youtube.com/"
+        url = 'https://youtube.com'
+        url2 = 'https://studio.youtube.com/'
         driver.get(url)
         driver.implicitly_wait(wait_time_url_uploads)
-        for cookie in pickle.load(open(f"outside/oyt_info/uploaders/{User}_cookies", "rb")):
+        for cookie in pickle.load(open(f'outside/oyt_info/uploaders/{User}_cookies', 'rb')):
             driver.add_cookie(cookie)
         driver.implicitly_wait(wait_time_url_uploads)
 
@@ -120,9 +119,9 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
             time.sleep(1)
             title_el.clear()
             title_el.send_keys(Title)
-        elif title_el.text != ".".join(os.path.basename(Video).split(".")[:-1]) and Save_title:
+        elif title_el.text != '.'.join(os.path.basename(Video).split('.')[:-1]) and Save_title:
             title_el.clear()
-            title_el.send_keys(".".join(os.path.basename(Video).split(".")[:-1]))
+            title_el.send_keys('.'.join(os.path.basename(Video).split('.')[:-1]))
 
         description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                        f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
@@ -130,18 +129,15 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
         time.sleep(5)
         description_old = description_el.text
         description_el.clear()
-        if description_old:
-            descs_del = "\n\n"
-        else:
-            descs_del = ""
-        description_el.send_keys("".join([Description, descs_del, description_old]))
+        descs_del = '\n\n' if description_old else ''
+        description_el.send_keys(''.join([Description, descs_del, description_old]))
 
         if Preview:
             try:
                 driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(Preview)
                 driver.implicitly_wait(wait_time_url_uploads)
             except Exception:
-                print("Превью невозможно загрузить")
+                print('Превью невозможно загрузить')
 
         if Playlist:
             try:
@@ -151,16 +147,16 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
                 playlist_el.click()
                 driver.implicitly_wait(wait_time_url_uploads // 2)
                 if not isinstance(Playlist, (tuple, list)):
-                    playlist = [Playlist]
+                    pass
                 for i in Playlist:
                     try:
                         playlist_el.find_element(By.XPATH, f'//span[@class="label label-text'
                                                            f' style-scope ytcp-checkbox-group" and'
                                                            f' contains(text(), "{i.rstrip()}")]').click()
                     except:
-                        print(f"No playlist: {i}")
+                        print(f'No playlist: {i}')
             except Exception as e:
-                print("Произошла ошибка на этапе добавления видео в плейлисты")
+                print('Произошла ошибка на этапе добавления видео в плейлисты')
                 print(e)
             finally:
                 try:
@@ -191,26 +187,26 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
 
                 ends_el = driver.find_element(By.XPATH,
                                               f'//*[@id="cards-row"]')
-                if Ends == "import":
+                if Ends == 'import':
                     end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
                                                              f' style-scope ytve-endscreen'
                                                              f'-template-picker"]')[0]
-                elif Ends == "random":
+                elif Ends == 'random':
                     while True:
                         end_num = random.randint(0, 5)
                         end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
                                                                  f' style-scope ytve-endscreen'
                                                                  f'-template-picker"]')[end_num]
-                        if "playlist" not in end_el.text.lower() and "плейлист" not in end_el.text.lower():
+                        if 'playlist' not in end_el.text.lower() and 'плейлист' not in end_el.text.lower():
                             break
-                end_el.find_element(By.XPATH, "..").click()
+                end_el.find_element(By.XPATH, '..').click()
                 driver.implicitly_wait(wait_time_url_uploads // 2)
                 time.sleep(2)
                 driver.find_element(By.XPATH, f'//*[@id="save-button"]').click()
                 driver.implicitly_wait(wait_time_url_uploads // 2)
                 time.sleep(2)
             except Exception as e:
-                print(f"Невозможно поставить конечные заставки\n{e}")
+                print(f'Невозможно поставить конечные заставки\n{e}')
 
         driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
         driver.implicitly_wait(1)
@@ -221,95 +217,99 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
             pass
         else:
             publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
-            if Access == "Private":
+            if Access == 'Private':
                 publ_el.find_element(By.XPATH, f'//*[@name="PRIVATE"]').click()
-            elif Access == "On link":
+            elif Access == 'On link':
                 publ_el.find_element(By.XPATH, f'//*[@name="UNLISTED"]').click()
                 video_url = driver.find_element(By.XPATH, f'//span[@class="video-url-fadeable'
                                                           f' style-scope ytcp-video-info"]/a').text
                 print(video_url)
-            elif Access == "Public":
+            elif Access == 'Public':
                 publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
         driver.implicitly_wait(wait_time_url_uploads // 2)
         while True:
             try:
-                driver.find_element(By.XPATH, f'//ytcp-video-upload-progress[@checks-summary-status-v2='
-                                              f'"UPLOAD_CHECKS_DATA_SUMMARY_STATUS_COMPLETED"]')
+                driver.find_element(By.XPATH,
+                                    f'//ytcp-video-upload-progress[@checks-summary-status-v2='
+                                    f'"UPLOAD_CHECKS_DATA_SUMMARY_STATUS_COMPLETED"]')
                 break
             except:
                 continue
         driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
         driver.implicitly_wait(wait_time_url_uploads)
-        print(f"\033[32m\033[1mВидео {os.path.basename(Video)} было успешно загружено!\033[0m")
+        print(f'\033[32m\033[1mВидео {os.path.basename(Video)} было успешно загружено!\033[0m')
     except Exception as e:
-        print("Error!")
+        print('Error!')
         print(e)
 
 
 def get_video_info(link):
-    """
-    Функция для получения информации о видео (название и канал)
-    """
+    """Функция для получения информации о видео (название и канал)."""
     response = requests.get(link)
     # with open("123.html", "w", encoding="UTF-8") as f:
     #     f.write(response.text)
     # return
     if response.status_code == 200:
-        soup = bs(response.text, "html.parser")
+        soup = bs(response.text, 'html.parser')
         script_tags = soup.find_all('script', {'nonce': True})
         video = channel = duration = None
         for script_tag in script_tags:
             script_text = script_tag.get_text()
             if not video and 'ytInitialData' in script_text:
-                ytInitialData = json.loads(script_text.replace('var ytInitialData = ', '')[:-1])
-                video_info = ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
-                    'playerOverlayVideoDetailsRenderer']
+                ytInitialData = json.loads(script_text.replace('var ytInitialData = ',
+                                                               '')[:-1])
+                video_info = \
+                    ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
+                        'playerOverlayVideoDetailsRenderer']
                 video = video_info['title']['simpleText']
                 channel = video_info['subtitle']['runs'][0]['text']
                 continue
             if not duration and 'ytInitialPlayerResponse' in script_text:
-                ytInitialPlayerResponse = json.loads(script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
-                duration = int(ytInitialPlayerResponse['streamingData']['formats'][0]['approxDurationMs']) // 1000
+                ytInitialPlayerResponse = json.loads(
+                    script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
+                duration = int(ytInitialPlayerResponse['streamingData']['formats'][0][
+                                   'approxDurationMs']) // 1000
         if not (video and channel and duration):
-            error_func("Не удалось получить информацию о видео...")
+            error_func('Не удалось получить информацию о видео...')
         return video, channel, duration
     else:
-        error_func("Нет подключения к сайту")
+        error_func('Нет подключения к сайту')
         return None, None, None
 
 
 def get_playlist_info(link):
-    """
-    Функция для получения информации о всех видео в плейлисте
-    """
-    error_func("This action will be update latter...")
-    return None
+    """Функция для получения информации о всех видео в плейлисте."""
+    error_func('This action will be update latter...')
 
 
 def select_page(type_add: str):
     """
-    Функция для получения ссылки на канал (channel), видео (video) или всех видео в плейлисте (playlist)
+    Функция для получения ссылки на канал (channel),
+    видео (video) или всех видео в плейлисте (playlist).
+
+    Args:
+        type_add: str - type of added object (video or playlist).
     """
     ans = None
     try:
-        yt_url = "https://www.youtube.com/"
+        yt_url = 'https://www.youtube.com/'
         not_add_urls = []
-        driver = get_driver(gpu=True, images=True)
+        driver = get_driver(gpu=True, images=True, headless=False)
         driver.get(yt_url)
         driver.implicitly_wait(3)
-        if type_add == "video":
-            url_search = "www.youtube.com/watch"
-        elif type_add == "channel":
-            url_search = "www.youtube.com/@"
-        elif type_add == "playlist":
-            url_search = "www.youtube.com/playlist"
+        if type_add == 'video':
+            url_search = 'www.youtube.com/watch'
+        elif type_add == 'channel':
+            url_search = 'www.youtube.com/@'
+        elif type_add == 'playlist':
+            url_search = 'www.youtube.com/playlist'
         else:
-            raise "Not valid type."
+            raise 'Not valid type.'
         while True:
             time.sleep(2)
             if url_search in driver.current_url and driver.current_url not in not_add_urls:
-                if waiting_func(f"This is {type_add} you want to add?", 3):
+                if waiting_func(f'This is {type_add} you want to add?', 3):
                     ans = driver.current_url
                     driver.close()
                     break
@@ -317,30 +317,32 @@ def select_page(type_add: str):
     except selenium.common.exceptions.NoSuchWindowException:
         pass
     except Exception as e:
-        error_func(f"Error.\n{e}")
+        error_func(f'Error.\n{e}')
     finally:
-        try:
+        with contextlib.suppress(Exception):
             driver.close()
-        except:
-            pass
         return ans
 
 
-def watching(url: str, duration: int, user: str, driver_headless=True):
+def watching(url: str, duration: int, user: str, driver_headless: bool = True):
     """
-    Function start watching video on url link by group watchers
-    :param url: str - link of YT video
-    :param user: str - watchers group
+    Start watching video on url link by group watchers.
+
+    Args:
+        url: str - link of YT video
+        duration: int - duration on video
+        user: str - watchers group
+        driver_headless: bool - headless argument for driver.
     """
     try:
-        url_yt = "https://www.youtube.com/"
+        url_yt = 'https://www.youtube.com/'
         driver = get_driver(headless=driver_headless)
         driver.get(url_yt)
         driver.implicitly_wait(wait_time_url_uploads)
-        file_cookies = f"outside/oyt_info/watchers/{user}_cookies"
+        file_cookies = f'outside/oyt_info/watchers/{user}_cookies'
         if not os.path.exists(file_cookies):
             raise Exception(f'Cookies for {user} are not found.')
-        cookies = pickle.load(open(file_cookies, "rb"))
+        cookies = pickle.load(open(file_cookies, 'rb'))
         for cookie in cookies:
             driver.add_cookie(cookie)
         driver.implicitly_wait(wait_time_url_uploads)
@@ -351,96 +353,27 @@ def watching(url: str, duration: int, user: str, driver_headless=True):
             try:
                 driver.current_url
             except:
-                raise Exception(f"Driver was closed.")
+                raise Exception(f'Driver was closed.')
             time.sleep(1)
             yield 1
         driver.close()
     except BaseException as e:
-        error_func(f"Error.\n{e}")
-        try:
+        error_func(f'Error.\n{e}')
+        with contextlib.suppress(Exception):
             driver.close()
-        except:
-            pass
     finally:
-        try:
+        with contextlib.suppress(Exception):
             driver.close()
-        except:
-            pass
-    yield "End"
+    yield 'End'
 
 
-def get_google_login_generator(login: str, mail: str, folder: str):
-    added = False
-    try:
-        driver = get_driver()
-        yield 1
-        filename = f"{login}_cookies"
-        url = "https://youtube.com"
-        url_log = "https://accounts.google.com/"
-        driver.get(url)
-        yield 2
-        driver.implicitly_wait(7)
-        time.sleep(15)
-        while True:
-            yield 3
-            time.sleep(1)
-            if "www.youtube.com/watch" in driver.current_url:
-                break
-        yield 4
-        cookies = driver.get_cookies()
-        yield 5
-        pickle.dump(cookies,
-                    open(os.path.join(project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
-        # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
-        yield 6
-        added = True
-    except Exception as e:
-        error_func(f"An error occurred while trying to login.\n\n{e}")
-    finally:
-        try:
-            driver.quit()
-        except:
-            pass
-        yield 7
-        return added
-
-
-async def async_get_google_login(login: str, mail: str, folder: str):
-    added = False
-    try:
-        driver = await get_driver()
-        filename = f"{login}_cookies"
-        url = "https://youtube.com"
-        url_log = "https://accounts.google.com/"
-        await driver.get(url)
-        await driver.implicitly_wait(7)
-        await asyncio.sleep(15)
-        while True:
-            await asyncio.sleep(1)
-            if "www.youtube.com/watch" in driver.current_url:
-                break
-        cookies = await driver.get_cookies()
-        pickle.dump(cookies,
-                    open(os.path.join(project_folder, "outside", "oyt_info", folder.lower(), filename), "wb"))
-        # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
-        added = True
-    except Exception as e:
-        error_func(f"An error occurred while trying to login.\n\n{e}")
-    finally:
-        try:
-            await driver.quit()
-        except:
-            pass
-        return added
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     driver_options = webdriver.ChromeOptions()
-    user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-                 f" AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    user_agent = (f'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                  f' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36')
     driver_options.add_argument(
-        f"user-agent={user_agent}")
-    driver_options.add_argument("--disable-blink-features=AutomationControlled")
+        f'user-agent={user_agent}')
+    driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
     # options = webdriver.ChromeOptions()
     # options.add_argument('--disable-blink-features=AutomationControlled')
@@ -465,8 +398,8 @@ if __name__ == "__main__":
     #     f'--user-agent={user_agent}')
     # options.add_argument('--disable-web-security')
     # options.add_argument('--allow-running-insecure-content')
-    driver = webdriver.Chrome(executable_path="bin/chromedriver.exe",
+    driver = webdriver.Chrome(executable_path='bin/chromedriver.exe',
                               options=driver_options)
-    login = "outsider.deal3"
+    login = 'outsider.deal3'
     # google_login(login, driver)
     # upload_video(driver, login, "1", ends="import")

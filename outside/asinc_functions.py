@@ -1,25 +1,24 @@
-import asyncio
-import sys
 import time
-from PyQt5.QtCore import QThread, pyqtSignal, QMutex
-from PyQt5.QtWidgets import QTableView, QPushButton, QProgressBar, QWidget
+
+from PyQt5.QtCore import QMutex, QThread
+from PyQt5.QtWidgets import QProgressBar, QWidget
 
 
 class WorkerThread(QThread):
 
-    def __init__(self, progress_bar, process, total_steps: int):
+    def __init__(self, progress_bar, process, total_steps: int) -> None:
         super().__init__()
         self.progress_bar = progress_bar
         self.process = process
         self.total_steps = total_steps
 
     def run(self):
-        print("start progress bar...")
+        print('start progress bar...')
         for i in self.process():
             if self.total_steps == 0:
                 self.total_steps = i
                 continue
-            if i == "End":
+            if i == 'End':
                 break
             time.sleep(0.1)
             progress = int((i / self.total_steps) * 100)
@@ -28,14 +27,14 @@ class WorkerThread(QThread):
 
 
 class WatchProgress:
-    def __init__(self, total_steps):
+    def __init__(self, total_steps) -> None:
         self.mutex = QMutex()
         self.progress = 0
         self.total_steps = total_steps
 
 
 class SeekThreads(QThread):
-    def __init__(self, threads_list, elements_list, dialog_settings):
+    def __init__(self, threads_list, elements_list, dialog_settings) -> None:
         super().__init__()
         self.threads_list = threads_list
         self.elements_list = elements_list
@@ -45,25 +44,27 @@ class SeekThreads(QThread):
         while True:
             if not self.threads_list:
                 self.dialog_settings.Watch_Table.hideColumn(
-                    list(self.dialog_settings.Watch_Table.model().get_data().columns).index("Progress"))
+                    list(self.dialog_settings.Watch_Table.model().get_data().columns).index(
+                        'Progress'))
                 self.dialog_settings.Watch_Table.setColumnHidden(
-                    list(self.dialog_settings.Watch_Table.model().get_data().columns).index("id"), False)
+                    list(self.dialog_settings.Watch_Table.model().get_data().columns).index('id'),
+                    False)
                 for el in self.elements_list:
                     el.setEnabled(True)
                 break
 
 
 class WatchThreadOneProgressBar(QThread):
-    def __init__(self, progress_bar, process, group_progress):
+    def __init__(self, progress_bar, process, group_progress) -> None:
         super().__init__()
         self.progress_bar = progress_bar
         self.process = process
         self.group_progress = group_progress
 
     def run(self):
-        print("start progress bar...")
+        print('start progress bar...')
         for i in self.process():
-            if i == "End":
+            if i == 'End':
                 break
             time.sleep(0.1)
 
@@ -76,7 +77,7 @@ class WatchThreadOneProgressBar(QThread):
 
 
 class WatchThread(QThread):
-    def __init__(self, progress_bar, process, group_progress):
+    def __init__(self, progress_bar, process, group_progress) -> None:
         super().__init__()
         self.progress_bar = progress_bar
         self.process = process
@@ -84,7 +85,7 @@ class WatchThread(QThread):
 
     def run(self):
         for i in self.process():
-            if i == "End":
+            if i == 'End':
                 break
             time.sleep(0.1)
 
@@ -96,8 +97,8 @@ class WatchThread(QThread):
             self.progress_bar(value=progress)
 
 
-
-def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process, total_steps: int = 0):
+def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,
+                    total_steps: int = 0):
     current_tab = dialog.findChild(QWidget, page)
     tab_elements = current_tab.findChildren(QWidget)
 
@@ -109,7 +110,8 @@ def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressB
     for el in tab_elements:
         el.setEnabled(False)
 
-    dialog_settings.worker_thread = WorkerThread(progress_bar, process=process, total_steps=total_steps)
+    dialog_settings.worker_thread = WorkerThread(progress_bar, process=process,
+                                                 total_steps=total_steps)
     dialog_settings.worker_thread.finished.connect(finish_operation)
     dialog_settings.worker_thread.start()
 

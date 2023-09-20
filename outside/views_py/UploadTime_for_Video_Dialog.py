@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_Upload_Time_for_video(object):
     def setupUi(self, Upload_Time_for_video):
-        Upload_Time_for_video.setObjectName("Upload_Time_for_video")
+        Upload_Time_for_video.setObjectName('Upload_Time_for_video')
         Upload_Time_for_video.setWindowModality(QtCore.Qt.NonModal)
         Upload_Time_for_video.resize(419, 200)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -22,59 +22,59 @@ class Ui_Upload_Time_for_video(object):
         sizePolicy.setHeightForWidth(Upload_Time_for_video.sizePolicy().hasHeightForWidth())
         Upload_Time_for_video.setSizePolicy(sizePolicy)
         Upload_Time_for_video.setMaximumSize(QtCore.QSize(600, 200))
-        Upload_Time_for_video.setStyleSheet("background-color: rgb(39, 39, 39);\n"
-"color: rgb(255, 255, 255);\n"
-"alternate-background-color: rgb(39, 39, 39);\n"
-"selection-background-color: rgb(15, 15, 15);")
+        Upload_Time_for_video.setStyleSheet('background-color: rgb(39, 39, 39);\n'
+'color: rgb(255, 255, 255);\n'
+'alternate-background-color: rgb(39, 39, 39);\n'
+'selection-background-color: rgb(15, 15, 15);')
         self.verticalLayout = QtWidgets.QVBoxLayout(Upload_Time_for_video)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout.setObjectName('verticalLayout')
         self.Video_label = QtWidgets.QLabel(Upload_Time_for_video)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(16)
         font.setBold(True)
         font.setWeight(75)
         self.Video_label.setFont(font)
-        self.Video_label.setText("")
+        self.Video_label.setText('')
         self.Video_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.Video_label.setObjectName("Video_label")
+        self.Video_label.setObjectName('Video_label')
         self.verticalLayout.addWidget(self.Video_label)
         self.gridLayout = QtWidgets.QGridLayout()
-        self.gridLayout.setObjectName("gridLayout")
+        self.gridLayout.setObjectName('gridLayout')
         self.label_Day = QtWidgets.QLabel(Upload_Time_for_video)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(14)
         self.label_Day.setFont(font)
-        self.label_Day.setObjectName("label_Day")
+        self.label_Day.setObjectName('label_Day')
         self.gridLayout.addWidget(self.label_Day, 0, 1, 1, 1)
         self.Time = QtWidgets.QTimeEdit(Upload_Time_for_video)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(16)
         self.Time.setFont(font)
-        self.Time.setObjectName("Time")
+        self.Time.setObjectName('Time')
         self.gridLayout.addWidget(self.Time, 3, 1, 1, 1)
         self.Day = QtWidgets.QDateEdit(Upload_Time_for_video)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(16)
         self.Day.setFont(font)
         self.Day.setCalendarPopup(True)
-        self.Day.setObjectName("Day")
+        self.Day.setObjectName('Day')
         self.gridLayout.addWidget(self.Day, 1, 1, 1, 1)
         self.label_Time = QtWidgets.QLabel(Upload_Time_for_video)
         font = QtGui.QFont()
-        font.setFamily("Arial")
+        font.setFamily('Arial')
         font.setPointSize(14)
         self.label_Time.setFont(font)
-        self.label_Time.setObjectName("label_Time")
+        self.label_Time.setObjectName('label_Time')
         self.gridLayout.addWidget(self.label_Time, 2, 1, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(Upload_Time_for_video)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
+        self.buttonBox.setObjectName('buttonBox')
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.retranslateUi(Upload_Time_for_video)
@@ -84,12 +84,12 @@ class Ui_Upload_Time_for_video(object):
 
     def retranslateUi(self, Upload_Time_for_video):
         _translate = QtCore.QCoreApplication.translate
-        Upload_Time_for_video.setWindowTitle(_translate("Upload_Time_for_video", "Upload Time"))
-        self.label_Day.setText(_translate("Upload_Time_for_video", "Day"))
-        self.label_Time.setText(_translate("Upload_Time_for_video", "Time"))
+        Upload_Time_for_video.setWindowTitle(_translate('Upload_Time_for_video', 'Upload Time'))
+        self.label_Day.setText(_translate('Upload_Time_for_video', 'Day'))
+        self.label_Time.setText(_translate('Upload_Time_for_video', 'Time'))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
     Upload_Time_for_video = QtWidgets.QDialog()

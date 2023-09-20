@@ -2,21 +2,23 @@ import typing
 
 import pandas as pd
 from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import QModelIndex, QAbstractTableModel, Qt
-from PyQt5.QtWidgets import QStyledItemDelegate, QProgressBar, QWidget, QVBoxLayout, QStyle, QStyleOptionProgressBar
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt5.QtWidgets import (
+    QStyledItemDelegate,
+)
 
-from OutsideYT import app_settings_watchers
 from outside.message_boxes import error_func
+from OutsideYT import app_settings_watchers
 
 
 class WatchModel(QAbstractTableModel):
-    columns = ["id", "Progress", "Watchers Group", "Count", "Video", "Channel", "Duration", "Link", "Selected"]
+    columns = ['id', 'Progress', 'Watchers Group', 'Count', 'Video', 'Channel', 'Duration', 'Link', 'Selected']
 
-    default_content = {"id": None, "Progress": 0,
-                       "Watchers Group": app_settings_watchers.def_group, "Count": 0,
-                       "Video": "", "Channel": "", "Duration": "0", "Link": "", "Selected": True}
+    default_content = {'id': None, 'Progress': 0,
+                       'Watchers Group': app_settings_watchers.def_group, 'Count': 0,
+                       'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
 
-    def __init__(self, data=None, oldest_settings=None):
+    def __init__(self, data=None, oldest_settings=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
@@ -29,11 +31,11 @@ class WatchModel(QAbstractTableModel):
 
     def flags(self, index: QModelIndex):
         flags = Qt.ItemIsEnabled
-        if self._data.columns[index.column()] == "id":
+        if self._data.columns[index.column()] == 'id':
             flags |= Qt.ItemIsUserCheckable
         else:
             flags |= Qt.ItemIsSelectable
-            if self._data.columns[index.column()] in ["Link", "Watchers Group"]:
+            if self._data.columns[index.column()] in ['Link', 'Watchers Group']:
                 flags |= Qt.ItemIsEditable
         return flags
 
@@ -45,22 +47,23 @@ class WatchModel(QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
         if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal and self._data.columns[section] != "Selected":
+            if orientation == Qt.Horizontal and self._data.columns[section] != 'Selected':
                 return self._data.columns[section]
             elif orientation == Qt.Vertical:
-                return ">"
+                return '>'
+            return None
+        return None
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         if index.isValid():
             column = self._data.columns[index.column()]
-            if role == Qt.CheckStateRole:
-                if column == "id":
-                    return Qt.Checked if self._data.loc[index.row(), "Selected"] else Qt.Unchecked
+            if role == Qt.CheckStateRole and column == 'id':
+                return Qt.Checked if self._data.loc[index.row(), 'Selected'] else Qt.Unchecked
             if role == Qt.DisplayRole:
-                if column == "Selected":
-                    return
-                if column == "Duration":
-                    duration = ""
+                if column == 'Selected':
+                    return None
+                if column == 'Duration':
+                    duration = ''
                     dur_sec = int(self.get_data().loc[index.row(), column])
                     if dur_sec > 3600:
                         duration += f'{dur_sec // 3600}:'
@@ -68,19 +71,21 @@ class WatchModel(QAbstractTableModel):
                     duration += f'{dur_sec // 60}:{dur_sec % 60}'
                     return duration
 
-                elif column == "Count":
-                    return len(app_settings_watchers.groups[self.get_data().loc[index.row(), "Watchers Group"]])
+                elif column == 'Count':
+                    return len(app_settings_watchers.groups[self.get_data().loc[index.row(), 'Watchers Group']])
 
                 else:
                     return self.get_data().loc[index.row(), column]
+            return None
+        return None
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
-            if role == Qt.CheckStateRole and column == "id":
-                self._data.loc[index.row(), "Selected"] = value
+            if role == Qt.CheckStateRole and column == 'id':
+                self._data.loc[index.row(), 'Selected'] = value
                 self.dataChanged.emit(index, index, [role])
-                if all(self.get_data()["Selected"]):
+                if all(self.get_data()['Selected']):
                     self.oldest_settings.Watch_SelectAll_CheckBox.setChecked(True)
                 else:
                     self.oldest_settings.Watch_SelectAll_CheckBox.setChecked(False)
@@ -98,26 +103,26 @@ class WatchModel(QAbstractTableModel):
             row_content = {}
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
-        WatchModel.default_content["Watchers Group"] = app_settings_watchers.def_group
+        WatchModel.default_content['Watchers Group'] = app_settings_watchers.def_group
         for col in self.get_data().columns:
-            if col == "id":
+            if col == 'id':
                 self._data.loc[row_count, col] = row_count + 1
                 continue
-            if col in row_content.keys() and row_content[col] is not None:
+            if col in row_content and row_content[col] is not None:
                 self._data.loc[row_count, col] = row_content[col]
             else:
                 self._data.loc[row_count, col] = WatchModel.default_content[col]
         row_count += count
         self.endInsertRows()
-        if "Url" in kwargs.keys():
-            self.paths.append(kwargs["Url"])
+        if 'Url' in kwargs:
+            self.paths.append(kwargs['Url'])
         self.update()
         return True
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
         self.beginRemoveRows(QModelIndex(), row, row)
         self._data = self._data.drop(index=row)
-        self._data.reset_index(drop=True, inplace=True)
+        self._data = self._data.reset_index(drop=True)
         self.reset_ids()
         self.endRemoveRows()
         self.update()
@@ -132,27 +137,27 @@ class WatchModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount() + 1)]
+            new_list = list(range(1, self.rowCount() + 1))
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
         return self._data
 
     def update_progress_bar(self, index, value, viewport):
-        self._data.loc[index, "Progress"] = value
+        self._data.loc[index, 'Progress'] = value
         self.update()
         viewport.update()
 
     def reset_progress_bars(self):
-        self._data["Progress"] = 0
+        self._data['Progress'] = 0
         self.update()
 
 
 class WatchersUsersModel(QAbstractTableModel):
     columns = ['id', 'Account', 'Gmail', 'Group']
-    default_group = "No group"
+    default_group = 'No group'
 
-    def __init__(self):
+    def __init__(self) -> None:
         QAbstractTableModel.__init__(self)
         self._data = pd.DataFrame(columns=WatchersUsersModel.columns)
         self.update()
@@ -160,13 +165,13 @@ class WatchersUsersModel(QAbstractTableModel):
     def update(self):
         temp_df = pd.DataFrame([(acc, mail, group) for group, accounts in
                                 app_settings_watchers.groups.items() for
-                                acc, mail in accounts.items()], columns=["Account", "Gmail", "Group"])
-        temp_df["id"] = list(map(lambda x: str(x + 1), temp_df.index))
+                                acc, mail in accounts.items()], columns=['Account', 'Gmail', 'Group'])
+        temp_df['id'] = [str(x + 1) for x in temp_df.index]
         self._data = temp_df.reindex(columns=WatchersUsersModel.columns)
         self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
-        if self._data.columns[index.column()] == "id" or self._data.columns[index.column()] == "Gmail":
+        if self._data.columns[index.column()] == 'id' or self._data.columns[index.column()] == 'Gmail':
             flags = Qt.ItemIsEnabled
         else:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
@@ -183,27 +188,31 @@ class WatchersUsersModel(QAbstractTableModel):
             if orientation == Qt.Horizontal:
                 return self._data.columns[section]
             elif orientation == Qt.Vertical:
-                return ">"
+                return '>'
+            return None
+        return None
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.DisplayRole:
-                if column == "Gmail":
+                if column == 'Gmail':
                     return f'{self.get_data().loc[index.row(), column]}@gmail.com'
                 else:
                     return self.get_data().loc[index.row(), column]
+            return None
+        return None
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
-            if column == "Account" and value != self._data.loc[index.row(), column]:
-                if value not in list(self.get_data()["Account"]):
+            if column == 'Account' and value != self._data.loc[index.row(), column]:
+                if value not in list(self.get_data()['Account']):
                     self._data.loc[index.row(), column] = value
                     self.dataChanged.emit(index, index, [role])
                     return True
                 else:
-                    error_func("This Account name is already used")
+                    error_func('This Account name is already used')
             else:
                 self._data.loc[index.row(), column] = value
                 self.dataChanged.emit(index, index, [role])
@@ -220,7 +229,7 @@ class WatchersUsersModel(QAbstractTableModel):
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
         self.beginRemoveRows(QModelIndex(), row, row)
         self._data.drop(index=row)
-        self._data.reset_index(drop=True, inplace=True)
+        self._data = self._data.reset_index(drop=True)
         self.reset_ids()
         self.endRemoveRows()
         self.update()
@@ -228,7 +237,7 @@ class WatchersUsersModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount() + 1)]
+            new_list = list(range(1, self.rowCount() + 1))
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -236,21 +245,21 @@ class WatchersUsersModel(QAbstractTableModel):
 
 
 class WatchersGroupsModel(QAbstractTableModel):
-    columns = ['id', 'Group', "New Group name"]
+    columns = ['id', 'Group', 'New Group name']
 
-    def __init__(self):
+    def __init__(self) -> None:
         QAbstractTableModel.__init__(self)
         self._data = pd.DataFrame(columns=WatchersGroupsModel.columns)
-        self._data["Group"] = app_settings_watchers.groups.keys()
-        self._data["New Group name"] = ''
-        self._data["id"] = list(map(lambda x: str(x + 1), self._data.index))
+        self._data['Group'] = app_settings_watchers.groups.keys()
+        self._data['New Group name'] = ''
+        self._data['id'] = [str(x + 1) for x in self._data.index]
         self.update()
 
     def update(self):
         self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
-        if self._data.columns[index.column()] in ["id", "Group"]:
+        if self._data.columns[index.column()] in ['id', 'Group']:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
         else:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
@@ -267,44 +276,48 @@ class WatchersGroupsModel(QAbstractTableModel):
             if orientation == Qt.Horizontal:
                 return self._data.columns[section]
             elif orientation == Qt.Vertical:
-                return ">"
+                return '>'
+            return None
+        return None
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.DisplayRole:
                 return self.get_data().loc[index.row(), column]
+            return None
+        return None
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
-            if column == "New Group name" and value != self.get_data().loc[index.row(), column]:
-                if value not in list(self.get_data()["Group"]):
+            if column == 'New Group name' and value != self.get_data().loc[index.row(), column]:
+                if value not in list(self.get_data()['Group']):
                     self._data.loc[index.row(), column] = value
                     self.dataChanged.emit(index, index, [role])
                     return True
                 else:
-                    error_func("This group name is already used")
+                    error_func('This group name is already used')
         return False
 
     def insertRows(self, group: str = None, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
         if group is None:
-            groupname = "New Group"
+            groupname = 'New Group'
             num = 0
             while True:
-                if app_settings_watchers.add_group(f"{groupname} {num}", error_ignore=True):
-                    group = f"{groupname} {num}"
+                if app_settings_watchers.add_group(f'{groupname} {num}', error_ignore=True):
+                    group = f'{groupname} {num}'
                     break
                 num += 1
 
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
-        self._data.loc[row_count] = [row_count + 1, group, ""]
+        self._data.loc[row_count] = [row_count + 1, group, '']
         if kwargs:
             for col in self.get_data().columns:
-                if col == "id":
+                if col == 'id':
                     continue
-                if col in kwargs.keys() and kwargs[col] is not None:
+                if col in kwargs and kwargs[col] is not None:
                     self._data.loc[row_count, col] = kwargs[col]
         row_count += count
         self.endInsertRows()
@@ -314,7 +327,7 @@ class WatchersGroupsModel(QAbstractTableModel):
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
         self.beginRemoveRows(QModelIndex(), row, row)
         self._data = self._data.drop(index=row)
-        self._data.reset_index(drop=True, inplace=True)
+        self._data = self._data.reset_index(drop=True)
         self.reset_ids()
         self.endRemoveRows()
         self.update()
@@ -322,7 +335,7 @@ class WatchersGroupsModel(QAbstractTableModel):
 
     def reset_ids(self, new_list=None):
         if new_list is None:
-            new_list = [i for i in range(1, self.rowCount() + 1)]
+            new_list = list(range(1, self.rowCount() + 1))
         self._data.id = list(map(str, new_list))
 
     def get_data(self):
@@ -331,14 +344,14 @@ class WatchersGroupsModel(QAbstractTableModel):
 
 class ProgressBarDelegate(QStyledItemDelegate):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.progress_bar = QtWidgets.QStyleOptionProgressBar()
         self.progress_bar.state = QtWidgets.QStyle.State_Enabled
         self.progress_bar.direction = QtWidgets.QApplication.layoutDirection()
         self.progress_bar.minimum = 0
         self.progress_bar.maximum = 100
-        self.progress_bar.text = f"{self.progress_bar.progress}%"
+        self.progress_bar.text = f'{self.progress_bar.progress}%'
         self.progress_bar.textVisible = True
         pal = self.progress_bar.palette
         pal.setColor(QtGui.QPalette.Highlight, QtGui.QColor(189, 0, 0))
@@ -348,5 +361,5 @@ class ProgressBarDelegate(QStyledItemDelegate):
         self.progress_bar.rect = option.rect
         self.progress_bar.fontMetrics = QtGui.QFontMetrics(option.font)
         self.progress_bar.progress = int(index.data())
-        self.progress_bar.text = f"{self.progress_bar.progress}%"
+        self.progress_bar.text = f'{self.progress_bar.progress}%'
         QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, self.progress_bar, painter)
