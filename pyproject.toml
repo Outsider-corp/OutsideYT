@@ -41,12 +41,14 @@ extend-select = [
 ignore = [
     "F541",
     "F823",
+	"F841",
     "E266",
     "D107",
     "D205",
     "D211",
     "D212",
-    "D407"
+    "D407",
+    "ANN201",
 ]
 show-fixes = true
 line-length = 100

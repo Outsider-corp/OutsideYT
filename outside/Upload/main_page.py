@@ -1,12 +1,14 @@
 from functools import partial
 
 from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QWidget
 
 import OutsideYT
 from outside import TableModels as CommonTables
 from outside import main_dialogs
 
 from ..functions import update_checkbox_select_all
+from ..YT_functions import upload_video
 from . import TableModels, context_menu, dialogs
 
 
@@ -56,7 +58,8 @@ def update_upload(ui, parent):
         partial(dialogs.scan_videos_folder, table=upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
         partial(dialogs.set_upload_time, parent=parent, table=upload_table))
-    ui.Upload_Start.clicked.connect(partial(start_upload, dialog=parent, dialog_settings=ui))
+    ui.Upload_Start.clicked.connect(
+        partial(start_upload, dialog=parent, dialog_settings=ui, table=upload_table))
     ui.Upload_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                          checkbox=ui.Upload_SelectAll_CheckBox,
                                                          table=upload_table))
@@ -75,11 +78,34 @@ def update_upload(ui, parent):
     return upload_table, ui
 
 
-def start_upload(dialog, dialog_settings):
+def start_upload(dialog, dialog_settings, table):
     # start_operation(dialog=dialog, dialog_settings=dialog_settings, page="UploadPage",
     #                 progress_bar=dialog_settings.Upload_Progress_Bar,
     #                 process=partial(upload_video, login="test_test", mail="outside.deal1",
     #                                 folder="Uploaders"),
     #                 total_steps=7)
-
     print('Start Upload!')
+    current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'UploadPage')
+    tab_elements = current_tab.findChildren(QWidget)
+
+    for el in tab_elements:
+        el.setEnabled(False)
+
+    for num, video in table.model().get_data().iterrows():
+        upload_video(user=video['User'],
+                     title=video['Title'],
+                     publish=video['Publish'],
+                     video=video['Video'],
+                     description=video['Description'],
+                     playlist=video['Playlist'],
+                     preview=video['Preview'],
+                     tags=video['Tags'],
+                     ends=video['Ends'],
+                     cards=video['Cards'],
+                     access=video['Access'],
+                     save_title=video['Save filename?'],
+                     driver_headless=not dialog_settings.Upload_ShowBrowser_checkBox.isChecked()
+                     )
+
+    for el in tab_elements:
+        el.setEnabled(True)

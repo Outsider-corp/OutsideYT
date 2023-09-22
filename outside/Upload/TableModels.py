@@ -1,3 +1,4 @@
+import os
 import typing
 
 import pandas as pd
@@ -77,8 +78,7 @@ class UploadModel(QAbstractTableModel):
 
                 elif column == 'Video':
                     v = self.get_data().loc[index.row(), column]
-                    return self.get_data().loc[index.row(), column].split('/')[-1] \
-                        if len(v.split('/')) > 1 else v
+                    return os.path.basename(v) if os.path.exists(v) else v
 
                 elif column == 'Description':
                     return self.get_data().loc[index.row(), column]
@@ -88,8 +88,7 @@ class UploadModel(QAbstractTableModel):
 
                 elif column == 'Preview':
                     v = self.get_data().loc[index.row(), column]
-                    return self.get_data().loc[index.row(), column].split('/')[-1] \
-                        if len(v.split('/')) > 1 else v
+                    return os.path.basename(v) if os.path.exists(v) else v
 
                 elif column == 'Tags':
                     return self.get_data().loc[index.row(), column]
@@ -274,8 +273,9 @@ def open_location(table, index, ext: str):
     }
     file, _ = QFileDialog.getOpenFileName(None, f'Select {ext.capitalize()}', '',
                                           f"{ext.capitalize()} Files ({' '.join('*' + ex for ex in exts[ext.capitalize()])})")
-    table.model()._data.at[index, ext.capitalize()] = file
-    table.update()
+    if file:
+        table.model()._data.at[index, ext.capitalize()] = file
+        table.update()
 
 
 def add_video_for_uploading(table: QTableView, path, user=None):

@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import json
 import os
@@ -8,6 +9,7 @@ import time
 
 import requests
 import selenium.common.exceptions
+from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -74,32 +76,35 @@ def get_google_login(login: str, mail: str, folder: str):
         return added
 
 
-def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Tags, Ends,
-                 Cards, Access, Save_title):
+def upload_video(user: str, title: str, publish, video: str, description: str, playlist: str,
+                 preview: str, tags: str, ends: str, cards: int, access: int, save_title: bool,
+                 driver_headless: bool = True):
     """
-    :param User: Имя пользователя
-    :param Title: Название
-    :param Publish: время публикации
-    :param Video: папка с данными для видео
-    :param Description: Описание
-    :param Playlist: Плейлист
-    :param Preview: Превью
-    :param Tags: теги
-    :param Ends: import (default) - импортировать конечные заставки из предыдушего видео,
+    :param user: Имя пользователя
+    :param title: Название
+    :param publish: время публикации
+    :param video: папка с данными для видео
+    :param description: Описание
+    :param playlist: Плейлист
+    :param preview: Превью
+    :param tags: теги
+    :param ends: import (default) - импортировать конечные заставки из предыдушего видео,
     random - рандомные конечные заставки из стандартных
-    :param Cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
-    :param Access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
+    :param cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
+    :param access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
     Используется, если publ_time = None (не указано)
-    :param Save_title: Bool - использовать ли название файла с видео в качестве названия видео
+    :param save_title: bool - использовать ли название файла с видео в качестве названия видео
+    :param driver_headless: bool - отключить отображение браузеров
     :return:
     """
     try:
-        driver = get_driver()
+        driver = get_driver(headless=driver_headless, images=not driver_headless,
+                            gpu=not driver_headless)
         url = 'https://youtube.com'
         url2 = 'https://studio.youtube.com/'
         driver.get(url)
         driver.implicitly_wait(wait_time_url_uploads)
-        for cookie in pickle.load(open(f'outside/oyt_info/uploaders/{User}_cookies', 'rb')):
+        for cookie in pickle.load(open(f'outside/oyt_info/uploaders/{user}_cookies', 'rb')):
             driver.add_cookie(cookie)
         driver.implicitly_wait(wait_time_url_uploads)
 
@@ -109,19 +114,19 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
         driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
         driver.implicitly_wait(wait_time_url_uploads)
 
-        driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(Video)
+        driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(video)
         driver.implicitly_wait(wait_time_url_uploads)
 
         title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                  f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                  f'*[@slot="body"]/*[@id="input"]/div')
-        if Title:
+        if title:
             time.sleep(1)
             title_el.clear()
-            title_el.send_keys(Title)
-        elif title_el.text != '.'.join(os.path.basename(Video).split('.')[:-1]) and Save_title:
+            title_el.send_keys(title)
+        elif title_el.text != '.'.join(os.path.basename(video).split('.')[:-1]) and save_title:
             title_el.clear()
-            title_el.send_keys('.'.join(os.path.basename(Video).split('.')[:-1]))
+            title_el.send_keys('.'.join(os.path.basename(video).split('.')[:-1]))
 
         description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                        f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
@@ -130,25 +135,25 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
         description_old = description_el.text
         description_el.clear()
         descs_del = '\n\n' if description_old else ''
-        description_el.send_keys(''.join([Description, descs_del, description_old]))
+        description_el.send_keys(''.join([description, descs_del, description_old]))
 
-        if Preview:
+        if preview:
             try:
-                driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(Preview)
+                driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(preview)
                 driver.implicitly_wait(wait_time_url_uploads)
             except Exception:
                 print('Превью невозможно загрузить')
 
-        if Playlist:
+        if playlist:
             try:
                 playlist_el = driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger'
                                                             f'[@class="dropdown style-scope'
                                                             f' ytcp-video-metadata-playlists"]')
                 playlist_el.click()
                 driver.implicitly_wait(wait_time_url_uploads // 2)
-                if not isinstance(Playlist, (tuple, list)):
+                if not isinstance(playlist, (tuple, list)):
                     pass
-                for i in Playlist:
+                for i in playlist:
                     try:
                         playlist_el.find_element(By.XPATH, f'//span[@class="label label-text'
                                                            f' style-scope ytcp-checkbox-group" and'
@@ -166,13 +171,13 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
                 except:
                     pass
 
-        if Tags:
+        if tags:
             driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
             driver.implicitly_wait(wait_time_url_uploads)
             tags_el = driver.find_element(By.XPATH, f'//*[@id="tags-container"]/'
                                                     f'*[@id="outer"]/*[@id="child-input"]/'
                                                     f'*[@slot="body"]/*[@id="chip-bar"]/div/*[@id="text-input"]')
-            tags_el.send_keys(Tags)
+            tags_el.send_keys(tags)
             driver.implicitly_wait(wait_time_url_uploads)
 
         driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
@@ -180,18 +185,18 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
 
         # Добавить добавление подсказок
 
-        if Ends:
+        if ends:
             try:
                 driver.find_element(By.XPATH, f'//*[@id="endscreens-button"]').click()
                 driver.implicitly_wait(wait_time_url_uploads)
 
                 ends_el = driver.find_element(By.XPATH,
                                               f'//*[@id="cards-row"]')
-                if Ends == 'import':
+                if ends == 'import':
                     end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
                                                              f' style-scope ytve-endscreen'
                                                              f'-template-picker"]')[0]
-                elif Ends == 'random':
+                elif ends == 'random':
                     while True:
                         end_num = random.randint(0, 5)
                         end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
@@ -213,18 +218,19 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
         driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
         driver.implicitly_wait(wait_time_url_uploads // 2)
 
-        if Publish:
-            pass
-        else:
+        if True:
+            # if publish:
+            #     pass
+            # else:
             publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
-            if Access == 'Private':
+            if access == 'Private':
                 publ_el.find_element(By.XPATH, f'//*[@name="PRIVATE"]').click()
-            elif Access == 'On link':
+            elif access == 'On link':
                 publ_el.find_element(By.XPATH, f'//*[@name="UNLISTED"]').click()
                 video_url = driver.find_element(By.XPATH, f'//span[@class="video-url-fadeable'
                                                           f' style-scope ytcp-video-info"]/a').text
                 print(video_url)
-            elif Access == 'Public':
+            elif access == 'Public':
                 publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
         driver.implicitly_wait(wait_time_url_uploads // 2)
@@ -238,7 +244,7 @@ def upload_video(User, Title, Publish, Video, Description, Playlist, Preview, Ta
                 continue
         driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
         driver.implicitly_wait(wait_time_url_uploads)
-        print(f'\033[32m\033[1mВидео {os.path.basename(Video)} было успешно загружено!\033[0m')
+        print(f'\033[32m\033[1mВидео {os.path.basename(video)} было успешно загружено!\033[0m')
     except Exception as e:
         print('Error!')
         print(e)
@@ -348,7 +354,8 @@ def watching(url: str, duration: int, user: str, driver_headless: bool = True):
         driver.implicitly_wait(wait_time_url_uploads)
         driver.get(url)
         driver.implicitly_wait(wait_time_url_uploads)
-        driver.find_element(By.XPATH, '//button[@class="ytp-play-button ytp-button"]').click()
+        button = driver.find_element(By.XPATH, '//button[@class="ytp-play-button ytp-button"]')
+        button.click()
         for i in range(duration):
             try:
                 driver.current_url
@@ -365,6 +372,51 @@ def watching(url: str, duration: int, user: str, driver_headless: bool = True):
         with contextlib.suppress(Exception):
             driver.close()
     yield 'End'
+
+async def async_watching(url: str, duration: int, user: str, driver_headless: bool = True,
+                   progress_bar=None):
+    """
+    Start watching video on url link by group watchers.
+
+    Args:
+        url: str - link of YT video
+        duration: int - duration on video
+        user: str - watchers group
+        driver_headless: bool - headless argument for driver.
+    """
+    try:
+        url_yt = 'https://www.youtube.com/'
+        driver = get_driver(headless=driver_headless)
+        await driver.get(url_yt)
+        await driver.implicitly_wait(wait_time_url_uploads)
+        file_cookies = f'outside/oyt_info/watchers/{user}_cookies'
+        if not os.path.exists(file_cookies):
+            raise Exception(f'Cookies for {user} are not found.')
+        cookies = pickle.load(open(file_cookies, 'rb'))
+        for cookie in cookies:
+            await driver.add_cookie(cookie)
+        await driver.implicitly_wait(wait_time_url_uploads)
+        await driver.get(url)
+        await driver.implicitly_wait(wait_time_url_uploads)
+        button = await driver.find_element(By.XPATH,
+                                           '//button[@class="ytp-play-button ytp-button"]')
+        await button.click()
+        for i in range(duration):
+            try:
+                await driver.current_url
+            except:
+                raise Exception(f'Driver was closed.')
+            await asyncio.sleep(1)
+            # yield 1
+        await driver.close()
+    except BaseException as e:
+        error_func(f'Error.\n{e}')
+        with contextlib.suppress(Exception):
+            await driver.close()
+    finally:
+        with contextlib.suppress(Exception):
+            await driver.close()
+    # yield 'End'
 
 
 if __name__ == '__main__':

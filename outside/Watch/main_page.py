@@ -8,7 +8,7 @@ from outside import TableModels as CommonTables
 from outside import main_dialogs as MainDialogs
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation
+from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation, AsyncWatchThread
 from ..functions import update_checkbox_select_all
 from ..message_boxes import error_func
 from ..YT_functions import watching
@@ -28,14 +28,17 @@ def update_watch(ui, parent):
     for i, size in enumerate([50, 150, 150, 70, 350, 150, 70, int(width) - 880]):
         watch_table.setColumnWidth(i, size)
 
-    group_combo_del = CommonTables.ComboBoxDelegate(watch_table, app_settings_watchers.groups.keys())
-    watch_table.setItemDelegateForColumn(list(watch_table.model().get_data().columns).index('Watchers Group'),
-                                         group_combo_del)
+    group_combo_del = CommonTables.ComboBoxDelegate(watch_table,
+                                                    app_settings_watchers.groups.keys())
+    watch_table.setItemDelegateForColumn(
+        list(watch_table.model().get_data().columns).index('Watchers Group'),
+        group_combo_del)
     progress_del = TableModels.ProgressBarDelegate(parent)
     watch_table.setItemDelegateForColumn(1, progress_del)
 
     ui.Watch_SelectVideos_Button.clicked.connect(
-        partial(dialogs.open_watch_select_videos, parent=parent, table=watch_table, parent_settings=ui))
+        partial(dialogs.open_watch_select_videos, parent=parent, table=watch_table,
+                parent_settings=ui))
 
     ui.Watch_advanced_settings_Button.clicked.connect(
         partial(dialogs.open_advanced_settings, parent=parent, table=watch_table))
@@ -43,7 +46,8 @@ def update_watch(ui, parent):
     ui.Watch_url_add_Button.clicked.connect(
         partial(dialogs.add_video_to_table, table=watch_table, textbox=ui.Watch_url_textBox))
 
-    ui.Watch_Start.clicked.connect(partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))
+    ui.Watch_Start.clicked.connect(
+        partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))
 
     ui.Watch_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                         checkbox=ui.Watch_SelectAll_CheckBox,
@@ -53,9 +57,10 @@ def update_watch(ui, parent):
     watch_table.customContextMenuRequested.connect(
         lambda pos: context_menu.watch_context_menu(pos, parent=parent, table=watch_table))
 
-    ui.actionWatchers_2.triggered.connect(partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type='watch',
-                                                  add_table_class=TableModels.WatchersUsersModel,
-                                                  ))
+    ui.actionWatchers_2.triggered.connect(
+        partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type='watch',
+                add_table_class=TableModels.WatchersUsersModel,
+                ))
 
     return watch_table, ui
 
@@ -80,24 +85,32 @@ def start_watch(dialog, dialog_settings, table):
             dialog_settings.Watch_Table.hideColumn(
                 list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
             dialog_settings.Watch_Table.setColumnHidden(
-                list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'), False)
+                list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
+                False)
 
         total_steps = video['Duration'] * len(users)
         group_progress = WatchProgress(total_steps)
         progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num,
                                viewport=dialog_settings.Watch_Table)
 
+        # async_thread = AsyncWatchThread(dialog)
+
         for user in users:
             process = partial(watching,
                               url=video['Link'],
                               duration=video['Duration'],
                               user=user,
-                              driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.isChecked())
+                              driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
+                              isChecked(),
+                              progress_bar=None)
 
             start_watch_operation(dialog_settings=dialog_settings,
                                   progress_bar=progress_bar,
                                   group_progress=group_progress,
                                   process=process)
+
+            # async_thread.add_video(process)
+        # async_thread.start()
 
     def seek_ends(seek_thread):
         seek_thread.deleteLater()

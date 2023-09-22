@@ -19,12 +19,12 @@ def update_checkbox_select_all(checkbox, table):
 
 def find_files(args: list, folder: str, name: str = ''):
     for file in os.listdir(folder):
-        if file.endswith(tuple(args)) and file.startswith(name):
+        if file.endswith(tuple(args)) and file.startswith(name.lower()):
             if '.txt' in args:
                 with open(os.path.join(folder, file), 'r', encoding='UTF-8') as f:
-                    if name == 'Playlist':
+                    if name.lower() == 'playlist':
                         return f.read().split('\n')
                     return f.read()
-            return file
+            return os.path.join(folder, file)
     print('File not founded')
     return None

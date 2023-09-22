@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from PyQt5.QtCore import QMutex, QThread
@@ -27,7 +28,7 @@ class WorkerThread(QThread):
 
 
 class WatchProgress:
-    def __init__(self, total_steps) -> None:
+    def __init__(self, total_steps: int) -> None:
         self.mutex = QMutex()
         self.progress = 0
         self.total_steps = total_steps
@@ -74,6 +75,25 @@ class WatchThreadOneProgressBar(QThread):
 
             progress = int((self.group_progress.progress / self.group_progress.total_steps) * 100)
             self.progress_bar.setValue(progress)
+
+class AsyncWatchThread(QThread):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.loop = asyncio.new_event_loop()
+        self.videos = []
+
+    def run(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self.main())
+        self.loop.close()
+        self.finished.emit()
+
+    def add_video(self, start_video):
+        self.videos.append(start_video)
+
+    async def main(self):
+        await asyncio.gather(*self.videos)
 
 
 class WatchThread(QThread):
