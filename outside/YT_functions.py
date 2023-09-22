@@ -9,7 +9,7 @@ import time
 
 import requests
 import selenium.common.exceptions
-from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
+# from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -417,6 +417,9 @@ async def async_watching(url: str, duration: int, user: str, driver_headless: bo
         with contextlib.suppress(Exception):
             await driver.close()
     # yield 'End'
+
+
+def download_video(url: str, driver_headless: bool = True, progress_bar=None):
 
 
 if __name__ == '__main__':

@@ -8,6 +8,8 @@ app_settings_uploaders = settings.SettingsUploaders(
 app_settings_watchers = settings.SettingsWatchers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_WATCHERS.json'),
 )
+app_settings_download = settings.SettingsDownloads(os.path.join(project_folder, 'videos'))
+
 text_extensions = ['.txt']
 video_extensions = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
                     '.mpegps', '.flv', '.3gpp', '.WebM', '.DNxHR', '.ProRes', '.CineForm', '.HEVC',

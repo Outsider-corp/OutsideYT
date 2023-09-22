@@ -7,4 +7,5 @@ python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UsersList_Di
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectUploadVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectUploadVideos_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UpdateTime_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\UpdateTime_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UploadTime_for_Video_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\UploadTime_for_Video_Dialog.py
+python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectDownloadVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectDownloadVideos_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectWatchVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectWatchVideos_Dialog.py

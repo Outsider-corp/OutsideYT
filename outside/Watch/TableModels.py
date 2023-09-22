@@ -23,7 +23,6 @@ class WatchModel(QAbstractTableModel):
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
-        self.paths = []
         self.oldest_settings = oldest_settings
 
     def update(self):
@@ -114,8 +113,6 @@ class WatchModel(QAbstractTableModel):
                 self._data.loc[row_count, col] = WatchModel.default_content[col]
         row_count += count
         self.endInsertRows()
-        if 'Url' in kwargs:
-            self.paths.append(kwargs['Url'])
         self.update()
         return True
 

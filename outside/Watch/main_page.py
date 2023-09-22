@@ -10,19 +10,21 @@ from OutsideYT import app_settings_watchers
 
 from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation, AsyncWatchThread
 from ..functions import update_checkbox_select_all
+from ..main_dialogs import open_watch_down_select_videos, add_video_to_table
 from ..message_boxes import error_func
 from ..YT_functions import watching
 from . import TableModels, context_menu, dialogs
+from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
 
 
 def update_watch(ui, parent):
     watch_table = ui.Watch_Table
-    Watch_model = TableModels.WatchModel(oldest_settings=ui)
-    watch_table.setModel(Watch_model)
+    watch_model = TableModels.WatchModel(oldest_settings=ui)
+    watch_table.setModel(watch_model)
     watch_table = CommonTables.table_universal(watch_table)
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Selected'))
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Progress'))
-    # watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
+    watch_table.setVerticalHeader(CommonTables.HeaderView(watch_table))
     watch_table.horizontalHeader().setFont(QtGui.QFont('Arial', 12))
     width = parent.width()
     for i, size in enumerate([50, 150, 150, 70, 350, 150, 70, int(width) - 880]):
@@ -37,14 +39,14 @@ def update_watch(ui, parent):
     watch_table.setItemDelegateForColumn(1, progress_del)
 
     ui.Watch_SelectVideos_Button.clicked.connect(
-        partial(dialogs.open_watch_select_videos, parent=parent, table=watch_table,
-                parent_settings=ui))
+        partial(open_watch_down_select_videos, parent=parent, table=watch_table, parent_settings=ui,
+                add_table_class=Ui_SelectVideos_Dialog, table_type="Watch"))
 
     ui.Watch_advanced_settings_Button.clicked.connect(
         partial(dialogs.open_advanced_settings, parent=parent, table=watch_table))
 
     ui.Watch_url_add_Button.clicked.connect(
-        partial(dialogs.add_video_to_table, table=watch_table, textbox=ui.Watch_url_textBox))
+        partial(add_video_to_table, table=watch_table, table_type="Watch", textbox=ui.Watch_url_textBox))
 
     ui.Watch_Start.clicked.connect(
         partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))

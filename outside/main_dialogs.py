@@ -8,6 +8,8 @@ import outside.Upload.context_menu as upload_context
 import outside.Watch.context_menu as watch_context
 import OutsideYT
 from outside import TableModels
+from outside.YT_functions import select_page, get_video_info, get_playlist_info
+from outside.asinc_functions import start_operation
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
@@ -260,6 +262,187 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
         dialog.reject)
     dialog.exec_()
+
+
+def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_settings, add_table_class,
+                                  table_type: str):
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+    dialog_settings = add_table_class()
+    dialog_settings.setupUi(dialog)
+
+    radios = [dialog_settings.Last_video_radioButton, dialog_settings.Random_video_radioButton,
+              dialog_settings.Period_radioButton]
+    var1 = [dialog_settings.Count_label, dialog_settings.Count_videos_spinBox]
+    var2 = [dialog_settings.Start_label, dialog_settings.Start_date, dialog_settings.End_label,
+            dialog_settings.End_date]
+
+    def add_video():
+        text = select_page('video')
+        if text:
+            if table_type == "Watch":
+                group = dialog_settings.Group_comboBox.currentText()
+                add_video_to_table(table, link=text, group=group)
+            else:
+                add_video_to_table(table, link=text)
+            dialog.accept()
+        else:
+            error_func('Not valid link.', dialog)
+
+    def add_playlist():
+        error_func('This action will be add later...')
+        # text = select_page("playlist")
+        # if text:
+        #     group = dialog_settings.Group_comboBox.currentText()
+        #     add_video_to_table(table, text, group)
+        #     dialog.accept()
+        # else:
+        #     error_func("Not valid link.", dialog)
+
+    def import_links_from_file():
+        exts = OutsideYT.text_extensions
+        file, _ = QtWidgets.QFileDialog.getOpenFileName(None,
+                                                        f'Select File with Links', '',
+                                                        f"Text Files ("
+                                                        f"{' '.join('*' + ex for ex in exts)})")
+        if not file:
+            return
+
+        group = dialog_settings.Group_comboBox.currentText() if table_type == "Watch" else None
+        dialog.accept()
+
+        with open(file, 'r', encoding='UTF-8') as f:
+            links = f.readlines()
+        for num, link in enumerate(links):
+            add_video_to_table(table=table, link=link, group=group, table_type=table_type)
+##################################################################################################
+        # start_operation(
+        #     dialog=parent,
+        #     dialog_settings=parent_settings,
+        #     page=f'{table_type}Page',
+        #     progress_bar=getattr(parent_settings, f'{table_type}_Progress_Bar'),
+        #     process=partial(import_links_process, file=file, table_type=table_type))
+##################################################################################################
+
+
+    def select_channel():
+        text = select_page('channel')
+        if text:
+            dialog_settings.channel_link_textBox.setText(text)
+        else:
+            error_func('Not valid link.', dialog)
+
+    def show_elements(group):
+        """
+        Args:
+            group: str - "none" - hide all elements, "count" - show count elements and radios,
+            "period" - show period elements and radios.
+        """
+        if group == 'none':
+            for el in radios + var1 + var2:
+                el.setVisible(False)
+        elif group == 'count':
+            for el in radios + var1:
+                el.setVisible(True)
+            for el in var2:
+                el.setVisible(False)
+        elif group == 'period':
+            for el in radios + var2:
+                el.setVisible(True)
+            for el in var1:
+                el.setVisible(False)
+
+    def show_actions_for_channel():
+        if dialog_settings.channel_link_textBox.text() == '':
+            show_elements('none')
+        else:
+            show_elements('count')
+
+    def ok():
+        url = dialog_settings.channel_link_textBox.text()
+        if url == '':
+            dialog.reject()
+        elif 'youtube.com/' not in url:
+            error_func(f'Wrong url: {url}')
+        else:
+            if table_type == "Watch":
+                group = dialog_settings.Group_comboBox.currentText()
+            if dialog_settings.Last_video_radioButton.isChecked():
+                dialog_settings.Count_videos_spinBox.value()
+
+                # table.model().insertRows(row_content={"Watchers Group": group,
+                #                                       "Video": video,
+                #                                       "Channel": channel,
+                #                                       "Link": link})
+
+            elif dialog_settings.Random_video_radioButton.isChecked():
+                dialog_settings.Count_videos_spinBox.value()
+            else:
+                dialog_settings.Start_date.time()
+                dialog_settings.End_date.time()
+    if table_type == "Watch":
+        items = list(OutsideYT.app_settings_watchers.groups.keys())
+        dialog_settings.Group_comboBox = update_combobox(
+            dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
+
+    show_elements('none')
+    dialog_settings.channel_link_textBox.textChanged.connect(show_actions_for_channel)
+    dialog_settings.Last_video_radioButton.toggled.connect(lambda: show_elements('count'))
+    dialog_settings.Random_video_radioButton.toggled.connect(lambda: show_elements('count'))
+    dialog_settings.Period_radioButton.toggled.connect(lambda: show_elements('period'))
+
+    dialog_settings.AddVideo_Button.clicked.connect(add_video)
+    dialog_settings.AddPlaylist_Button.clicked.connect(add_playlist)
+    dialog_settings.Import_links_Button.clicked.connect(import_links_from_file)
+    dialog_settings.Select_channel_Button.clicked.connect(select_channel)
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
+        dialog.reject)
+    dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
+
+    dialog.exec_()
+
+
+def add_video_to_table(table, link: str = '', group=None, table_type: str = "Download",
+                       textbox: QtWidgets.QLineEdit = None):
+    if group is None and table_type == "Watch":
+        group = OutsideYT.app_settings_watchers.def_group
+    if not link:
+        if not textbox:
+            return
+        link = textbox.text()
+    if 'youtube.com/watch' in link or 'youtu.be/' in link:
+        video, channel, duration = get_video_info(link)
+        if video and channel and duration:
+            if table_type == "Watch":
+                table.model().insertRows(row_content={'Watchers Group': group,
+                                                      'Video': video,
+                                                      'Channel': channel,
+                                                      'Duration': duration,
+                                                      'Link': link})
+            else:
+                table.model().insertRows(row_content={'Video': video,
+                                                      'Channel': channel,
+                                                      'Duration': duration,
+                                                      'Link': link})
+    elif 'youtube.com/playlist' in link:
+        videos = get_playlist_info(link)
+        if videos:
+            if table_type == "Watch":
+                for video, channel, video_link in videos:
+                    table.model().insertRows(row_content={'Watchers Group': group,
+                                                          'Video': video,
+                                                          'Channel': channel,
+                                                          'Link': video_link})
+            else:
+                for video, channel, video_link in videos:
+                    table.model().insertRows(row_content={'Video': video,
+                                                          'Channel': channel,
+                                                          'Link': video_link})
+    else:
+        return
+    if textbox is not None:
+        textbox.clear()
+        table.update()
 
 
 def userslist(parent, table_name: str):

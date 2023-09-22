@@ -278,6 +278,19 @@ class SettingsWatchers:
             self.del_def_group()
         self.update_settings()
 
+
+class SettingsDownloads:
+    def __init__(self, saving_path: str):
+        self.__saving_path = saving_path
+
+    @property
+    def saving_path(self):
+        return self.__saving_path
+
+    def change_path(self, new_path: str):
+        if new_path:
+            self.__saving_path = new_path
+
 # class AccountSettings:
 #
 #     def __init__(self, account):
