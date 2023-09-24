@@ -10,7 +10,7 @@ from OutsideYT import app_settings_watchers
 
 from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation, AsyncWatchThread
 from ..functions import update_checkbox_select_all
-from ..main_dialogs import open_watch_down_select_videos, add_video_to_table
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..message_boxes import error_func
 from ..YT_functions import watching
 from . import TableModels, context_menu, dialogs
@@ -40,13 +40,13 @@ def update_watch(ui, parent):
 
     ui.Watch_SelectVideos_Button.clicked.connect(
         partial(open_watch_down_select_videos, parent=parent, table=watch_table, parent_settings=ui,
-                add_table_class=Ui_SelectVideos_Dialog, table_type="Watch"))
+                add_table_class=Ui_SelectVideos_Dialog))
 
     ui.Watch_advanced_settings_Button.clicked.connect(
         partial(dialogs.open_advanced_settings, parent=parent, table=watch_table))
 
     ui.Watch_url_add_Button.clicked.connect(
-        partial(add_video_to_table, table=watch_table, table_type="Watch", textbox=ui.Watch_url_textBox))
+        partial(add_video_from_textbox, table=watch_table, textbox=ui.Watch_url_textBox))
 
     ui.Watch_Start.clicked.connect(
         partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))

@@ -18,16 +18,24 @@ class WatchModel(QAbstractTableModel):
                        'Watchers Group': app_settings_watchers.def_group, 'Count': 0,
                        'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
 
-    def __init__(self, data=None, oldest_settings=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
+        self.main_progress_bar = main_progress_bar
 
     def update(self):
         self.layoutChanged.emit()
 
+    @property
+    def table_type(self):
+        return "Watch"
+
+    @property
+    def progress_bar(self):
+        return self.main_progress_bar
     def flags(self, index: QModelIndex):
         flags = Qt.ItemIsEnabled
         if self._data.columns[index.column()] == 'id':
@@ -159,6 +167,10 @@ class WatchersUsersModel(QAbstractTableModel):
         self._data = pd.DataFrame(columns=WatchersUsersModel.columns)
         self.update()
 
+    @property
+    def table_type(self):
+        return "Watch"
+
     def update(self):
         temp_df = pd.DataFrame([(acc, mail, group) for group, accounts in
                                 app_settings_watchers.groups.items() for
@@ -251,6 +263,10 @@ class WatchersGroupsModel(QAbstractTableModel):
         self._data['New Group name'] = ''
         self._data['id'] = [str(x + 1) for x in self._data.index]
         self.update()
+
+    @property
+    def table_type(self):
+        return "Watch"
 
     def update(self):
         self.layoutChanged.emit()

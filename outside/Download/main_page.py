@@ -6,7 +6,7 @@ import OutsideYT
 from . import TableModels, context_menu, dialogs
 from outside import TableModels as CommonTables
 from ..functions import update_checkbox_select_all
-from ..main_dialogs import open_watch_down_select_videos, add_video_to_table
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
 
@@ -27,11 +27,11 @@ def update_download(ui, parent):
 
     ui.Download_SelectVideos_Button.clicked.connect(
         partial(open_watch_down_select_videos, parent=parent, table=download_table, parent_settings=ui,
-                add_table_class=Ui_Download_Videos_Dialog, table_type="Download")
+                add_table_class=Ui_Download_Videos_Dialog)
     )
 
     ui.Download_url_add_Button.clicked.connect(
-        partial(add_video_to_table, table=download_table, table_type="Download", textbox=ui.Download_url_textBox))
+        partial(add_video_from_textbox, table=download_table, textbox=ui.Download_url_textBox))
 
     ui.Watch_Start.clicked.connect(
         partial(start_download, dialog=parent, dialog_settings=ui, table=download_table))

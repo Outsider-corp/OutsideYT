@@ -27,13 +27,22 @@ class UploadModel(QAbstractTableModel):
                        'Tags': '', 'Ends': 'random', 'Cards': 2,
                        'Access': 'Private', 'Save filename?': False}
 
-    def __init__(self, data=None, oldest_settings=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=UploadModel.columns)
         self._data = data
         self.paths = []
         self.oldest_settings = oldest_settings
+        self.main_progress_bar = main_progress_bar
+
+    @property
+    def table_type(self):
+        return "Upload"
+
+    @property
+    def progress_bar(self):
+        return self.main_progress_bar
 
     def update(self):
         self.layoutChanged.emit()
@@ -170,6 +179,10 @@ class UploadersUsersModel(QAbstractTableModel):
     def __init__(self) -> None:
         QAbstractTableModel.__init__(self)
         self.update()
+
+    @property
+    def table_type(self):
+        return "Upload"
 
     def update(self):
         self._data = pd.DataFrame(columns=UploadersUsersModel.columns)

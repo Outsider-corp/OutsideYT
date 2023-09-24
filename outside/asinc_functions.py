@@ -1,8 +1,11 @@
 import asyncio
 import time
 
+import aiohttp
 from PyQt5.QtCore import QMutex, QThread
 from PyQt5.QtWidgets import QProgressBar, QWidget
+
+from outside.YT_functions import get_video_info
 
 
 class WorkerThread(QThread):
@@ -76,6 +79,7 @@ class WatchThreadOneProgressBar(QThread):
             progress = int((self.group_progress.progress / self.group_progress.total_steps) * 100)
             self.progress_bar.setValue(progress)
 
+
 class AsyncWatchThread(QThread):
 
     def __init__(self, parent=None):
@@ -115,6 +119,23 @@ class WatchThread(QThread):
 
             progress = int((self.group_progress.progress / self.group_progress.total_steps) * 100)
             self.progress_bar(value=progress)
+
+
+class GetVideoInfoThread(QThread):
+
+    def __init__(self, tasks: list, table, parent=None):
+        super().__init__(parent)
+        self.table = table
+        self.tasks = tasks
+        self.results = []
+
+    async def start_loop(self):
+        async with aiohttp.ClientSession() as session:
+            atasks = [get_video_info(link, session) for link in self.tasks]
+            self.results = await asyncio.gather(*atasks)
+
+    def run(self):
+        asyncio.run(self.start_loop())
 
 
 def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,

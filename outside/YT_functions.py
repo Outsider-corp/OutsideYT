@@ -7,6 +7,7 @@ import random
 import sys
 import time
 
+import aiohttp
 import requests
 import selenium.common.exceptions
 # from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
@@ -250,38 +251,40 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
         print(e)
 
 
-def get_video_info(link):
+async def get_video_info(link, session: aiohttp.ClientSession):
     """Функция для получения информации о видео (название и канал)."""
-    response = requests.get(link)
-    # with open("123.html", "w", encoding="UTF-8") as f:
-    #     f.write(response.text)
-    # return
-    if response.status_code == 200:
-        soup = bs(response.text, 'html.parser')
-        script_tags = soup.find_all('script', {'nonce': True})
-        video = channel = duration = None
-        for script_tag in script_tags:
-            script_text = script_tag.get_text()
-            if not video and 'ytInitialData' in script_text:
-                ytInitialData = json.loads(script_text.replace('var ytInitialData = ',
-                                                               '')[:-1])
-                video_info = \
-                    ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
-                        'playerOverlayVideoDetailsRenderer']
-                video = video_info['title']['simpleText']
-                channel = video_info['subtitle']['runs'][0]['text']
-                continue
-            if not duration and 'ytInitialPlayerResponse' in script_text:
-                ytInitialPlayerResponse = json.loads(
-                    script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
-                duration = int(ytInitialPlayerResponse['streamingData']['formats'][0][
-                                   'approxDurationMs']) // 1000
-        if not (video and channel and duration):
-            error_func('Не удалось получить информацию о видео...')
-        return video, channel, duration
-    else:
-        error_func('Нет подключения к сайту')
-        return None, None, None
+    try:
+        async with session.get(link) as response:
+            if response.status == 200:
+                res_text = await response.text()
+                soup = bs(res_text, 'html.parser')
+                script_tags = soup.find_all('script', {'nonce': True})
+                video = channel = duration = None
+                for script_tag in script_tags:
+                    script_text = script_tag.get_text()
+                    if not video and 'ytInitialData' in script_text:
+                        ytInitialData = json.loads(script_text.replace('var ytInitialData = ',
+                                                                       '')[:-1])
+                        video_info = \
+                            ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
+                                'playerOverlayVideoDetailsRenderer']
+                        video = video_info['title']['simpleText']
+                        channel = video_info['subtitle']['runs'][0]['text']
+                        continue
+                    if not duration and 'ytInitialPlayerResponse' in script_text:
+                        ytInitialPlayerResponse = json.loads(
+                            script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
+                        duration = int(ytInitialPlayerResponse['streamingData']['formats'][0][
+                                           'approxDurationMs']) // 1000
+                    if video and channel and duration:
+                        return video, channel, duration, link
+                if not (video and channel and duration):
+                    error_func('Не удалось получить информацию о видео...')
+            else:
+                error_func('Нет подключения к сайту')
+    except:
+        pass
+    return None, None, None, None
 
 
 def get_playlist_info(link):
@@ -373,8 +376,9 @@ def watching(url: str, duration: int, user: str, driver_headless: bool = True):
             driver.close()
     yield 'End'
 
+
 async def async_watching(url: str, duration: int, user: str, driver_headless: bool = True,
-                   progress_bar=None):
+                         progress_bar=None):
     """
     Start watching video on url link by group watchers.
 
@@ -420,6 +424,7 @@ async def async_watching(url: str, duration: int, user: str, driver_headless: bo
 
 
 def download_video(url: str, driver_headless: bool = True, progress_bar=None):
+    pass
 
 
 if __name__ == '__main__':

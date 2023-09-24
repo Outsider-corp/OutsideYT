@@ -9,12 +9,21 @@ class DownloadModel(QAbstractTableModel):
 
     default_content = {'id': None, 'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
 
-    def __init__(self, data=None, oldest_settings=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=DownloadModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
+        self.main_progress_bar = main_progress_bar
+
+    @property
+    def table_type(self):
+        return "Download"
+
+    @property
+    def progress_bar(self):
+        return self.main_progress_bar
 
     def update(self):
         self.layoutChanged.emit()

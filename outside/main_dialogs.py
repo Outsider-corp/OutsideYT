@@ -1,6 +1,8 @@
 import glob
 import os
+import time
 from functools import partial
+from typing import List
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -8,8 +10,8 @@ import outside.Upload.context_menu as upload_context
 import outside.Watch.context_menu as watch_context
 import OutsideYT
 from outside import TableModels
-from outside.YT_functions import select_page, get_video_info, get_playlist_info
-from outside.asinc_functions import start_operation
+from outside.YT_functions import select_page, get_playlist_info
+from outside.asinc_functions import start_operation, GetVideoInfoThread
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
@@ -264,8 +266,8 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
     dialog.exec_()
 
 
-def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_settings, add_table_class,
-                                  table_type: str):
+def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_settings,
+                                  add_table_class):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     dialog_settings = add_table_class()
@@ -280,11 +282,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
     def add_video():
         text = select_page('video')
         if text:
-            if table_type == "Watch":
-                group = dialog_settings.Group_comboBox.currentText()
-                add_video_to_table(table, link=text, group=group)
-            else:
-                add_video_to_table(table, link=text)
+            group = dialog_settings.Group_comboBox.currentText() if \
+                table.model().table_type == "Watch" else None
+            get_videos_info(table, links=[text], group=group)
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -308,22 +308,13 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         if not file:
             return
 
-        group = dialog_settings.Group_comboBox.currentText() if table_type == "Watch" else None
+        group = dialog_settings.Group_comboBox.currentText() if \
+            table.model().table_type == "Watch" else None
         dialog.accept()
 
         with open(file, 'r', encoding='UTF-8') as f:
             links = f.readlines()
-        for num, link in enumerate(links):
-            add_video_to_table(table=table, link=link, group=group, table_type=table_type)
-##################################################################################################
-        # start_operation(
-        #     dialog=parent,
-        #     dialog_settings=parent_settings,
-        #     page=f'{table_type}Page',
-        #     progress_bar=getattr(parent_settings, f'{table_type}_Progress_Bar'),
-        #     process=partial(import_links_process, file=file, table_type=table_type))
-##################################################################################################
-
+        get_videos_info(table=table, links=links, group=group)
 
     def select_channel():
         text = select_page('channel')
@@ -365,7 +356,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         elif 'youtube.com/' not in url:
             error_func(f'Wrong url: {url}')
         else:
-            if table_type == "Watch":
+            if table.model().table_type == "Watch":
                 group = dialog_settings.Group_comboBox.currentText()
             if dialog_settings.Last_video_radioButton.isChecked():
                 dialog_settings.Count_videos_spinBox.value()
@@ -380,7 +371,8 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
             else:
                 dialog_settings.Start_date.time()
                 dialog_settings.End_date.time()
-    if table_type == "Watch":
+
+    if table.model().table_type == "Watch":
         items = list(OutsideYT.app_settings_watchers.groups.keys())
         dialog_settings.Group_comboBox = update_combobox(
             dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
@@ -402,47 +394,36 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
     dialog.exec_()
 
 
-def add_video_to_table(table, link: str = '', group=None, table_type: str = "Download",
-                       textbox: QtWidgets.QLineEdit = None):
-    if group is None and table_type == "Watch":
-        group = OutsideYT.app_settings_watchers.def_group
-    if not link:
-        if not textbox:
-            return
-        link = textbox.text()
-    if 'youtube.com/watch' in link or 'youtu.be/' in link:
-        video, channel, duration = get_video_info(link)
-        if video and channel and duration:
-            if table_type == "Watch":
-                table.model().insertRows(row_content={'Watchers Group': group,
-                                                      'Video': video,
-                                                      'Channel': channel,
-                                                      'Duration': duration,
-                                                      'Link': link})
-            else:
-                table.model().insertRows(row_content={'Video': video,
-                                                      'Channel': channel,
-                                                      'Duration': duration,
-                                                      'Link': link})
-    elif 'youtube.com/playlist' in link:
-        videos = get_playlist_info(link)
-        if videos:
-            if table_type == "Watch":
-                for video, channel, video_link in videos:
-                    table.model().insertRows(row_content={'Watchers Group': group,
-                                                          'Video': video,
-                                                          'Channel': channel,
-                                                          'Link': video_link})
-            else:
-                for video, channel, video_link in videos:
-                    table.model().insertRows(row_content={'Video': video,
-                                                          'Channel': channel,
-                                                          'Link': video_link})
-    else:
-        return
-    if textbox is not None:
+def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
+    text = textbox.text()
+    if "youtube.com/watch" in text or "youtu.be/" in text:
+        get_videos_info(table, [text])
         textbox.clear()
-        table.update()
+    elif 'youtube.com/playlist' in text:
+        get_playlist_info(table, textbox)
+        textbox.clear()
+
+def get_videos_info(table, links: List, group=None):
+    def return_func():
+        for video in vids_thread.results:
+            _add_video_to_table(table, video, group)
+
+    vids_thread = GetVideoInfoThread(links, table)
+    vids_thread.start()
+    vids_thread.finished.connect(return_func)
+
+
+def get_playlist_info(table, link: str, group: str = None):
+    pass
+
+
+def _add_video_to_table(table, video_info, group=None):
+    if all(video_info):
+        table.model().insertRows(row_content={'Watchers Group': group,
+                                              'Video': video_info[0],
+                                              'Channel': video_info[1],
+                                              'Duration': video_info[2],
+                                              'Link': video_info[3]})
 
 
 def userslist(parent, table_name: str):
