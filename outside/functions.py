@@ -28,3 +28,13 @@ def find_files(args: list, folder: str, name: str = ''):
             return os.path.join(folder, file)
     print('File not founded')
     return None
+
+
+def progress_bar_inc(func):
+    async def wrapper(*args, **kwargs):
+        result = await func(*args, **kwargs)
+        if 'progress_bar' in kwargs:
+            await kwargs['progress_bar']
+        return result
+
+    return wrapper

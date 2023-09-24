@@ -8,7 +8,7 @@ from outside import TableModels as CommonTables
 from outside import main_dialogs as MainDialogs
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import SeekThreads, WatchProgress, start_watch_operation, AsyncWatchThread
+from ..asinc_functions import SeekThreads, start_watch_operation, AsyncWatchThread, ProgressMutex
 from ..functions import update_checkbox_select_all
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..message_boxes import error_func
@@ -19,7 +19,8 @@ from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
 
 def update_watch(ui, parent):
     watch_table = ui.Watch_Table
-    watch_model = TableModels.WatchModel(oldest_settings=ui)
+    watch_model = TableModels.WatchModel(oldest_settings=ui,
+                                         main_progress_bar=ui.Watch_Progress_Bar)
     watch_table.setModel(watch_model)
     watch_table = CommonTables.table_universal(watch_table)
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Selected'))
@@ -91,10 +92,9 @@ def start_watch(dialog, dialog_settings, table):
                 False)
 
         total_steps = video['Duration'] * len(users)
-        group_progress = WatchProgress(total_steps)
         progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num,
                                viewport=dialog_settings.Watch_Table)
-
+        group_progress = ProgressMutex(total_steps, progress_bar)
         # async_thread = AsyncWatchThread(dialog)
 
         for user in users:

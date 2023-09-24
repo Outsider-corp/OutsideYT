@@ -12,21 +12,23 @@ from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
 def update_download(ui, parent):
     download_table = ui.Download_Table
-    download_model = TableModels.DownloadModel(oldest_settings=ui)
+    download_model = TableModels.DownloadModel(oldest_settings=ui,
+                                               main_progress_bar=ui.Download_Progress_Bar)
     download_table.setModel(download_model)
     download_table = CommonTables.table_universal(download_table)
     download_table.hideColumn(list(download_table.model().get_data().columns).index('Selected'))
     download_table.setVerticalHeader(CommonTables.HeaderView(download_table))
     download_table.horizontalHeader().setFont(QtGui.QFont('Arial', 12))
     width = parent.width()
-    for i, size in enumerate([50, 400, 200, 70, int(width) - 720]):
+    for i, size in enumerate([50, 400, 200, 70, int(width) - 760]):
         download_table.setColumnWidth(i, size)
 
     # ui.Download_advanced_settings_Button.clicked.connect(
     #     partial(dialogs.open_advanced_settings, parent=parent, table=download_table))
 
     ui.Download_SelectVideos_Button.clicked.connect(
-        partial(open_watch_down_select_videos, parent=parent, table=download_table, parent_settings=ui,
+        partial(open_watch_down_select_videos, parent=parent, table=download_table,
+                parent_settings=ui,
                 add_table_class=Ui_Download_Videos_Dialog)
     )
 
@@ -44,7 +46,6 @@ def update_download(ui, parent):
                                                            table=download_table))
 
     ui.Download_SavingPath_Label.setText(OutsideYT.app_settings_uploaders.vids_folder)
-    ui.Download_Progress_Bar.setVisible(False)
 
     download_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     download_table.customContextMenuRequested.connect(

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\Outside_MainWindow.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/Outside_MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -280,6 +280,14 @@ class Ui_YouTubeOutside(object):
         self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_6.setSpacing(10)
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.Watch_Progress_Bar = QtWidgets.QProgressBar(self.WatchPage)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(9)
+        self.Watch_Progress_Bar.setFont(font)
+        self.Watch_Progress_Bar.setProperty("value", 0)
+        self.Watch_Progress_Bar.setObjectName("Watch_Progress_Bar")
+        self.horizontalLayout_6.addWidget(self.Watch_Progress_Bar)
         self.Watch_Progress_Label = QtWidgets.QLabel(self.WatchPage)
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -290,14 +298,6 @@ class Ui_YouTubeOutside(object):
         self.Watch_Progress_Label.setText("")
         self.Watch_Progress_Label.setObjectName("Watch_Progress_Label")
         self.horizontalLayout_6.addWidget(self.Watch_Progress_Label)
-        self.Watch_Progress_Bar = QtWidgets.QProgressBar(self.WatchPage)
-        font = QtGui.QFont()
-        font.setFamily("Arial")
-        font.setPointSize(9)
-        self.Watch_Progress_Bar.setFont(font)
-        self.Watch_Progress_Bar.setProperty("value", 0)
-        self.Watch_Progress_Bar.setObjectName("Watch_Progress_Bar")
-        self.horizontalLayout_6.addWidget(self.Watch_Progress_Bar)
         spacerItem12 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem12)
         self.Watch_ShowBrowser_checkBox = QtWidgets.QCheckBox(self.WatchPage)
@@ -409,11 +409,10 @@ class Ui_YouTubeOutside(object):
         self.horizontalLayout_10.setSpacing(10)
         self.horizontalLayout_10.setObjectName("horizontalLayout_10")
         self.Download_Progress_Bar = QtWidgets.QProgressBar(self.DownloadPage)
+        self.Download_Progress_Bar.setEnabled(True)
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(9)
-        font.setBold(True)
-        font.setWeight(75)
         self.Download_Progress_Bar.setFont(font)
         self.Download_Progress_Bar.setProperty("value", 0)
         self.Download_Progress_Bar.setObjectName("Download_Progress_Bar")
@@ -451,7 +450,7 @@ class Ui_YouTubeOutside(object):
         self.gridLayout.addWidget(self.OutsideYT, 2, 0, 1, 1)
         YouTubeOutside.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(YouTubeOutside)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 21))
         self.menubar.setObjectName("menubar")
         self.menuOutside_YouTube = QtWidgets.QMenu(self.menubar)
         font = QtGui.QFont()
@@ -531,7 +530,7 @@ class Ui_YouTubeOutside(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(YouTubeOutside)
-        self.OutsideYT.setCurrentIndex(0)
+        self.OutsideYT.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(YouTubeOutside)
 
     def retranslateUi(self, YouTubeOutside):

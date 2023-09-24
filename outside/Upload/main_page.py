@@ -14,7 +14,8 @@ from . import TableModels, context_menu, dialogs
 
 def update_upload(ui, parent):
     upload_table = ui.Upload_Table
-    upload_model = TableModels.UploadModel(oldest_settings=ui)
+    upload_model = TableModels.UploadModel(oldest_settings=ui,
+                                           main_progress_bar=ui.Upload_Progress_Bar)
     upload_table.setModel(upload_model)
 
     upload_table = CommonTables.table_universal(upload_table)

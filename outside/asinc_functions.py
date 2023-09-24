@@ -2,7 +2,7 @@ import asyncio
 import time
 
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread
+from PyQt5.QtCore import QMutex, QThread, QMetaObject, Qt, QGenericArgument, pyqtSignal
 from PyQt5.QtWidgets import QProgressBar, QWidget
 
 from outside.YT_functions import get_video_info
@@ -30,11 +30,18 @@ class WorkerThread(QThread):
         self.progress_bar.setValue(0)
 
 
-class WatchProgress:
-    def __init__(self, total_steps: int) -> None:
+class ProgressMutex:
+    def __init__(self, total_steps: int, progress_bar) -> None:
         self.mutex = QMutex()
         self.progress = 0
         self.total_steps = total_steps
+        self.progress_bar = progress_bar
+
+    def inc(self):
+        self.mutex.lock()
+        self.progress += 1
+        self.progress_bar.setValue(self.progress)
+        self.mutex.unlock()
 
 
 class SeekThreads(QThread):
@@ -82,7 +89,7 @@ class WatchThreadOneProgressBar(QThread):
 
 class AsyncWatchThread(QThread):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.loop = asyncio.new_event_loop()
         self.videos = []
@@ -123,20 +130,32 @@ class WatchThread(QThread):
 
 class GetVideoInfoThread(QThread):
 
-    def __init__(self, tasks: list, table, parent=None):
+    def __init__(self, tasks: list, table, parent=None) -> None:
         super().__init__(parent)
         self.table = table
         self.tasks = tasks
         self.results = []
+        self.progress_bar = table.model().progress_bar
+        self.lock = asyncio.Lock()
+        self.total_steps = len(tasks)
+        self.progress = 0
+
+    async def progress_bar_inc(self):
+        await asyncio.sleep(0.005)
+        async with self.lock:
+            self.progress += 1
+            new_val = int(self.progress / self.total_steps * 100)
+            self.progress_bar.setValue(new_val)
 
     async def start_loop(self):
         async with aiohttp.ClientSession() as session:
-            atasks = [get_video_info(link, session) for link in self.tasks]
+            atasks = [get_video_info(link.strip(), session, progress_inc=self.progress_bar_inc)
+                      for link in self.tasks]
             self.results = await asyncio.gather(*atasks)
 
     def run(self):
         asyncio.run(self.start_loop())
-
+        self.progress_bar.setValue(0)
 
 def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,
                     total_steps: int = 0):

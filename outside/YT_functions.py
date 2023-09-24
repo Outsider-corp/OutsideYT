@@ -8,13 +8,14 @@ import sys
 import time
 
 import aiohttp
-import requests
 import selenium.common.exceptions
+
 # from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+from outside.functions import progress_bar_inc
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, save_cookies_time, wait_time_url_uploads
 
@@ -251,7 +252,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
         print(e)
 
 
-async def get_video_info(link, session: aiohttp.ClientSession):
+async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
     """Функция для получения информации о видео (название и канал)."""
     try:
         async with session.get(link) as response:
@@ -266,7 +267,8 @@ async def get_video_info(link, session: aiohttp.ClientSession):
                         ytInitialData = json.loads(script_text.replace('var ytInitialData = ',
                                                                        '')[:-1])
                         video_info = \
-                            ytInitialData['playerOverlays']['playerOverlayRenderer']['videoDetails'][
+                            ytInitialData['playerOverlays']['playerOverlayRenderer'][
+                                'videoDetails'][
                                 'playerOverlayVideoDetailsRenderer']
                         video = video_info['title']['simpleText']
                         channel = video_info['subtitle']['runs'][0]['text']
@@ -277,6 +279,8 @@ async def get_video_info(link, session: aiohttp.ClientSession):
                         duration = int(ytInitialPlayerResponse['streamingData']['formats'][0][
                                            'approxDurationMs']) // 1000
                     if video and channel and duration:
+                        if 'progress_inc' in kwargs:
+                            await kwargs['progress_inc']()
                         return video, channel, duration, link
                 if not (video and channel and duration):
                     error_func('Не удалось получить информацию о видео...')
@@ -284,6 +288,8 @@ async def get_video_info(link, session: aiohttp.ClientSession):
                 error_func('Нет подключения к сайту')
     except:
         pass
+    if 'progress_inc' in kwargs:
+        await kwargs['progress_inc']()
     return None, None, None, None
 
 

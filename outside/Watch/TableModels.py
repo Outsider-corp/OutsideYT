@@ -12,7 +12,8 @@ from OutsideYT import app_settings_watchers
 
 
 class WatchModel(QAbstractTableModel):
-    columns = ['id', 'Progress', 'Watchers Group', 'Count', 'Video', 'Channel', 'Duration', 'Link', 'Selected']
+    columns = ['id', 'Progress', 'Watchers Group', 'Count', 'Video', 'Channel', 'Duration', 'Link',
+               'Selected']
 
     default_content = {'id': None, 'Progress': 0,
                        'Watchers Group': app_settings_watchers.def_group, 'Count': 0,
@@ -24,7 +25,7 @@ class WatchModel(QAbstractTableModel):
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
-        self.main_progress_bar = main_progress_bar
+        self._main_progress_bar = main_progress_bar
 
     def update(self):
         self.layoutChanged.emit()
@@ -35,7 +36,8 @@ class WatchModel(QAbstractTableModel):
 
     @property
     def progress_bar(self):
-        return self.main_progress_bar
+        return self._main_progress_bar
+
     def flags(self, index: QModelIndex):
         flags = Qt.ItemIsEnabled
         if self._data.columns[index.column()] == 'id':
@@ -75,15 +77,15 @@ class WatchModel(QAbstractTableModel):
                     if dur_sec > 3600:
                         duration += f'{dur_sec // 3600}:'
                         dur_sec %= 3600
-                    duration += f'{dur_sec // 60}:{dur_sec % 60}'
+                    duration += f'{dur_sec // 60:02d}:{dur_sec % 60:02d}'
                     return duration
 
                 elif column == 'Count':
-                    return len(app_settings_watchers.groups[self.get_data().loc[index.row(), 'Watchers Group']])
+                    return len(app_settings_watchers.groups[self.get_data().loc[index.row(),
+                                                                                'Watchers Group']])
 
                 else:
                     return self.get_data().loc[index.row(), column]
-            return None
         return None
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
@@ -105,7 +107,8 @@ class WatchModel(QAbstractTableModel):
     def setDataFuncs(self, id, column, value):
         self._data[self._data.id == id][column] = value
 
-    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None, **kwargs) -> bool:
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None,
+                   **kwargs) -> bool:
         if not row_content:
             row_content = {}
         row_count = self.rowCount()
@@ -174,13 +177,15 @@ class WatchersUsersModel(QAbstractTableModel):
     def update(self):
         temp_df = pd.DataFrame([(acc, mail, group) for group, accounts in
                                 app_settings_watchers.groups.items() for
-                                acc, mail in accounts.items()], columns=['Account', 'Gmail', 'Group'])
+                                acc, mail in accounts.items()],
+                               columns=['Account', 'Gmail', 'Group'])
         temp_df['id'] = [str(x + 1) for x in temp_df.index]
         self._data = temp_df.reindex(columns=WatchersUsersModel.columns)
         self.layoutChanged.emit()
 
     def flags(self, index: QModelIndex):
-        if self._data.columns[index.column()] == 'id' or self._data.columns[index.column()] == 'Gmail':
+        if self._data.columns[index.column()] == 'id' or self._data.columns[
+            index.column()] == 'Gmail':
             flags = Qt.ItemIsEnabled
         else:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
@@ -313,7 +318,8 @@ class WatchersGroupsModel(QAbstractTableModel):
                     error_func('This group name is already used')
         return False
 
-    def insertRows(self, group: str = None, count: int = 1, parent: QModelIndex = ..., **kwargs) -> bool:
+    def insertRows(self, group: str = None, count: int = 1, parent: QModelIndex = ...,
+                   **kwargs) -> bool:
         if group is None:
             groupname = 'New Group'
             num = 0
@@ -375,4 +381,5 @@ class ProgressBarDelegate(QStyledItemDelegate):
         self.progress_bar.fontMetrics = QtGui.QFontMetrics(option.font)
         self.progress_bar.progress = int(index.data())
         self.progress_bar.text = f'{self.progress_bar.progress}%'
-        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, self.progress_bar, painter)
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar,
+                                                   self.progress_bar, painter)

@@ -1,13 +1,14 @@
 import typing
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 import pandas as pd
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 
 class DownloadModel(QAbstractTableModel):
     columns = ['id', 'Video', 'Channel', 'Duration', 'Link', 'Selected']
 
-    default_content = {'id': None, 'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
+    default_content = {'id': None, 'Video': '', 'Channel': '', 'Duration': '0', 'Link': '',
+                       'Selected': True}
 
     def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
         QAbstractTableModel.__init__(self)
@@ -15,15 +16,15 @@ class DownloadModel(QAbstractTableModel):
             data = pd.DataFrame(columns=DownloadModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
-        self.main_progress_bar = main_progress_bar
+        self._main_progress_bar = main_progress_bar
 
     @property
     def table_type(self):
-        return "Download"
+        return 'Download'
 
     @property
     def progress_bar(self):
-        return self.main_progress_bar
+        return self._main_progress_bar
 
     def update(self):
         self.layoutChanged.emit()
@@ -34,7 +35,7 @@ class DownloadModel(QAbstractTableModel):
             flags |= Qt.ItemIsUserCheckable
         else:
             flags |= Qt.ItemIsSelectable
-            if self._data.columns[index.column()] == "Link":
+            if self._data.columns[index.column()] == 'Link':
                 flags |= Qt.ItemIsEditable
         return flags
 
@@ -67,11 +68,11 @@ class DownloadModel(QAbstractTableModel):
                     if dur_sec > 3600:
                         duration += f'{dur_sec // 3600}:'
                         dur_sec %= 3600
-                    duration += f'{dur_sec // 60}:{dur_sec % 60}'
+                    duration += f'{dur_sec // 60:02d}:{dur_sec % 60:02d}'
                     return duration
+
                 else:
                     return self.get_data().loc[index.row(), column]
-            return None
         return None
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
@@ -93,7 +94,8 @@ class DownloadModel(QAbstractTableModel):
     def setDataFuncs(self, id, column, value):
         self._data[self._data.id == id][column] = value
 
-    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None, **kwargs) -> bool:
+    def insertRows(self, count: int = 1, parent: QModelIndex = ..., row_content=None,
+                   **kwargs) -> bool:
         if not row_content:
             row_content = {}
         row_count = self.rowCount()

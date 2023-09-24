@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\SelectDownloadVideos_Dialog.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/SelectDownloadVideos_Dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
