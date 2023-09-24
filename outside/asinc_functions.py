@@ -1,11 +1,13 @@
 import asyncio
 import time
 
+from typing import List
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread, QMetaObject, Qt, QGenericArgument, pyqtSignal
+from PyQt5.QtCore import QMutex, QThread, QMetaObject, Qt, QGenericArgument, pyqtSignal, QModelIndex
 from PyQt5.QtWidgets import QProgressBar, QWidget
 
-from outside.YT_functions import get_video_info
+import OutsideYT
+from outside.YT_functions import get_video_info, watching
 
 
 class WorkerThread(QThread):
@@ -87,27 +89,7 @@ class WatchThreadOneProgressBar(QThread):
             self.progress_bar.setValue(progress)
 
 
-class AsyncWatchThread(QThread):
-
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.loop = asyncio.new_event_loop()
-        self.videos = []
-
-    def run(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.main())
-        self.loop.close()
-        self.finished.emit()
-
-    def add_video(self, start_video):
-        self.videos.append(start_video)
-
-    async def main(self):
-        await asyncio.gather(*self.videos)
-
-
-class WatchThread(QThread):
+class WatchThreadOld(QThread):
     def __init__(self, progress_bar, process, group_progress) -> None:
         super().__init__()
         self.progress_bar = progress_bar
@@ -156,6 +138,44 @@ class GetVideoInfoThread(QThread):
     def run(self):
         asyncio.run(self.start_loop())
         self.progress_bar.setValue(0)
+
+
+class WatchThread(QThread):
+
+    def __init__(self, table, table_row: int, driver_headless=True, parent=None,
+                 offsets: List = None) -> None:
+        super().__init__(parent)
+        self._table = table
+        self._video = table.model().get_data().loc[table_row, "Link"]
+        self._durations = table.model().get_data().loc[table_row, "Duration"]
+        self._users = list(OutsideYT.app_settings_watchers.groups[
+                               table.model().get_data().loc[table_row, "Watchers Group"]].keys())
+        self._progress_bar_num = table_row
+        self._lock = asyncio.Lock()
+        sum_offsets = sum(offsets) if offsets else 0
+        self._total_steps = len(self._users) * self._durations + sum_offsets
+        self._progress = 0
+        self.driver_headless = driver_headless
+        self._offsets = offsets
+
+    async def progress_bar_inc(self):
+        await asyncio.sleep(0.005)
+        async with self._lock:
+            self._progress += 1
+            new_val = int(self._progress / self._total_steps * 100)
+            self._table.model().update_progress_bar(self._progress_bar_num, new_val)
+            qindex = self._table.model().index(self._progress_bar_num, 1, QModelIndex())
+
+    async def start_loop(self):
+        atasks = [watching(self._video, self._durations, user,
+                           driver_headless=self.driver_headless,
+                           progress_inc=self.progress_bar_inc)
+                  for user in self._users]
+        await asyncio.gather(*atasks)
+
+    def run(self):
+        asyncio.run(self.start_loop())
+
 
 def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,
                     total_steps: int = 0):

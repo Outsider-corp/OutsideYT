@@ -8,7 +8,7 @@ from outside import TableModels as CommonTables
 from outside import main_dialogs as MainDialogs
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import SeekThreads, start_watch_operation, AsyncWatchThread, ProgressMutex
+from ..asinc_functions import SeekThreads, start_watch_operation, ProgressMutex, WatchThread
 from ..functions import update_checkbox_select_all
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..message_boxes import error_func
@@ -20,7 +20,8 @@ from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
 def update_watch(ui, parent):
     watch_table = ui.Watch_Table
     watch_model = TableModels.WatchModel(oldest_settings=ui,
-                                         main_progress_bar=ui.Watch_Progress_Bar)
+                                         main_progress_bar=ui.Watch_Progress_Bar,
+                                         tableview=watch_table)
     watch_table.setModel(watch_model)
     watch_table = CommonTables.table_universal(watch_table)
     watch_table.hideColumn(list(watch_table.model().get_data().columns).index('Selected'))
@@ -69,7 +70,11 @@ def update_watch(ui, parent):
 
 
 def start_watch(dialog, dialog_settings, table):
-    dialog_settings.watch_threads = []
+
+    def finish_video(video):
+            watch_threads_check.remove(video)
+
+    watch_threads_check = []
     current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'WatchPage')
     tab_elements = current_tab.findChildren(QWidget)
 
@@ -82,7 +87,7 @@ def start_watch(dialog, dialog_settings, table):
         if not video['Selected']:
             continue
 
-        if not dialog_settings.watch_threads:
+        if not watch_threads_check:
             for el in tab_elements:
                 el.setEnabled(False)
             dialog_settings.Watch_Table.hideColumn(
@@ -91,40 +96,17 @@ def start_watch(dialog, dialog_settings, table):
                 list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
                 False)
 
-        total_steps = video['Duration'] * len(users)
-        progress_bar = partial(dialog_settings.Watch_Table.model().update_progress_bar, index=num,
-                               viewport=dialog_settings.Watch_Table)
-        group_progress = ProgressMutex(total_steps, progress_bar)
-        # async_thread = AsyncWatchThread(dialog)
-
-        for user in users:
-            process = partial(watching,
-                              url=video['Link'],
-                              duration=video['Duration'],
-                              user=user,
-                              driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
-                              isChecked(),
-                              progress_bar=None)
-
-            start_watch_operation(dialog_settings=dialog_settings,
-                                  progress_bar=progress_bar,
-                                  group_progress=group_progress,
-                                  process=process)
-
-            # async_thread.add_video(process)
-        # async_thread.start()
+        watch_thread = WatchThread(table=table, table_row=num, parent=dialog,
+                                   driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
+                                   isChecked())
+        watch_threads_check.append(num)
+        watch_thread.start()
+        watch_thread.finished.connect(partial(finish_video, video=num))
 
     def seek_ends(seek_thread):
         seek_thread.deleteLater()
         dialog_settings.Watch_Table.model().reset_progress_bars()
 
-    seek_threads = SeekThreads(dialog_settings.watch_threads, tab_elements, dialog_settings)
+    seek_threads = SeekThreads(watch_threads_check, tab_elements, dialog_settings)
     seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))
     seek_threads.start()
-
-
-def example_process():
-    for i in range(5):
-        time.sleep(i + 2)
-        print(i + 2)
-        yield i + 1

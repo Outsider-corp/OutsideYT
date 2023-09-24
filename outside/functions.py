@@ -34,7 +34,7 @@ def progress_bar_inc(func):
     async def wrapper(*args, **kwargs):
         result = await func(*args, **kwargs)
         if 'progress_bar' in kwargs:
-            await kwargs['progress_bar']
+            await kwargs['progress_bar']()
         return result
 
     return wrapper

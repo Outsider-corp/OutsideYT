@@ -65,7 +65,6 @@ def start_GUI():
     update_ui()
     YouTubeOutside.show()
 
-
 if __name__ == '__main__':
     start_GUI()
 

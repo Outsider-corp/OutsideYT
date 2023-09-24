@@ -136,12 +136,3 @@ class DownloadModel(QAbstractTableModel):
 
     def get_data(self):
         return self._data
-
-    def update_progress_bar(self, index, value, viewport):
-        self._data.loc[index, 'Progress'] = value
-        self.update()
-        viewport.update()
-
-    def reset_progress_bars(self):
-        self._data['Progress'] = 0
-        self.update()

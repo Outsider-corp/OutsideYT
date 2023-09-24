@@ -19,13 +19,15 @@ class WatchModel(QAbstractTableModel):
                        'Watchers Group': app_settings_watchers.def_group, 'Count': 0,
                        'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
 
-    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None,
+                 tableview=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
         self._main_progress_bar = main_progress_bar
+        self._tableview = tableview
 
     def update(self):
         self.layoutChanged.emit()
@@ -151,10 +153,10 @@ class WatchModel(QAbstractTableModel):
     def get_data(self):
         return self._data
 
-    def update_progress_bar(self, index, value, viewport):
+    def update_progress_bar(self, index, value):
         self._data.loc[index, 'Progress'] = value
-        self.update()
-        viewport.update()
+        qindex = self.index(index, 1, QModelIndex())
+        self._tableview.update(qindex)
 
     def reset_progress_bars(self):
         self._data['Progress'] = 0

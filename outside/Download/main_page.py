@@ -35,7 +35,7 @@ def update_download(ui, parent):
     ui.Download_url_add_Button.clicked.connect(
         partial(add_video_from_textbox, table=download_table, textbox=ui.Download_url_textBox))
 
-    ui.Watch_Start.clicked.connect(
+    ui.Download_Start.clicked.connect(
         partial(start_download, dialog=parent, dialog_settings=ui, table=download_table))
 
     ui.Download_ChangePath_Button.clicked.connect(
