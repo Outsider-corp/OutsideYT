@@ -1,5 +1,5 @@
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\Outside_MainWindow.ui -o P:\PROJECTS\OutsideYT\outside\views_py\Outside_MainWindow.py
-python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\AddUploader_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\AddUploader_Dialog.py 
+python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\AddUser_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\AddUser_Dialog.py 
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\AddWatcher_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\AddWatcher_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\EditWatchersGroups_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\EditWatchersGroups_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\WatchersList_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\WatchersList_Dialog.py

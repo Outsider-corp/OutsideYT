@@ -112,18 +112,19 @@ class WatchThreadOld(QThread):
 
 class GetVideoInfoThread(QThread):
 
-    def __init__(self, tasks: list, table, parent=None) -> None:
+    def __init__(self, tasks: list, table, parent=None, full_info: bool = False) -> None:
         super().__init__(parent)
         self.table = table
         self.tasks = tasks
         self.results = []
         self.progress_bar = table.model().progress_bar
+        self.full_info = full_info
         self.lock = asyncio.Lock()
         self.total_steps = len(tasks)
         self.progress = 0
 
     async def progress_bar_inc(self):
-        await asyncio.sleep(0.005)
+        await asyncio.sleep(0.01)
         async with self.lock:
             self.progress += 1
             new_val = int(self.progress / self.total_steps * 100)
@@ -131,8 +132,9 @@ class GetVideoInfoThread(QThread):
 
     async def start_loop(self):
         async with aiohttp.ClientSession() as session:
-            atasks = [get_video_info(link.strip(), session, progress_inc=self.progress_bar_inc)
-                      for link in self.tasks]
+            atasks = [get_video_info(link.strip(), session,
+                                     progress_inc=self.progress_bar_inc,
+                                     full_info=self.full_info) for link in self.tasks]
             self.results = await asyncio.gather(*atasks)
 
     def run(self):

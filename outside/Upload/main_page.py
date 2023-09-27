@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QWidget
 
 import OutsideYT
+import outside.TableModels
 from outside import TableModels as CommonTables
 from outside import main_dialogs
 
@@ -74,7 +75,8 @@ def update_upload(ui, parent):
     ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog,
                                                    parent=parent,
                                                    table_type='upload',
-                                                   add_table_class=TableModels.UploadersUsersModel))
+                                                   add_table_class=partial(CommonTables.UsersModel,
+                                                                           table_type='upload')))
 
     return upload_table, ui
 

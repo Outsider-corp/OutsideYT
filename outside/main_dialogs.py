@@ -5,16 +5,16 @@ from typing import List
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import outside.Upload.context_menu as upload_context
 import outside.Watch.context_menu as watch_context
 import OutsideYT
+import outside.context_menu
 from outside import TableModels
 from outside.asinc_functions import GetVideoInfoThread
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
 from outside.views_py import (
-    AddUploader_Dialog,
+    AddUser_Dialog,
     AddWatcher_Dialog,
     UsersList_Dialog,
     WatchersList_Dialog,
@@ -24,8 +24,9 @@ from outside.YT_functions import get_playlist_info, select_page
 
 
 def open_UsersList_Dialog(parent, table_type: str, add_table_class):
-    if table_type == 'upload':
-        table_settings = OutsideYT.app_settings_uploaders
+    if table_type in ['upload', 'download']:
+        table_settings = OutsideYT.app_settings_uploaders if table_type == 'upload' \
+            else OutsideYT.app_settings_download
         def_type = 'account'
         combo_items_default = table_settings.accounts.keys()
     elif table_type == 'watch':
@@ -48,7 +49,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
         TableModels.HeaderView(dialog_settings.Users_Table, replace=False))
 
     width = dialog.width() - 50
-    if str(table_settings).lower() == 'uploaders':
+    if table_type in ['upload', 'download']:
         dialog_settings.Users_Table.setColumnWidth(0, int(width * 0.1))
         dialog_settings.Users_Table.setColumnWidth(1, int(width * 0.3))
         dialog_settings.Users_Table.setColumnWidth(2, width - int(width * 0.1) - int(width * 0.3))
@@ -79,17 +80,18 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
     adduser = partial(open_addUsers_Dialog, parent=dialog, parent_settings=dialog_settings,
                       table_settings=table_settings,
                       def_type=def_type, combo_items_default=combo_items_default,
-                      dialog_ui=AddUploader_Dialog.Ui_AddUser_Dialog if str(
-                          table_settings).lower() == 'uploaders'
+                      dialog_ui=AddUser_Dialog.Ui_AddUser_Dialog if table_type in ['upload',
+                                                                                   'download']
                       else AddWatcher_Dialog.Ui_AddUser_Dialog)
     dialog_settings.addUser_Button.clicked.connect(adduser)
     dialog_settings.Users_Table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
     def context_menu(pos):
-        if str(table_settings).lower() == 'uploaders':
-            upload_context.uploaders_dialogs_menu(pos, parent=dialog,
-                                                  table=dialog_settings.Users_Table)
-        elif str(table_settings).lower() == 'watchers':
+        if table_type in ['upload', 'download']:
+            outside.context_menu.users_dialogs_menu(pos, parent=dialog,
+                                                    table=dialog_settings.Users_Table,
+                                                    table_type=table_type)
+        elif table_type == 'watch':
             watch_context.watchers_dialogs_menu(pos, parent=dialog,
                                                 table=dialog_settings.Users_Table)
 
@@ -136,7 +138,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
                 old_group = None
                 if ind in dialog_settings.Users_Table.model().get_data().index:
                     new = dialog_settings.Users_Table.model().get_data().loc[ind, 'Account']
-                    if str(table_settings).lower() == 'uploaders':
+                    if table_type in ['upload', 'download']:
                         if old != new:
                             table_settings.edit_account(old, new)
                     elif str(table_settings).lower() == 'watchers':
@@ -149,7 +151,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
             dialog_settings.Users_Table.model().reset_ids(
                 [dialog_settings.Users_Table.verticalHeader().visualIndex(i) for i in
                  range(dialog_settings.Users_Table.model().rowCount())])
-            if str(table_settings).lower() == 'uploaders':
+            if table_type in ['upload', 'download']:
                 dialog_settings.Users_Table.model()._data = \
                     dialog_settings.Users_Table.model().get_data().sort_values(by='id')
                 accs = dialog_settings.Users_Table.model().get_data().set_index('Account')[
@@ -189,8 +191,8 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
 
             cook = QtWidgets.QDialog(dialog)
             cook.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
-            if str(table_settings).lower() == 'uploaders':
-                cook_settings = AddUploader_Dialog.Ui_AddUser_Dialog()
+            if table_type in ['upload', 'download']:
+                cook_settings = AddUser_Dialog.Ui_AddUser_Dialog()
                 cook_settings.setupUi(cook)
             else:
                 cook_settings = AddWatcher_Dialog.Ui_AddUser_Dialog()
@@ -217,7 +219,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
     dialog_settings.CheckCookies_Button.clicked.connect(
         partial(chk_cookies, dialog_settings=dialog_settings))
 
-    if str(table_settings).lower() == 'watchers':
+    if table_type == 'watch':
         dialog_settings.EditGroups_Button.clicked.connect(
             partial(edit_watchers_groups, parent=dialog, parent_settings=dialog_settings))
         dialog_settings.Users_Table.model().update()
@@ -233,7 +235,8 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
     dialog_settings = dialog_ui()
     dialog_settings.setupUi(dialog)
     items = [f'No {def_type}', *combo_items_default]
-    dialog_settings = update_settings_combobox_with_type(dialog_settings, items)
+    dialog_settings = update_settings_combobox_with_type(dialog_settings, items,
+                                                         table_type=str(table_settings).lower())
 
     def ok(parent_settings):
         login = dialog_settings.Account_textbox.text()
@@ -255,7 +258,7 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
                     items = [f'No default {def_type}', *combo_items_default]
                     parent_settings = update_settings_combobox_with_type(
                         dialog_settings=parent_settings,
-                        items=items)
+                        items=items, table_type=str(table_settings))
             except Exception as e:
                 error_func(f'Error. \n{e}')
 
@@ -267,6 +270,8 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
 
 def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_settings,
                                   add_table_class):
+    owner_account = parent_settings.Download_Owner_ComboBox.currentText() \
+        if parent_settings.Download_OwnerMode_radioButton.isChecked() else ''
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     dialog_settings = add_table_class()
@@ -282,8 +287,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         text = select_page('video')
         if text:
             group = dialog_settings.Group_comboBox.currentText() if \
-                table.model().table_type == 'Watch' else None
-            get_videos_info(table, links=[text], group=group)
+                table.model().table_type == 'watch' else None
+            get_videos_info(table, links=[text], group=group,
+                            full_info=table.model().table_type == 'download')
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -308,12 +314,13 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
             return
 
         group = dialog_settings.Group_comboBox.currentText() if \
-            table.model().table_type == 'Watch' else None
+            table.model().table_type == 'watch' else None
         dialog.accept()
 
         with open(file, 'r', encoding='UTF-8') as f:
             links = f.readlines()
-        get_videos_info(table=table, links=links, group=group)
+        get_videos_info(table=table, links=links, group=group,
+                        full_info=table.model().table_type == "download")
 
     def select_channel():
         text = select_page('channel')
@@ -343,19 +350,22 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
                 el.setVisible(False)
 
     def show_actions_for_channel():
-        if dialog_settings.channel_link_textBox.text() == '':
+        if not dialog_settings.channel_link_textBox.text() and not owner_account:
             show_elements('none')
         else:
             show_elements('count')
 
     def ok():
-        url = dialog_settings.channel_link_textBox.text()
-        if url == '':
+        if owner_account:
+            url = owner_account
+        else:
+            url = dialog_settings.channel_link_textBox.text()
+        if not url:
             dialog.reject()
         elif 'youtube.com/' not in url:
             error_func(f'Wrong url: {url}')
         else:
-            if table.model().table_type == 'Watch':
+            if table.model().table_type == 'watch':
                 group = dialog_settings.Group_comboBox.currentText()
             if dialog_settings.Last_video_radioButton.isChecked():
                 dialog_settings.Count_videos_spinBox.value()
@@ -371,13 +381,21 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
                 dialog_settings.Start_date.time()
                 dialog_settings.End_date.time()
 
-    if table.model().table_type == 'Watch':
+    if table.model().table_type == 'watch':
         items = list(OutsideYT.app_settings_watchers.groups.keys())
         dialog_settings.Group_comboBox = update_combobox(
             dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
 
-    show_elements('none')
-    dialog_settings.channel_link_textBox.textChanged.connect(show_actions_for_channel)
+    show_elements('count' if owner_account else 'none')
+
+    if owner_account:
+        dialog_settings.Select_channel_Button.setVisible(False)
+        dialog_settings.channel_link_textBox.setEnabled(False)
+        dialog_settings.channel_link_textBox.setText(owner_account)
+    else:
+        dialog_settings.channel_link_textBox.textChanged.connect(show_actions_for_channel)
+        dialog_settings.Select_channel_Button.clicked.connect(select_channel)
+
     dialog_settings.Last_video_radioButton.toggled.connect(lambda: show_elements('count'))
     dialog_settings.Random_video_radioButton.toggled.connect(lambda: show_elements('count'))
     dialog_settings.Period_radioButton.toggled.connect(lambda: show_elements('period'))
@@ -385,7 +403,6 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
     dialog_settings.AddVideo_Button.clicked.connect(add_video)
     dialog_settings.AddPlaylist_Button.clicked.connect(add_playlist)
     dialog_settings.Import_links_Button.clicked.connect(import_links_from_file)
-    dialog_settings.Select_channel_Button.clicked.connect(select_channel)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
         dialog.reject)
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
@@ -396,40 +413,45 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
-        get_videos_info(table, [text])
+        get_videos_info(table, [text], full_info=table.model().table_type == 'download')
         textbox.clear()
     elif 'youtube.com/playlist' in text:
-        get_playlist_info(table, textbox)
+        get_playlist_info(table, text)
         textbox.clear()
 
 
-def get_videos_info(table, links: List, group=None):
+def get_videos_info(table, links: List, group=None, full_info: bool = False, owner=''):
     def return_func():
         for video in vids_thread.results:
-            _add_video_to_table(table, video, group)
+            _add_video_to_table(table, video_info=video, group=group)
+            if full_info:
+                create_video_folder(table, video_info=video)
+        vids_thread.deleteLater()
 
-    vids_thread = GetVideoInfoThread(links, table)
+    vids_thread = GetVideoInfoThread(links, table, full_info=full_info)
     vids_thread.start()
     vids_thread.finished.connect(return_func)
 
 
-def get_playlist_info(table, link: str, group: str = None):
+def get_playlist_info(table, link: str, group: str = None, owner=''):
     pass
 
 
 def _add_video_to_table(table, video_info, group=None):
-    if all(video_info):
+    if video_info:
         table.model().insertRows(row_content={'Watchers Group': group,
-                                              'Video': video_info[0],
-                                              'Channel': video_info[1],
-                                              'Duration': video_info[2],
-                                              'Link': video_info[3]})
+                                              'Video': video_info['title'],
+                                              'Channel': video_info['author'],
+                                              'Duration': video_info['lengthSeconds'],
+                                              'Link': video_info['link']})
 
+def create_video_folder(table, video_info, ):
+    pass
 
 def userslist(parent, table_name: str):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
-    if table_name.lower() == 'uploaders':
+    if table_name in ['upload', 'download']:
         dialog_settings = UsersList_Dialog.Ui_UsersList_Dialog()
     else:
         dialog_settings = WatchersList_Dialog.Ui_WatchersList_Dialog()
@@ -437,17 +459,23 @@ def userslist(parent, table_name: str):
     return dialog, dialog_settings
 
 
-def update_settings_combobox_with_type(dialog_settings, items):
-    if hasattr(dialog_settings, 'Group_comboBox'):
+def update_settings_combobox_with_type(dialog_settings, items, table_type):
+    if table_type == 'watch':
         dialog_settings.Group_comboBox = update_combobox(
             dialog_settings.Group_comboBox, items[1:], OutsideYT.app_settings_watchers.def_group)
-    elif hasattr(dialog_settings, 'DefUser_ComboBox'):
-        dialog_settings.DefUser_ComboBox = update_combobox(
-            dialog_settings.DefUser_ComboBox, items, OutsideYT.app_settings_uploaders.def_account)
+    elif hasattr(dialog_settings, 'DefUser_CompBox'):
+        if table_type == 'upload':
+            dialog_settings.DefUser_ComboBox = update_combobox(
+                dialog_settings.DefUser_ComboBox, items,
+                OutsideYT.app_settings_uploaders.def_account)
+        elif table_type == 'download':
+            dialog_settings.DefUser_ComboBox = update_combobox(
+                dialog_settings.DefUser_ComboBox, items,
+                OutsideYT.app_settings_download.def_account)
     return dialog_settings
 
 
 def update_settings_from_file():
     OutsideYT.app_settings_uploaders.update_settings()
     OutsideYT.app_settings_watchers.update_settings()
-
+    OutsideYT.app_settings_download.update_settings()

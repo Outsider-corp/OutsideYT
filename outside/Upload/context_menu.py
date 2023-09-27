@@ -4,10 +4,8 @@ from functools import partial
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QMenu, QStyle
 
-import OutsideYT
 from outside.context_menu import add_remove_row
 from outside.message_boxes import error_func
-from outside.TableModels import remove_row
 from outside.Upload import dialogs
 from outside.Upload.TableModels import UploadModel, open_location
 
@@ -74,16 +72,3 @@ def upload_context_menu(pos, parent, table: QAbstractItemView):
     menu.exec_(cursor.pos())
 
 
-def uploaders_dialogs_menu(pos, parent, table: QAbstractItemView):
-    menu = QMenu(parent)
-    ind = table.indexAt(pos)
-    if ind.isValid() and table.selectedIndexes():
-        remove_data = menu.addAction('Remove Row')
-        remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
-        acc = table.model().get_data().loc[ind.row(), 'Account']
-        remove_data.triggered.connect(partial(remove_row, table=table,
-                                              del_from_settings=partial(
-                                                  OutsideYT.app_settings_uploaders.del_account,
-                                                  parent=parent, login=acc)))
-        cursor = QtGui.QCursor()
-        menu.exec_(cursor.pos())

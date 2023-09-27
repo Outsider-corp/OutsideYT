@@ -6,7 +6,6 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtWidgets import QFileDialog, QStyledItemDelegate, QTableView
 
 from outside.functions import find_files
-from outside.message_boxes import error_func
 from OutsideYT import (
     app_settings_uploaders,
     image_extensions,
@@ -38,7 +37,7 @@ class UploadModel(QAbstractTableModel):
 
     @property
     def table_type(self):
-        return "Upload"
+        return "upload"
 
     @property
     def progress_bar(self):
@@ -160,97 +159,6 @@ class UploadModel(QAbstractTableModel):
     def removeAllRows(self, *args, **kwargs):
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self._data = pd.DataFrame(columns=UploadModel.columns)
-        self.endRemoveRows()
-        self.update()
-        return True
-
-    def reset_ids(self, new_list=None):
-        if new_list is None:
-            new_list = list(range(1, self.rowCount() + 1))
-        self._data.id = list(map(str, new_list))
-
-    def get_data(self):
-        return self._data
-
-
-class UploadersUsersModel(QAbstractTableModel):
-    columns = ['id', 'Account', 'Gmail']
-
-    def __init__(self) -> None:
-        QAbstractTableModel.__init__(self)
-        self.update()
-
-    @property
-    def table_type(self):
-        return "Upload"
-
-    def update(self):
-        self._data = pd.DataFrame(columns=UploadersUsersModel.columns)
-        self._data['Account'] = app_settings_uploaders.accounts.keys()
-        self._data['Gmail'] = app_settings_uploaders.accounts.values()
-        self._data['id'] = list(map(str, (x + 1 for x in self._data.index)))
-        self.layoutChanged.emit()
-
-    def flags(self, index: QModelIndex):
-        if self._data.columns[index.column()] == 'id' or self._data.columns[
-            index.column()] == 'Gmail':
-            flags = Qt.ItemIsEnabled
-        else:
-            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
-        return flags
-
-    def rowCount(self, parent: QModelIndex = ...) -> int:
-        return len(self._data.index)
-
-    def columnCount(self, parent: QModelIndex = ...) -> int:
-        return len(self._data.columns)
-
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
-                return self._data.columns[section]
-            elif orientation == Qt.Vertical:
-                return '>'
-            return None
-        return None
-
-    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
-        if index.isValid():
-            column = self._data.columns[index.column()]
-            if role == Qt.DisplayRole:
-                if column == 'Gmail':
-                    return f'{self.get_data().loc[index.row(), column]}@gmail.com'
-                else:
-                    return self.get_data().loc[index.row(), column]
-        return None
-
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
-        if index.isValid():
-            column = list(self._data.keys())[index.column()]
-            if column == 'Account' and value != self._data.loc[index.row(), column]:
-                if value not in list(self.get_data()['Account']):
-                    self._data.loc[index.row(), column] = value
-                    self.dataChanged.emit(index, index, [role])
-                    return True
-                else:
-                    error_func('This Account name is already used')
-        return False
-
-    def insertRows(self, row: tuple, parent: QModelIndex = ..., **kwargs) -> bool:
-        row_count = self.rowCount()
-        self.beginInsertRows(QModelIndex(), row_count, row_count)
-        self._data.loc[row_count] = [str(row_count), row[0], row[1], False]
-        row_count += 1
-        self.endInsertRows()
-        return True
-
-    def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
-        row_count = self.rowCount()
-        row_count -= 1
-        self.beginRemoveRows(QModelIndex(), row, row)
-        self._data.drop(index=row)
-        self._data = self._data.reset_index(drop=True)
-        self.reset_ids()
         self.endRemoveRows()
         self.update()
         return True

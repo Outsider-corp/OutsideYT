@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import time
+from urllib.request import Request
 
 import aiohttp
 import selenium.common.exceptions
@@ -23,8 +24,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 class DriverContext:
-    def __init__(self, add_args: list = None, gpu: bool = False, images: bool = False, audio: bool = False,
-               headless: bool = True):
+    def __init__(self, add_args: list = None, gpu: bool = False, images: bool = False,
+                 audio: bool = False,
+                 headless: bool = True):
         self.driver_options = webdriver.ChromeOptions()
         user_agent = (f'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
                       f' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36')
@@ -47,13 +49,15 @@ class DriverContext:
 
     def __enter__(self):
         self.driver = webdriver.Chrome(executable_path=
-                            os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe'),
-                            options=self.driver_options)
+                                       os.path.join(project_folder, 'outside', 'bin',
+                                                    'chromedriver.exe'),
+                                       options=self.driver_options)
         return self.driver
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.driver:
             self.driver.quit()
+
 
 # def get_driver(add_args: list = None, gpu: bool = False, images: bool = False, audio: bool = False,
 #                headless: bool = True):
@@ -131,7 +135,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
     """
     try:
         with DriverContext(headless=driver_headless, images=not driver_headless,
-                            gpu=not driver_headless) as driver:
+                           gpu=not driver_headless) as driver:
             url = 'https://youtube.com'
             url2 = 'https://studio.youtube.com/'
             driver.get(url)
@@ -280,45 +284,32 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
     except Exception as e:
         error_func(f"Error.\n {e}")
 
-async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
-    """Функция для получения информации о видео (название и канал)."""
+
+async def get_video_info(link, session: aiohttp.ClientSession, full_info: bool, **kwargs):
+    """Функция для получения информации о видео."""
     try:
         async with session.get(link) as response:
             if response.status == 200:
                 res_text = await response.text()
                 soup = bs(res_text, 'html.parser')
                 script_tags = soup.find_all('script', {'nonce': True})
-                video = channel = duration = None
                 for script_tag in script_tags:
                     script_text = script_tag.get_text()
-                    if not video and 'ytInitialData' in script_text:
-                        ytInitialData = json.loads(script_text.replace('var ytInitialData = ',
-                                                                       '')[:-1])
-                        video_info = \
-                            ytInitialData['playerOverlays']['playerOverlayRenderer'][
-                                'videoDetails'][
-                                'playerOverlayVideoDetailsRenderer']
-                        video = video_info['title']['simpleText']
-                        channel = video_info['subtitle']['runs'][0]['text']
-                        continue
-                    if not duration and 'ytInitialPlayerResponse' in script_text:
-                        ytInitialPlayerResponse = json.loads(
-                            script_text.replace('var ytInitialPlayerResponse = ', '')[:-1])
-                        duration = int(ytInitialPlayerResponse['streamingData']['formats'][0][
-                                           'approxDurationMs']) // 1000
-                    if video and channel and duration:
+                    if 'ytInitialPlayerResponse' in script_text:
+                        ytInitialPlayerResponse = json.loads(script_text.replace(
+                            'var ytInitialPlayerResponse = ', '')[:-1])
+                        video_info_raw = ytInitialPlayerResponse['videoDetails']
+                        video_info_raw['link'] = link
                         if 'progress_inc' in kwargs:
                             await kwargs['progress_inc']()
-                        return video, channel, duration, link
-                if not (video and channel and duration):
-                    error_func('Не удалось получить информацию о видео...')
+                        return video_info_raw
             else:
                 error_func('Нет подключения к сайту')
     except:
         pass
     if 'progress_inc' in kwargs:
         await kwargs['progress_inc']()
-    return None, None, None, None
+    return None
 
 
 def get_playlist_info(link):

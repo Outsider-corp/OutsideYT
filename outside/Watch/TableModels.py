@@ -34,7 +34,7 @@ class WatchModel(QAbstractTableModel):
 
     @property
     def table_type(self):
-        return "Watch"
+        return "watch"
 
     @property
     def progress_bar(self):
@@ -174,7 +174,7 @@ class WatchersUsersModel(QAbstractTableModel):
 
     @property
     def table_type(self):
-        return "Watch"
+        return "watch"
 
     def update(self):
         temp_df = pd.DataFrame([(acc, mail, group) for group, accounts in
@@ -273,7 +273,7 @@ class WatchersGroupsModel(QAbstractTableModel):
 
     @property
     def table_type(self):
-        return "Watch"
+        return "watch"
 
     def update(self):
         self.layoutChanged.emit()

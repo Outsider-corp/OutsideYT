@@ -796,7 +796,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              <enum>Qt::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Expanding</enum>
+             <enum>QSizePolicy::Preferred</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -841,7 +841,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              <enum>Qt::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Fixed</enum>
+             <enum>QSizePolicy::Minimum</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -852,41 +852,59 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="Download_SavingPath_Label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="spacing">
+             <number>0</number>
             </property>
-            <property name="minimumSize">
-             <size>
-              <width>250</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Arial</family>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
+            <item>
+             <widget class="QRadioButton" name="Download_UserMode_radioButton">
+              <property name="font">
+               <font>
+                <family>Arial</family>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>User Mode</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="Download_OwnerMode_radioButton">
+              <property name="font">
+               <font>
+                <family>Arial</family>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Owner Mode</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
-           <widget class="QPushButton" name="Download_ChangePath_Button">
+           <spacer name="horizontalSpacer_14">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Minimum</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="Download_Owner_label">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -894,7 +912,23 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string> Change Saving Path </string>
+             <string>Select Owner</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="Download_Owner_ComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>11</pointsize>
+             </font>
             </property>
            </widget>
           </item>
@@ -999,6 +1033,19 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
+           <widget class="QCheckBox" name="checkBox">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Download Only Video Info</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="pushButton">
             <property name="font">
              <font>
@@ -1054,7 +1101,7 @@ selection-background-color: rgb(15, 15, 15);</string>
      <x>0</x>
      <y>0</y>
      <width>1031</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOutside_YouTube">
@@ -1095,6 +1142,7 @@ selection-background-color: rgb(15, 15, 15);</string>
     <addaction name="actionUploaders_2"/>
     <addaction name="separator"/>
     <addaction name="actionWatchers_2"/>
+    <addaction name="actionDownloaders"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -1187,6 +1235,11 @@ selection-background-color: rgb(15, 15, 15);</string>
   <action name="actionUpdate_Settings">
    <property name="text">
     <string>Update Settings</string>
+   </property>
+  </action>
+  <action name="actionDownloaders">
+   <property name="text">
+    <string>Downloaders</string>
    </property>
   </action>
  </widget>

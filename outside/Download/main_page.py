@@ -2,15 +2,21 @@ from functools import partial
 
 from PyQt5 import QtGui, QtCore
 
-import OutsideYT
+from OutsideYT import app_settings_download
 from . import TableModels, context_menu, dialogs
 from outside import TableModels as CommonTables
-from ..functions import update_checkbox_select_all
-from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
+from ..functions import update_checkbox_select_all, update_combobox
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
+    open_UsersList_Dialog
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
 
 def update_download(ui, parent):
+    def show_down_elements(mode: str):
+        state = mode == 'owner'
+        ui.Download_Owner_label.setVisible(state)
+        ui.Download_Owner_ComboBox.setVisible(state)
+
     download_table = ui.Download_Table
     download_model = TableModels.DownloadModel(oldest_settings=ui,
                                                main_progress_bar=ui.Download_Progress_Bar)
@@ -29,8 +35,7 @@ def update_download(ui, parent):
     ui.Download_SelectVideos_Button.clicked.connect(
         partial(open_watch_down_select_videos, parent=parent, table=download_table,
                 parent_settings=ui,
-                add_table_class=Ui_Download_Videos_Dialog)
-    )
+                add_table_class=Ui_Download_Videos_Dialog))
 
     ui.Download_url_add_Button.clicked.connect(
         partial(add_video_from_textbox, table=download_table, textbox=ui.Download_url_textBox))
@@ -38,18 +43,24 @@ def update_download(ui, parent):
     ui.Download_Start.clicked.connect(
         partial(start_download, dialog=parent, dialog_settings=ui, table=download_table))
 
-    ui.Download_ChangePath_Button.clicked.connect(
-        partial(dialogs.change_saving_path, dialog_settings=ui))
-
     ui.Download_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                            checkbox=ui.Download_SelectAll_CheckBox,
                                                            table=download_table))
 
-    ui.Download_SavingPath_Label.setText(OutsideYT.app_settings_uploaders.vids_folder)
-
     download_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     download_table.customContextMenuRequested.connect(
         lambda pos: context_menu.download_context_menu(pos, parent=parent, table=download_table))
+    ui.Download_Owner_ComboBox = update_combobox(ui.Download_Owner_ComboBox,
+                                                 app_settings_download.accounts,
+                                                 app_settings_download.def_account)
+
+    ui.Download_OwnerMode_radioButton.toggled.connect(lambda: show_down_elements('owner'))
+    ui.Download_UserMode_radioButton.toggled.connect(lambda: show_down_elements('user'))
+    show_down_elements('owner' if ui.Download_OwnerMode_radioButton.isChecked() else 'user')
+
+    ui.actionDownloaders.triggered.connect(
+        partial(open_UsersList_Dialog, parent=parent, table_type='download',
+                add_table_class=partial(CommonTables.UsersModel, table_type='download')))
 
     return download_table, ui
 

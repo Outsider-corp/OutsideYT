@@ -4,18 +4,19 @@ import os
 from outside.message_boxes import error_func, warning_func
 
 
-class SettingsUploaders:
-    def __init__(self, file) -> None:
+class SettingsUsers:
+    def __init__(self, file, videos_folder='videos', settings_type='upload') -> None:
         self._accounts = {}
         self._def_account = ''
-        self._vids_folder = 'videos'
+        self._vids_folder = videos_folder
+        self.settings_type = settings_type
         self.file = file
         if file:
             self.read_settings()
             self.check_cookies()
 
     def __str__(self) -> str:
-        return 'uploaders'
+        return self.settings_type
 
     @property
     def accounts(self):
@@ -55,8 +56,9 @@ class SettingsUploaders:
             del self._accounts[old_name]
             if self.def_account == old_name:
                 self._def_account = new_name
-            os.rename(os.path.join(os.path.dirname(self.file), 'uploaders', f'{old_name}_cookies'),
-                      os.path.join(os.path.dirname(self.file), 'uploaders', f'{new_name}_cookies'))
+            os.rename(
+                os.path.join(os.path.dirname(self.file), self.__str__(), f'{old_name}_cookies'),
+                os.path.join(os.path.dirname(self.file), self.__str__(), f'{new_name}_cookies'))
             self.update_settings()
 
     def find_account(self, login: str) -> bool:
@@ -71,7 +73,7 @@ class SettingsUploaders:
         self.update_settings()
 
     def del_vids_folder(self):
-        self._vids_folder = 'videos'
+        self._vids_folder = 'videos' if self.__str__() == 'uploaders' else 'download'
         self.update_settings()
 
     def add_def_account(self, login: str):
@@ -132,7 +134,7 @@ class SettingsWatchers:
             self.check_cookies()
 
     def __str__(self) -> str:
-        return 'watchers'
+        return 'watch'
 
     @property
     def accounts(self):

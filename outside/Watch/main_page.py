@@ -5,12 +5,12 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QWidget
 
 from outside import TableModels as CommonTables
-from outside import main_dialogs as MainDialogs
 from OutsideYT import app_settings_watchers
 
 from ..asinc_functions import SeekThreads, start_watch_operation, ProgressMutex, WatchThread
 from ..functions import update_checkbox_select_all
-from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
+    open_UsersList_Dialog
 from ..message_boxes import error_func
 from ..YT_functions import watching
 from . import TableModels, context_menu, dialogs
@@ -62,7 +62,7 @@ def update_watch(ui, parent):
         lambda pos: context_menu.watch_context_menu(pos, parent=parent, table=watch_table))
 
     ui.actionWatchers_2.triggered.connect(
-        partial(MainDialogs.open_UsersList_Dialog, parent=parent, table_type='watch',
+        partial(open_UsersList_Dialog, parent=parent, table_type='watch',
                 add_table_class=TableModels.WatchersUsersModel,
                 ))
 
