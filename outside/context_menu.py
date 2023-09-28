@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication, QAbstractItemView, QMenu, QStyle
 
 import OutsideYT
 from outside.TableModels import remove_all_rows, remove_row, remove_selected_rows
+from outside.YT_functions import open_video_in_browser
 
 
 def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView, type_deleting: str = ''):
@@ -46,3 +47,14 @@ def users_dialogs_menu(pos, parent, table: QAbstractItemView, table_type: str):
                                                                         parent=parent, login=acc)))
         cursor = QtGui.QCursor()
         menu.exec_(cursor.pos())
+
+
+def add_option_open_link(menu, table: QAbstractItemView):
+    """
+    Adding function for table context menu: open url in browser
+    """
+
+    url = table.model().get_data().loc[table.currentIndex().row(), "Link"]
+    open_video = menu.addAction("Open video")
+    open_video.setIcon(QApplication.style().standardIcon(QStyle.SP_MediaPlay))
+    open_video.triggered.connect(partial(open_video_in_browser, url))

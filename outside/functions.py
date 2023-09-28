@@ -30,11 +30,15 @@ def find_files(args: list, folder: str, name: str = ''):
     return None
 
 
-def progress_bar_inc(func):
-    async def wrapper(*args, **kwargs):
-        result = await func(*args, **kwargs)
-        if 'progress_bar' in kwargs:
-            await kwargs['progress_bar']()
-        return result
-
-    return wrapper
+def get_video_id(link: str):
+    if 'youtube.com/watch' not in link and 'youtu.be/' not in link:
+        return None
+    if 'youtube.com/watch' in link:
+        video_id = link.split('/watch?v=')[1]
+    else:
+        video_id = link.split('youtu.be/')[1]
+    if '?' in video_id:
+        video_id = video_id.split('?')[0]
+    if '&' in video_id:
+        video_id = video_id.split('&')[0]
+    return video_id

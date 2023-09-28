@@ -7,12 +7,11 @@ from PyQt5.QtWidgets import QWidget
 from outside import TableModels as CommonTables
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import SeekThreads, start_watch_operation, ProgressMutex, WatchThread
+from ..asinc_functions import SeekThreads, WatchThread
 from ..functions import update_checkbox_select_all
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
     open_UsersList_Dialog
 from ..message_boxes import error_func
-from ..YT_functions import watching
 from . import TableModels, context_menu, dialogs
 from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
 

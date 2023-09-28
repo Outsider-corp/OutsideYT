@@ -166,7 +166,6 @@ class WatchThread(QThread):
             self._progress += 1
             new_val = int(self._progress / self._total_steps * 100)
             self._table.model().update_progress_bar(self._progress_bar_num, new_val)
-            qindex = self._table.model().index(self._progress_bar_num, 1, QModelIndex())
 
     async def start_loop(self):
         atasks = [watching(self._video, self._durations, user,

@@ -10,7 +10,7 @@ import OutsideYT
 import outside.context_menu
 from outside import TableModels
 from outside.asinc_functions import GetVideoInfoThread
-from outside.functions import update_combobox
+from outside.functions import update_combobox, get_video_id
 from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
 from outside.views_py import (
@@ -270,8 +270,6 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
 
 def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_settings,
                                   add_table_class):
-    owner_account = parent_settings.Download_Owner_ComboBox.currentText() \
-        if parent_settings.Download_OwnerMode_radioButton.isChecked() else ''
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     dialog_settings = add_table_class()
@@ -289,7 +287,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
             group = dialog_settings.Group_comboBox.currentText() if \
                 table.model().table_type == 'watch' else None
             get_videos_info(table, links=[text], group=group,
-                            full_info=table.model().table_type == 'download')
+                            full_info=False)
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -320,7 +318,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         with open(file, 'r', encoding='UTF-8') as f:
             links = f.readlines()
         get_videos_info(table=table, links=links, group=group,
-                        full_info=table.model().table_type == "download")
+                        full_info=False)
 
     def select_channel():
         text = select_page('channel')
@@ -349,17 +347,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
             for el in var1:
                 el.setVisible(False)
 
-    def show_actions_for_channel():
-        if not dialog_settings.channel_link_textBox.text() and not owner_account:
-            show_elements('none')
-        else:
-            show_elements('count')
 
     def ok():
-        if owner_account:
-            url = owner_account
-        else:
-            url = dialog_settings.channel_link_textBox.text()
+        url = dialog_settings.channel_link_textBox.text()
         if not url:
             dialog.reject()
         elif 'youtube.com/' not in url:
@@ -386,15 +376,8 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         dialog_settings.Group_comboBox = update_combobox(
             dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
 
-    show_elements('count' if owner_account else 'none')
+    show_elements('count')
 
-    if owner_account:
-        dialog_settings.Select_channel_Button.setVisible(False)
-        dialog_settings.channel_link_textBox.setEnabled(False)
-        dialog_settings.channel_link_textBox.setText(owner_account)
-    else:
-        dialog_settings.channel_link_textBox.textChanged.connect(show_actions_for_channel)
-        dialog_settings.Select_channel_Button.clicked.connect(select_channel)
 
     dialog_settings.Last_video_radioButton.toggled.connect(lambda: show_elements('count'))
     dialog_settings.Random_video_radioButton.toggled.connect(lambda: show_elements('count'))
@@ -413,14 +396,14 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
-        get_videos_info(table, [text], full_info=table.model().table_type == 'download')
+        get_videos_info(table, [text], full_info=False)
         textbox.clear()
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)
         textbox.clear()
 
 
-def get_videos_info(table, links: List, group=None, full_info: bool = False, owner=''):
+def get_videos_info(table, links: List, group=None, full_info: bool = False):
     def return_func():
         for video in vids_thread.results:
             _add_video_to_table(table, video_info=video, group=group)
@@ -433,7 +416,7 @@ def get_videos_info(table, links: List, group=None, full_info: bool = False, own
     vids_thread.finished.connect(return_func)
 
 
-def get_playlist_info(table, link: str, group: str = None, owner=''):
+def get_playlist_info(table, link: str, group: str = None):
     pass
 
 
@@ -443,7 +426,7 @@ def _add_video_to_table(table, video_info, group=None):
                                               'Video': video_info['title'],
                                               'Channel': video_info['author'],
                                               'Duration': video_info['lengthSeconds'],
-                                              'Link': video_info['link']})
+                                              'Link': get_video_id(video_info['link'])})
 
 def create_video_folder(table, video_info, ):
     pass

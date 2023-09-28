@@ -20,7 +20,7 @@ class DownloadModel(QAbstractTableModel):
 
     @property
     def table_type(self):
-        return 'Download'
+        return 'download'
 
     @property
     def progress_bar(self):
@@ -35,8 +35,6 @@ class DownloadModel(QAbstractTableModel):
             flags |= Qt.ItemIsUserCheckable
         else:
             flags |= Qt.ItemIsSelectable
-            if self._data.columns[index.column()] == 'Link':
-                flags |= Qt.ItemIsEditable
         return flags
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
@@ -70,7 +68,9 @@ class DownloadModel(QAbstractTableModel):
                         dur_sec %= 3600
                     duration += f'{dur_sec // 60:02d}:{dur_sec % 60:02d}'
                     return duration
-
+                if column == 'Link':
+                    link = self.get_data().loc[index.row(), column]
+                    return f'youtu.be/{link}'
                 else:
                     return self.get_data().loc[index.row(), column]
         return None

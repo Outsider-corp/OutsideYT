@@ -10,10 +10,12 @@ from urllib.request import Request
 
 import aiohttp
 import selenium.common.exceptions
+import webbrowser
 
 # from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
 from outside.functions import progress_bar_inc
@@ -26,7 +28,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 class DriverContext:
     def __init__(self, add_args: list = None, gpu: bool = False, images: bool = False,
                  audio: bool = False,
-                 headless: bool = True):
+                 headless: bool = True, download_dir: str = ''):
         self.driver_options = webdriver.ChromeOptions()
         user_agent = (f'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
                       f' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36')
@@ -42,6 +44,8 @@ class DriverContext:
             self.driver_options.add_argument('--mute-audio')
         if headless:
             self.driver_options.add_argument('--headless')
+        if download_dir:
+            self.driver_options.add_argument(f'--download.default_directory={download_dir}')
         if add_args:
             for arg in add_args:
                 self.driver_options.add_argument(arg)
@@ -389,13 +393,39 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
                 except:
                     raise Exception(f'Driver was closed.')
                 await asyncio.sleep(1)
-                await progress_inc()
+                if progress_inc:
+                    await progress_inc()
     except BaseException as e:
         print(f"Error. \n {e}")
 
 
-def download_video(url: str, driver_headless: bool = True, progress_bar=None):
-    pass
+def download_video_by_owner(video_id: str, title: str, user: str, download_dir: str,
+                            driver_headless: bool = True,
+                            progress_bar=None):
+    user_id = ""
+    with (DriverContext(headless=driver_headless, download_dir=download_dir) as driver):
+        url = 'https://youtube.com'
+        url2 = f'https://studio.youtube.com/channel/{user_id}/videos/upload/'
+        driver.get(url)
+        driver.implicitly_wait(wait_time_url_uploads)
+        for cookie in pickle.load(open(f'outside/oyt_info/download/{user}_cookies', 'rb')):
+            driver.add_cookie(cookie)
+        driver.implicitly_wait(wait_time_url_uploads)
+
+        driver.get(url2)
+        driver.implicitly_wait(wait_time_url_uploads // 2)
+
+        filter_textbox = driver.find_element(By.CLASS_NAME,'text-input style-scope ytcp-chip-bar')
+        filter_textbox.send_keys(title)
+        filter_textbox.send_keys(Keys.RETURN)
+        driver.implicitly_wait(wait_time_url_uploads)
+
+        video = driver.find_element(By.XPATH, f'//a[contains(@href, "{video_id}")]')
+
+
+def open_video_in_browser(url):
+    target = f'https://youtu.be/{url}'
+    webbrowser.open(target)
 
 
 if __name__ == '__main__':

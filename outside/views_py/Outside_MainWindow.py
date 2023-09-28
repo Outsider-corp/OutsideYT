@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'outside/views_ui/Outside_MainWindow.ui'
+# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\Outside_MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -483,13 +483,26 @@ class Ui_YouTubeOutside(object):
         self.horizontalLayout_10.addWidget(self.Download_Progress_Label)
         spacerItem20 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_10.addItem(spacerItem20)
-        self.checkBox = QtWidgets.QCheckBox(self.DownloadPage)
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_5.setSpacing(0)
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.Download_Info_checkBox = QtWidgets.QCheckBox(self.DownloadPage)
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
-        self.checkBox.setFont(font)
-        self.checkBox.setObjectName("checkBox")
-        self.horizontalLayout_10.addWidget(self.checkBox)
+        self.Download_Info_checkBox.setFont(font)
+        self.Download_Info_checkBox.setChecked(True)
+        self.Download_Info_checkBox.setObjectName("Download_Info_checkBox")
+        self.verticalLayout_5.addWidget(self.Download_Info_checkBox)
+        self.Download_Video_checkBox = QtWidgets.QCheckBox(self.DownloadPage)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        self.Download_Video_checkBox.setFont(font)
+        self.Download_Video_checkBox.setChecked(True)
+        self.Download_Video_checkBox.setObjectName("Download_Video_checkBox")
+        self.verticalLayout_5.addWidget(self.Download_Video_checkBox)
+        self.horizontalLayout_10.addLayout(self.verticalLayout_5)
         self.pushButton = QtWidgets.QPushButton(self.DownloadPage)
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -511,7 +524,7 @@ class Ui_YouTubeOutside(object):
         self.gridLayout.addWidget(self.OutsideYT, 2, 0, 1, 1)
         YouTubeOutside.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(YouTubeOutside)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 20))
         self.menubar.setObjectName("menubar")
         self.menuOutside_YouTube = QtWidgets.QMenu(self.menubar)
         font = QtGui.QFont()
@@ -627,7 +640,8 @@ class Ui_YouTubeOutside(object):
         self.Download_Folder_Save_Mode_radioButton.setText(_translate("YouTubeOutside", "Folder"))
         self.Download_Select_Path_Button.setText(_translate("YouTubeOutside", "Select Path"))
         self.Download_SelectVideos_Button.setText(_translate("YouTubeOutside", "  Select Videos  "))
-        self.checkBox.setText(_translate("YouTubeOutside", "Download Only Video Info"))
+        self.Download_Info_checkBox.setText(_translate("YouTubeOutside", "Download Video Info"))
+        self.Download_Video_checkBox.setText(_translate("YouTubeOutside", "Download Video"))
         self.pushButton.setText(_translate("YouTubeOutside", "Advanced Settings"))
         self.Download_Start.setText(_translate("YouTubeOutside", "      Start      "))
         self.OutsideYT.setTabText(self.OutsideYT.indexOf(self.DownloadPage), _translate("YouTubeOutside", "Download"))

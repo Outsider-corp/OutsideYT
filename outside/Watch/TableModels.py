@@ -46,7 +46,7 @@ class WatchModel(QAbstractTableModel):
             flags |= Qt.ItemIsUserCheckable
         else:
             flags |= Qt.ItemIsSelectable
-            if self._data.columns[index.column()] in ['Link', 'Watchers Group']:
+            if self._data.columns[index.column()] in ['Watchers Group']:
                 flags |= Qt.ItemIsEditable
         return flags
 

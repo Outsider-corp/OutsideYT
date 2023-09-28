@@ -1,6 +1,7 @@
 from functools import partial
 
 from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QTableView
 
 from OutsideYT import app_settings_download
 from . import TableModels, context_menu, dialogs
@@ -52,8 +53,8 @@ def update_download(ui, parent):
     download_table.customContextMenuRequested.connect(
         lambda pos: context_menu.download_context_menu(pos, parent=parent, table=download_table))
     ui.Download_Save_to_ComboBox = update_combobox(ui.Download_Save_to_ComboBox,
-                                                 app_settings_download.accounts,
-                                                 app_settings_download.def_account)
+                                                   app_settings_download.accounts,
+                                                   app_settings_download.def_account)
 
     ui.Download_Folder_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('folder'))
     ui.Download_User_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('user'))
@@ -66,5 +67,16 @@ def update_download(ui, parent):
     return download_table, ui
 
 
-def start_download():
+def start_download(dialog, dialog_settings, table: QTableView):
+    if dialog_settings.Download_Info_checkBox.isChecked():
+        start_info_download(dialog, dialog_settings, table)
+    if dialog_settings.Download_Video_checkBox.isChecked():
+        start_video_download(dialog, dialog_settings, table)
+
+
+def start_video_download(dialog, dialog_settings, table: QTableView):
+    pass
+
+
+def start_info_download(dialog, dialog_settings, table: QTableView):
     pass
