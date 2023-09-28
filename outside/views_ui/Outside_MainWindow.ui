@@ -796,11 +796,11 @@ selection-background-color: rgb(15, 15, 15);</string>
              <enum>Qt::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Preferred</enum>
+             <enum>QSizePolicy::Minimum</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
+              <width>20</width>
               <height>20</height>
              </size>
             </property>
@@ -820,7 +820,26 @@ selection-background-color: rgb(15, 15, 15);</string>
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="Download_url_textBox"/>
+           <widget class="QLineEdit" name="Download_url_textBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>120</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>120</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="Download_url_add_Button">
@@ -841,7 +860,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              <enum>Qt::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
+             <enum>QSizePolicy::Expanding</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -857,7 +876,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              <number>0</number>
             </property>
             <item>
-             <widget class="QRadioButton" name="Download_UserMode_radioButton">
+             <widget class="QCheckBox" name="Download_UserMode_checkBox">
               <property name="font">
                <font>
                 <family>Arial</family>
@@ -873,7 +892,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="Download_OwnerMode_radioButton">
+             <widget class="QCheckBox" name="Download_OwnerMode_checkBox">
               <property name="font">
                <font>
                 <family>Arial</family>
@@ -904,7 +923,7 @@ selection-background-color: rgb(15, 15, 15);</string>
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="Download_Owner_label">
+           <widget class="QLabel" name="Download_Save_to_label">
             <property name="font">
              <font>
               <family>Arial</family>
@@ -912,12 +931,54 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>Select Owner</string>
+             <string>Save to</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="Download_Owner_ComboBox">
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QRadioButton" name="Download_User_Save_Mode_radioButton">
+              <property name="font">
+               <font>
+                <family>Arial</family>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>User</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="Download_Folder_Save_Mode_radioButton">
+              <property name="font">
+               <font>
+                <family>Arial</family>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Folder</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QComboBox" name="Download_Save_to_ComboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>100</width>
@@ -929,6 +990,22 @@ selection-background-color: rgb(15, 15, 15);</string>
               <family>Arial</family>
               <pointsize>11</pointsize>
              </font>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Download_save_textBox"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="Download_Select_Path_Button">
+            <property name="font">
+             <font>
+              <family>Arial</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Select Path</string>
             </property>
            </widget>
           </item>
@@ -1101,7 +1178,7 @@ selection-background-color: rgb(15, 15, 15);</string>
      <x>0</x>
      <y>0</y>
      <width>1031</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOutside_YouTube">

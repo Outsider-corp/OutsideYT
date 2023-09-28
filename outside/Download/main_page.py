@@ -13,9 +13,10 @@ from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
 def update_download(ui, parent):
     def show_down_elements(mode: str):
-        state = mode == 'owner'
-        ui.Download_Owner_label.setVisible(state)
-        ui.Download_Owner_ComboBox.setVisible(state)
+        state = mode == 'user'
+        ui.Download_Save_to_ComboBox.setVisible(state)
+        ui.Download_save_textBox.setVisible(not state)
+        ui.Download_Select_Path_Button.setVisible(not state)
 
     download_table = ui.Download_Table
     download_model = TableModels.DownloadModel(oldest_settings=ui,
@@ -50,13 +51,13 @@ def update_download(ui, parent):
     download_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     download_table.customContextMenuRequested.connect(
         lambda pos: context_menu.download_context_menu(pos, parent=parent, table=download_table))
-    ui.Download_Owner_ComboBox = update_combobox(ui.Download_Owner_ComboBox,
+    ui.Download_Save_to_ComboBox = update_combobox(ui.Download_Save_to_ComboBox,
                                                  app_settings_download.accounts,
                                                  app_settings_download.def_account)
 
-    ui.Download_OwnerMode_radioButton.toggled.connect(lambda: show_down_elements('owner'))
-    ui.Download_UserMode_radioButton.toggled.connect(lambda: show_down_elements('user'))
-    show_down_elements('owner' if ui.Download_OwnerMode_radioButton.isChecked() else 'user')
+    ui.Download_Folder_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('folder'))
+    ui.Download_User_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('user'))
+    show_down_elements('user' if ui.Download_User_Save_Mode_radioButton.isChecked() else 'folder')
 
     ui.actionDownloaders.triggered.connect(
         partial(open_UsersList_Dialog, parent=parent, table_type='download',
