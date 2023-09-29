@@ -8,7 +8,7 @@ from . import TableModels, context_menu
 from outside import TableModels as CommonTables
 from .dialogs import select_saving_path, open_advanced_settings
 from ..asinc_functions import DownloadThread
-from ..functions import update_checkbox_select_all, update_combobox
+from ..functions import update_checkbox_select_all, update_combobox, get_video_link
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
@@ -86,8 +86,16 @@ def start_download(dialog, dialog_settings, table: QTableView):
             el.setEnabled(False)
         dialog_settings.Download_Start.setText("Stop")
         dialog_settings.Download_Start.setEnabled(True)
+
+        links = [get_video_link(i) for i in table.model().get_data()['Link'].to_list()]
         download_thread = DownloadThread(table=table, dialog=dialog,
-                                         dialog_settings=dialog_settings)
+                                         dialog_settings=dialog_settings,
+                                         tasks=links, progress_bar=table.model().progress_bar,
+                                         cards=True,
+                                         download_info=dialog_settings.
+                                         Download_Info_checkBox.isChecked(),
+                                         download_videos=dialog_settings.
+                                         Download_Video_checkBox.isChecked())
 
         download_thread.finished.connect(partial(finish, download_thread))
         download_thread.start()

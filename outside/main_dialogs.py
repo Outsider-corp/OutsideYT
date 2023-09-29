@@ -406,7 +406,8 @@ def get_videos_info(table, links: List, group=None):
         vids_thread.deleteLater()
 
     table.model().progress_label.setText('Get info about videos...')
-    vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar)
+    vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
+                                     progress_label=table.model().progress_label)
     vids_thread.start()
     vids_thread.finished.connect(return_func)
 
@@ -447,14 +448,9 @@ def update_settings_combobox_with_type(dialog_settings, items, table_type):
             dialog_settings.DefUser_ComboBox = update_combobox(
                 dialog_settings.DefUser_ComboBox, items,
                 OutsideYT.app_settings_uploaders.def_account)
-        elif table_type == 'download':
-            dialog_settings.DefUser_ComboBox = update_combobox(
-                dialog_settings.DefUser_ComboBox, items,
-                OutsideYT.app_settings_download.def_account)
     return dialog_settings
 
 
 def update_settings_from_file():
     OutsideYT.app_settings_uploaders.update_settings()
     OutsideYT.app_settings_watchers.update_settings()
-    OutsideYT.app_settings_download.update_settings()
