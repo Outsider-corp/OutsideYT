@@ -25,8 +25,7 @@ from outside.YT_functions import get_playlist_info, select_page
 
 def open_UsersList_Dialog(parent, table_type: str, add_table_class):
     if table_type in ['upload', 'download']:
-        table_settings = OutsideYT.app_settings_uploaders if table_type == 'upload' \
-            else OutsideYT.app_settings_download
+        table_settings = OutsideYT.app_settings_uploaders
         def_type = 'account'
         combo_items_default = table_settings.accounts.keys()
     elif table_type == 'watch':
@@ -286,8 +285,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         if text:
             group = dialog_settings.Group_comboBox.currentText() if \
                 table.model().table_type == 'watch' else None
-            get_videos_info(table, links=[text], group=group,
-                            full_info=False)
+            get_videos_info(table, links=[text], group=group)
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -317,8 +315,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
         with open(file, 'r', encoding='UTF-8') as f:
             links = f.readlines()
-        get_videos_info(table=table, links=links, group=group,
-                        full_info=False)
+        get_videos_info(table=table, links=links, group=group)
 
     def select_channel():
         text = select_page('channel')
@@ -346,7 +343,6 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
                 el.setVisible(True)
             for el in var1:
                 el.setVisible(False)
-
 
     def ok():
         url = dialog_settings.channel_link_textBox.text()
@@ -378,7 +374,6 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
     show_elements('count')
 
-
     dialog_settings.Last_video_radioButton.toggled.connect(lambda: show_elements('count'))
     dialog_settings.Random_video_radioButton.toggled.connect(lambda: show_elements('count'))
     dialog_settings.Period_radioButton.toggled.connect(lambda: show_elements('period'))
@@ -396,22 +391,22 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
-        get_videos_info(table, [text], full_info=False)
+        get_videos_info(table, [text])
         textbox.clear()
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)
         textbox.clear()
 
 
-def get_videos_info(table, links: List, group=None, full_info: bool = False):
+def get_videos_info(table, links: List, group=None):
     def return_func():
         for video in vids_thread.results:
             _add_video_to_table(table, video_info=video, group=group)
-            if full_info:
-                create_video_folder(table, video_info=video)
+        table.model().progress_label.clear()
         vids_thread.deleteLater()
 
-    vids_thread = GetVideoInfoThread(links, table, full_info=full_info)
+    table.model().progress_label.setText('Get info about videos...')
+    vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar)
     vids_thread.start()
     vids_thread.finished.connect(return_func)
 
@@ -422,14 +417,15 @@ def get_playlist_info(table, link: str, group: str = None):
 
 def _add_video_to_table(table, video_info, group=None):
     if video_info:
-        table.model().insertRows(row_content={'Watchers Group': group,
-                                              'Video': video_info['title'],
-                                              'Channel': video_info['author'],
-                                              'Duration': video_info['lengthSeconds'],
-                                              'Link': get_video_id(video_info['link'])})
+        try:
+            table.model().insertRows(row_content={'Watchers Group': group,
+                                                  'Video': video_info['title'],
+                                                  'Channel': video_info['author'],
+                                                  'Duration': video_info['lengthSeconds'],
+                                                  'Link': get_video_id(video_info['link'])})
+        except KeyError:
+            pass
 
-def create_video_folder(table, video_info, ):
-    pass
 
 def userslist(parent, table_name: str):
     dialog = QtWidgets.QDialog(parent)

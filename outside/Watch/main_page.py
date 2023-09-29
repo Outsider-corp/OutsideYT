@@ -19,7 +19,8 @@ from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
 def update_watch(ui, parent):
     watch_table = ui.Watch_Table
     watch_model = TableModels.WatchModel(oldest_settings=ui,
-                                         main_progress_bar=ui.Watch_Progress_Bar,
+                                         table_progress_bar=ui.Watch_Progress_Bar,
+                                         table_progress_label=ui.Watch_Progress_Label,
                                          tableview=watch_table)
     watch_table.setModel(watch_model)
     watch_table = CommonTables.table_universal(watch_table)
@@ -89,6 +90,8 @@ def start_watch(dialog, dialog_settings, table):
         if not watch_threads_check:
             for el in tab_elements:
                 el.setEnabled(False)
+            dialog_settings.Watch_Start.setText("Stop")
+            dialog_settings.Watch_Start.setEnabled(True)
             dialog_settings.Watch_Table.hideColumn(
                 list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
             dialog_settings.Watch_Table.setColumnHidden(
@@ -105,6 +108,13 @@ def start_watch(dialog, dialog_settings, table):
     def seek_ends(seek_thread):
         seek_thread.deleteLater()
         dialog_settings.Watch_Table.model().reset_progress_bars()
+        dialog_settings.Watch_Table.hideColumn(
+            list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
+        dialog_settings.Watch_Table.setColumnHidden(
+            list(dialog_settings.Watch_Table.model().get_data().columns).index('id'), False)
+        for el in tab_elements:
+            el.setEnabled(True)
+        dialog_settings.Watch_Start.setText("Start")
 
     seek_threads = SeekThreads(watch_threads_check, tab_elements, dialog_settings)
     seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))

@@ -7,6 +7,7 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QStyleFactory
 
 from outside.Download.main_page import update_download
+from outside.asinc_functions import GetVideoInfoThread
 from outside.main_dialogs import update_settings_from_file
 from outside.Upload.main_page import update_upload
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
@@ -53,6 +54,7 @@ def update_ui():
     ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
     ui.actionUpdate_Settings.triggered.connect(update_settings_from_file)
 
+
 def start_GUI():
     global app, YouTubeOutside, ui, Upload_table, Download_table, Watch_table
     QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
@@ -65,7 +67,7 @@ def start_GUI():
     update_ui()
     YouTubeOutside.show()
 
+
 if __name__ == '__main__':
     start_GUI()
-
     sys.exit(app.exec_())

@@ -26,14 +26,16 @@ class UploadModel(QAbstractTableModel):
                        'Tags': '', 'Ends': 'random', 'Cards': 2,
                        'Access': 'Private', 'Save filename?': False}
 
-    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, table_progress_bar=None,
+                 table_progress_label=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=UploadModel.columns)
         self._data = data
         self.paths = []
         self.oldest_settings = oldest_settings
-        self.main_progress_bar = main_progress_bar
+        self._table_progress_bar = table_progress_bar
+        self._table_progress_label = table_progress_label
 
     @property
     def table_type(self):
@@ -41,7 +43,11 @@ class UploadModel(QAbstractTableModel):
 
     @property
     def progress_bar(self):
-        return self.main_progress_bar
+        return self._table_progress_bar
+
+    @property
+    def progress_label(self):
+        return self._table_progress_label
 
     def update(self):
         self.layoutChanged.emit()

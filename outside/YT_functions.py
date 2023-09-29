@@ -1,24 +1,22 @@
 import asyncio
-import contextlib
 import json
 import os
 import pickle
 import random
 import sys
 import time
-from urllib.request import Request
-
 import aiohttp
+import requests
+
 import selenium.common.exceptions
 import webbrowser
-
+import yt_dlp
 # from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
-from outside.functions import progress_bar_inc
+from outside.functions import get_video_id
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, save_cookies_time, wait_time_url_uploads
 
@@ -289,7 +287,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
         error_func(f"Error.\n {e}")
 
 
-async def get_video_info(link, session: aiohttp.ClientSession, full_info: bool, **kwargs):
+async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
     """Функция для получения информации о видео."""
     try:
         async with session.get(link) as response:
@@ -297,19 +295,63 @@ async def get_video_info(link, session: aiohttp.ClientSession, full_info: bool, 
                 res_text = await response.text()
                 soup = bs(res_text, 'html.parser')
                 script_tags = soup.find_all('script', {'nonce': True})
+                video_info_raw = dict()
                 for script_tag in script_tags:
                     script_text = script_tag.get_text()
-                    if 'ytInitialPlayerResponse' in script_text:
-                        ytInitialPlayerResponse = json.loads(script_text.replace(
-                            'var ytInitialPlayerResponse = ', '')[:-1])
-                        video_info_raw = ytInitialPlayerResponse['videoDetails']
-                        video_info_raw['link'] = link
+
+                    if ('cards' in kwargs and 'cards' not in video_info_raw and
+                            'ytInitialData' in script_text):
+                        ytInitialData = json.loads(script_text.replace(
+                            'var ytInitialData = ', '')[:-1])
+                        cards_panels = ytInitialData['engagementPanels']
+                        for panel in cards_panels:
+                            if 'panelIdentifier' in panel[
+                                'engagementPanelSectionListRenderer'] and panel[
+                                'engagementPanelSectionListRenderer'][
+                                'panelIdentifier'] == 'engagement-panel-structured-description':
+                                cards_content = panel['engagementPanelSectionListRenderer'][
+                                    'content']
+                                if 'items' in cards_content:
+                                    cards_items = cards_content['items']
+                                else:
+                                    video_info_raw['cards'] = {}
+                                    break
+                                for cards in cards_items:
+                                    if 'videoDescriptionInfocardsSectionRenderer' in cards:
+                                        cards_list = cards[
+                                            'videoDescriptionInfocardsSectionRenderer']['infocards']
+                                        video_info_raw['cards'] = dict
+                                        for ind, card in enumerate(cards_list):
+                                            card_info = card['compactInfocardRenderer']['content'][
+                                                'structuredDescriptionVideoLockupRenderer']
+                                            video_info_raw['cards'].update({
+                                                get_video_id(card_info[
+                                                                 'navigationEndpoint'][
+                                                                 'commandMetadata'][
+                                                                 'webCommandMetadata'][
+                                                                 'url']): int(
+                                                    ytInitialData['cards'][ind]['cardRenderer'][
+                                                        'cueRenderer'][0]['startCardActiveMs'])})
+                                        break
+                                break
                         if 'progress_inc' in kwargs:
                             await kwargs['progress_inc']()
+
+                    elif ('link' not in video_info_raw
+                          and 'ytInitialPlayerResponse' in script_text):
+                        ytInitialPlayerResponse = json.loads(script_text.replace(
+                            'var ytInitialPlayerResponse = ', '')[:-1])
+                        video_info_raw.update(ytInitialPlayerResponse['videoDetails'])
+                        video_info_raw['link'] = link
+                        if 'cards' not in kwargs:
+                            if 'progress_inc' in kwargs:
+                                await kwargs['progress_inc']()
+                            return video_info_raw
+                    if 'cards' in video_info_raw and 'link' in video_info_raw:
                         return video_info_raw
             else:
-                error_func('Нет подключения к сайту')
-    except:
+                pass
+    except Exception as e:
         pass
     if 'progress_inc' in kwargs:
         await kwargs['progress_inc']()
@@ -399,28 +441,14 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
         print(f"Error. \n {e}")
 
 
-def download_video_by_owner(video_id: str, title: str, user: str, download_dir: str,
-                            driver_headless: bool = True,
-                            progress_bar=None):
-    user_id = ""
-    with (DriverContext(headless=driver_headless, download_dir=download_dir) as driver):
-        url = 'https://youtube.com'
-        url2 = f'https://studio.youtube.com/channel/{user_id}/videos/upload/'
-        driver.get(url)
-        driver.implicitly_wait(wait_time_url_uploads)
-        for cookie in pickle.load(open(f'outside/oyt_info/download/{user}_cookies', 'rb')):
-            driver.add_cookie(cookie)
-        driver.implicitly_wait(wait_time_url_uploads)
+def download_image(url: str):
+    res = requests.get(url)
+    if res.status_code == 200:
+        return res.content
 
-        driver.get(url2)
-        driver.implicitly_wait(wait_time_url_uploads // 2)
 
-        filter_textbox = driver.find_element(By.CLASS_NAME,'text-input style-scope ytcp-chip-bar')
-        filter_textbox.send_keys(title)
-        filter_textbox.send_keys(Keys.RETURN)
-        driver.implicitly_wait(wait_time_url_uploads)
-
-        video = driver.find_element(By.XPATH, f'//a[contains(@href, "{video_id}")]')
+def download_video(link: str, progress_bar=None, **kwargs):
+    pass
 
 
 def open_video_in_browser(url):

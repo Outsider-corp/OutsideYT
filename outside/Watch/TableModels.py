@@ -19,14 +19,15 @@ class WatchModel(QAbstractTableModel):
                        'Watchers Group': app_settings_watchers.def_group, 'Count': 0,
                        'Video': '', 'Channel': '', 'Duration': '0', 'Link': '', 'Selected': True}
 
-    def __init__(self, data=None, oldest_settings=None, main_progress_bar=None,
-                 tableview=None) -> None:
+    def __init__(self, data=None, oldest_settings=None, table_progress_bar=None,
+                 table_progress_label=None, tableview=None) -> None:
         QAbstractTableModel.__init__(self)
         if data is None:
             data = pd.DataFrame(columns=WatchModel.columns)
         self._data = data
         self.oldest_settings = oldest_settings
-        self._main_progress_bar = main_progress_bar
+        self._table_progress_bar = table_progress_bar
+        self._table_progress_label = table_progress_label
         self._tableview = tableview
 
     def update(self):
@@ -38,7 +39,11 @@ class WatchModel(QAbstractTableModel):
 
     @property
     def progress_bar(self):
-        return self._main_progress_bar
+        return self._table_progress_bar
+
+    @property
+    def progress_label(self):
+        return self._table_progress_label
 
     def flags(self, index: QModelIndex):
         flags = Qt.ItemIsEnabled
@@ -84,7 +89,7 @@ class WatchModel(QAbstractTableModel):
 
                 elif column == 'Count':
                     return len(app_settings_watchers.groups[self.get_data().loc[index.row(),
-                                                                                'Watchers Group']])
+                    'Watchers Group']])
 
                 else:
                     return self.get_data().loc[index.row(), column]

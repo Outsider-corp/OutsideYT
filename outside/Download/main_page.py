@@ -1,14 +1,15 @@
 from functools import partial
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QTableView
+from PyQt5.QtWidgets import QTableView, QWidget
 
-from OutsideYT import app_settings_download
-from . import TableModels, context_menu, dialogs
+from OutsideYT import app_settings_uploaders
+from . import TableModels, context_menu
 from outside import TableModels as CommonTables
+from .dialogs import select_saving_path, open_advanced_settings
+from ..asinc_functions import DownloadThread
 from ..functions import update_checkbox_select_all, update_combobox
-from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
-    open_UsersList_Dialog
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
 
@@ -16,12 +17,13 @@ def update_download(ui, parent):
     def show_down_elements(mode: str):
         state = mode == 'user'
         ui.Download_Save_to_ComboBox.setVisible(state)
-        ui.Download_save_textBox.setVisible(not state)
+        ui.Download_Save_textBox.setVisible(not state)
         ui.Download_Select_Path_Button.setVisible(not state)
 
     download_table = ui.Download_Table
     download_model = TableModels.DownloadModel(oldest_settings=ui,
-                                               main_progress_bar=ui.Download_Progress_Bar)
+                                               table_progress_bar=ui.Download_Progress_Bar,
+                                               table_progress_label=ui.Download_Progress_Label)
     download_table.setModel(download_model)
     download_table = CommonTables.table_universal(download_table)
     download_table.hideColumn(list(download_table.model().get_data().columns).index('Selected'))
@@ -31,8 +33,8 @@ def update_download(ui, parent):
     for i, size in enumerate([50, 400, 200, 70, int(width) - 760]):
         download_table.setColumnWidth(i, size)
 
-    # ui.Download_advanced_settings_Button.clicked.connect(
-    #     partial(dialogs.open_advanced_settings, parent=parent, table=download_table))
+    ui.Download_advanced_settings_Button.clicked.connect(
+        partial(open_advanced_settings, parent=parent, table=download_table))
 
     ui.Download_SelectVideos_Button.clicked.connect(
         partial(open_watch_down_select_videos, parent=parent, table=download_table,
@@ -53,30 +55,39 @@ def update_download(ui, parent):
     download_table.customContextMenuRequested.connect(
         lambda pos: context_menu.download_context_menu(pos, parent=parent, table=download_table))
     ui.Download_Save_to_ComboBox = update_combobox(ui.Download_Save_to_ComboBox,
-                                                   app_settings_download.accounts,
-                                                   app_settings_download.def_account)
+                                                   app_settings_uploaders.accounts,
+                                                   app_settings_uploaders.def_account)
+    ui.Download_Select_Path_Button.clicked.connect(partial(select_saving_path, dialog_settings=ui))
 
     ui.Download_Folder_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('folder'))
     ui.Download_User_Save_Mode_radioButton.toggled.connect(lambda: show_down_elements('user'))
     show_down_elements('user' if ui.Download_User_Save_Mode_radioButton.isChecked() else 'folder')
 
-    ui.actionDownloaders.triggered.connect(
-        partial(open_UsersList_Dialog, parent=parent, table_type='download',
-                add_table_class=partial(CommonTables.UsersModel, table_type='download')))
-
     return download_table, ui
 
 
 def start_download(dialog, dialog_settings, table: QTableView):
-    if dialog_settings.Download_Info_checkBox.isChecked():
-        start_info_download(dialog, dialog_settings, table)
-    if dialog_settings.Download_Video_checkBox.isChecked():
-        start_video_download(dialog, dialog_settings, table)
+    def finish(thread):
+        for el in tab_elements:
+            el.setEnabled(True)
+        dialog_settings.Download_Start.setText("Start")
+        table.model().progress_label.clear()
+        thread.deleteLater()
 
+    data = table.model().get_data()
+    if len(data) and any(data['Selected']) and any(
+            [dialog_settings.Download_Info_checkBox.isChecked(),
+             dialog_settings.Download_Video_checkBox.isChecked()]):
 
-def start_video_download(dialog, dialog_settings, table: QTableView):
-    pass
+        current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'DownloadPage')
+        tab_elements = current_tab.findChildren(QWidget)
 
+        for el in tab_elements:
+            el.setEnabled(False)
+        dialog_settings.Download_Start.setText("Stop")
+        dialog_settings.Download_Start.setEnabled(True)
+        download_thread = DownloadThread(table=table, dialog=dialog,
+                                         dialog_settings=dialog_settings)
 
-def start_info_download(dialog, dialog_settings, table: QTableView):
-    pass
+        download_thread.finished.connect(partial(finish, download_thread))
+        download_thread.start()

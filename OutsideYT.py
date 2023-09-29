@@ -7,9 +7,6 @@ app_settings_uploaders = settings.SettingsUsers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_UPLOADERS.json'))
 app_settings_watchers = settings.SettingsWatchers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_WATCHERS.json'))
-app_settings_download = settings.SettingsUsers(
-    os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_DOWNLOAD.json'),
-    videos_folder='downloaded_videos', settings_type='download')
 
 text_extensions = ['.txt']
 video_extensions = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
@@ -18,6 +15,14 @@ video_extensions = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv'
                     '.FLV', '.3GPP', '.WEBM', '.DNXHR', '.PRORES', '.CINEFORM', '.HEVC']
 image_extensions = ['.pjp', '.jpg', '.pjpeg', '.jpeg', '.jfif', '.png',
                     '.PJP', '.JPG', '.PJPEG', '.JPEG', '.JFIF', '.PNG']
+json_extensions = ['.json']
+
+filenames_video_details = {"Title.txt": 'title', "Description.txt": 'shortDescription',
+                           'Tags.txt': 'keywords', 'Playlist.txt': '',
+                           'Preview.jpg': 'link',
+                           'Cards.json': 'cards'}
+
+foldername_forbidden_symbols = '`<>:"/\|?*'
 
 wait_time_url_uploads = 5
 save_cookies_time = 60 * 60 * 24 * 30

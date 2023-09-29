@@ -1,5 +1,7 @@
 import os
 
+from OutsideYT import foldername_forbidden_symbols
+
 
 def update_combobox(combobox, items: list, def_value: str):
     combobox.clear()
@@ -31,10 +33,12 @@ def find_files(args: list, folder: str, name: str = ''):
 
 
 def get_video_id(link: str):
-    if 'youtube.com/watch' not in link and 'youtu.be/' not in link:
+    if ('/watch?v=' not in link and 'youtu.be/' not in link and 'youtube.com/embed/' not in link):
         return None
-    if 'youtube.com/watch' in link:
+    if '/watch?v=' in link:
         video_id = link.split('/watch?v=')[1]
+    elif 'youtube.com/embed/' in link:
+        video_id = link.split('embed/')[1]
     else:
         video_id = link.split('youtu.be/')[1]
     if '?' in video_id:
@@ -42,3 +46,14 @@ def get_video_id(link: str):
     if '&' in video_id:
         video_id = video_id.split('&')[0]
     return video_id
+
+
+def get_video_link(video_id: str):
+    return f'https://youtube.com/watch?v={video_id}'
+
+
+def check_folder_name(fname: str):
+    for i in foldername_forbidden_symbols:
+        if i in fname:
+            fname = fname.replace(i, '_')
+    return fname

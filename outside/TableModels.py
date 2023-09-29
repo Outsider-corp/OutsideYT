@@ -5,7 +5,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget
 
-from OutsideYT import app_settings_uploaders, app_settings_download
+from OutsideYT import app_settings_uploaders
 from outside.message_boxes import warning_func, error_func
 
 
