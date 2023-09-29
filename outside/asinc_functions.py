@@ -50,10 +50,9 @@ class ProgressMutex:
 
 
 class SeekThreads(QThread):
-    def __init__(self, threads_list, elements_list, dialog_settings) -> None:
+    def __init__(self, threads_list, dialog_settings) -> None:
         super().__init__()
         self.threads_list = threads_list
-        self.elements_list = elements_list
         self.dialog_settings = dialog_settings
 
     def run(self):
@@ -167,11 +166,11 @@ class WatchThread(QThread):
     def run(self):
         asyncio.set_event_loop(WatchThread._loop)
         WatchThread._loop.run_until_complete(self.start_loop())
-        self.progress_bar.setValue(0)
+        self._table.model().reset_progress_bars()
 
 
 class DownloadThread(GetVideoInfoThread):
-    def __init__(self, table, dialog, dialog_settings,
+    def __init__(self, table, dialog, dialog_settings, saving_path: str,
                  tasks: list, progress_bar=None, progress_label=None, parent=None,
                  download_info=True, download_video=True, **kwargs):
         super().__init__(tasks=tasks, progress_bar=progress_bar,
@@ -181,13 +180,9 @@ class DownloadThread(GetVideoInfoThread):
         self._dialog_settings = dialog_settings
         self.download_info = download_info
         self.download_video = download_video
+        self._saving_path = saving_path
 
     def run(self):
-        try:
-            saving_path = _get_download_saving_path(self._dialog_settings)
-        except ValueError as e:
-            # error_func(text=e.args[0])
-            return
 
         if self.download_info:
             self.run_loop()
@@ -196,7 +191,7 @@ class DownloadThread(GetVideoInfoThread):
             if self.progress_bar:
                 self.progress_bar.setValue(0)
             save_videos_info(table=self._table, videos_info=self.results,
-                             saving_path=saving_path)
+                             saving_path=self._saving_path)
 
         if self.download_video:
             start_video_download(self._dialog, self._dialog_settings, self._table)

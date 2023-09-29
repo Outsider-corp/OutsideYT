@@ -8,7 +8,7 @@ import outside.TableModels
 from outside import TableModels as CommonTables
 from outside import main_dialogs
 
-from ..functions import update_checkbox_select_all
+from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from ..YT_functions import upload_video
 from . import TableModels, context_menu, dialogs
 
@@ -89,11 +89,7 @@ def start_upload(dialog, dialog_settings, table):
     #                                 folder="Uploaders"),
     #                 total_steps=7)
     print('Start Upload!')
-    current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'UploadPage')
-    tab_elements = current_tab.findChildren(QWidget)
-
-    for el in tab_elements:
-        el.setEnabled(False)
+    change_enabled_tab_elements(dialog_settings, 'UploadPage', False)
 
     for num, video in table.model().get_data().iterrows():
         upload_video(user=video['User'],
@@ -111,5 +107,4 @@ def start_upload(dialog, dialog_settings, table):
                      driver_headless=not dialog_settings.Upload_ShowBrowser_checkBox.isChecked()
                      )
 
-    for el in tab_elements:
-        el.setEnabled(True)
+    change_enabled_tab_elements(dialog_settings, 'UploadPage', True)

@@ -10,7 +10,7 @@ import OutsideYT
 import outside.context_menu
 from outside import TableModels
 from outside.asinc_functions import GetVideoInfoThread
-from outside.functions import update_combobox, get_video_id
+from outside.functions import update_combobox, get_video_id, change_enabled_tab_elements
 from outside.message_boxes import error_func, warning_func
 from outside.Upload.dialogs import google_login
 from outside.views_py import (
@@ -388,7 +388,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
     dialog.exec_()
 
 
-def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
+def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings):
+    change_enabled_tab_elements(dialog_settings,
+                                f'{table.model().table_type.capitalize()}Page', False)
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
         get_videos_info(table, [text])
@@ -396,6 +398,8 @@ def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit):
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)
         textbox.clear()
+    change_enabled_tab_elements(dialog_settings,
+                                f'{table.model().table_type.capitalize()}Page', True)
 
 
 def get_videos_info(table, links: List, group=None):

@@ -301,39 +301,44 @@ async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
 
                     if ('cards' in kwargs and 'cards' not in video_info_raw and
                             'ytInitialData' in script_text):
-                        ytInitialData = json.loads(script_text.replace(
-                            'var ytInitialData = ', '')[:-1])
-                        cards_panels = ytInitialData['engagementPanels']
-                        for panel in cards_panels:
-                            if 'panelIdentifier' in panel[
-                                'engagementPanelSectionListRenderer'] and panel[
-                                'engagementPanelSectionListRenderer'][
-                                'panelIdentifier'] == 'engagement-panel-structured-description':
-                                cards_content = panel['engagementPanelSectionListRenderer'][
-                                    'content']
-                                if 'items' in cards_content:
-                                    cards_items = cards_content['items']
-                                else:
-                                    video_info_raw['cards'] = {}
-                                    break
-                                for cards in cards_items:
-                                    if 'videoDescriptionInfocardsSectionRenderer' in cards:
-                                        cards_list = cards[
-                                            'videoDescriptionInfocardsSectionRenderer']['infocards']
-                                        video_info_raw['cards'] = dict
-                                        for ind, card in enumerate(cards_list):
-                                            card_info = card['compactInfocardRenderer']['content'][
-                                                'structuredDescriptionVideoLockupRenderer']
-                                            video_info_raw['cards'].update({
-                                                get_video_id(card_info[
-                                                                 'navigationEndpoint'][
-                                                                 'commandMetadata'][
-                                                                 'webCommandMetadata'][
-                                                                 'url']): int(
-                                                    ytInitialData['cards'][ind]['cardRenderer'][
-                                                        'cueRenderer'][0]['startCardActiveMs'])})
+                        try:
+                            ytInitialData = json.loads(script_text.replace(
+                                'var ytInitialData = ', '')[:-1])
+                            cards_panels = ytInitialData['engagementPanels']
+                            for panel in cards_panels:
+                                if 'panelIdentifier' in panel[
+                                    'engagementPanelSectionListRenderer'] and panel[
+                                    'engagementPanelSectionListRenderer'][
+                                    'panelIdentifier'] == 'engagement-panel-structured-description':
+                                    cards_content = panel['engagementPanelSectionListRenderer'][
+                                        'content']['structuredDescriptionContentRenderer']
+                                    if 'items' in cards_content:
+                                        cards_items = cards_content['items']
+                                    else:
+                                        video_info_raw['cards'] = {}
                                         break
-                                break
+                                    for cards in cards_items:
+                                        if 'videoDescriptionInfocardsSectionRenderer' in cards:
+                                            cards_list = cards[
+                                                'videoDescriptionInfocardsSectionRenderer']['infocards']
+                                            video_info_raw['cards'] = dict()
+                                            for ind, card in enumerate(cards_list):
+                                                card_info = card['compactInfocardRenderer']['content'][
+                                                    'structuredDescriptionVideoLockupRenderer']
+                                                video_info_raw['cards'].update({
+                                                    get_video_id(card_info[
+                                                                     'navigationEndpoint'][
+                                                                     'commandMetadata'][
+                                                                     'webCommandMetadata'][
+                                                                     'url']): int(
+                                                        ytInitialData['cards'][
+                                                            'cardCollectionRenderer']['cards'][ind][
+                                                            'cardRenderer']['cueRanges'][0][
+                                                            'startCardActiveMs'])})
+                                            break
+                                    break
+                        except KeyError:
+                            video_info_raw['cards'] = {}
                         if 'progress_inc' in kwargs:
                             await kwargs['progress_inc']()
 
@@ -352,7 +357,7 @@ async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
             else:
                 pass
     except Exception as e:
-        pass
+        print(f'Error in video info getting... \n{e}')
     if 'progress_inc' in kwargs:
         await kwargs['progress_inc']()
     return None

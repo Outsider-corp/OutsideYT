@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\Outside_MainWindow.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/Outside_MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -205,6 +205,8 @@ class Ui_YouTubeOutside(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.Upload_Start.sizePolicy().hasHeightForWidth())
         self.Upload_Start.setSizePolicy(sizePolicy)
+        self.Upload_Start.setMinimumSize(QtCore.QSize(122, 31))
+        self.Upload_Start.setBaseSize(QtCore.QSize(122, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(18)
@@ -313,6 +315,13 @@ class Ui_YouTubeOutside(object):
         spacerItem13 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_6.addItem(spacerItem13)
         self.Watch_Start = QtWidgets.QPushButton(self.WatchPage)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.Watch_Start.sizePolicy().hasHeightForWidth())
+        self.Watch_Start.setSizePolicy(sizePolicy)
+        self.Watch_Start.setMinimumSize(QtCore.QSize(122, 31))
+        self.Watch_Start.setBaseSize(QtCore.QSize(122, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(18)
@@ -490,6 +499,13 @@ class Ui_YouTubeOutside(object):
         self.Download_advanced_settings_Button.setObjectName("Download_advanced_settings_Button")
         self.horizontalLayout_10.addWidget(self.Download_advanced_settings_Button)
         self.Download_Start = QtWidgets.QPushButton(self.DownloadPage)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.Download_Start.sizePolicy().hasHeightForWidth())
+        self.Download_Start.setSizePolicy(sizePolicy)
+        self.Download_Start.setMinimumSize(QtCore.QSize(122, 31))
+        self.Download_Start.setBaseSize(QtCore.QSize(122, 31))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(18)
@@ -503,7 +519,7 @@ class Ui_YouTubeOutside(object):
         self.gridLayout.addWidget(self.OutsideYT, 2, 0, 1, 1)
         YouTubeOutside.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(YouTubeOutside)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1031, 21))
         self.menubar.setObjectName("menubar")
         self.menuOutside_YouTube = QtWidgets.QMenu(self.menubar)
         font = QtGui.QFont()
@@ -585,7 +601,7 @@ class Ui_YouTubeOutside(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(YouTubeOutside)
-        self.OutsideYT.setCurrentIndex(2)
+        self.OutsideYT.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(YouTubeOutside)
 
     def retranslateUi(self, YouTubeOutside):

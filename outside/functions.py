@@ -1,5 +1,7 @@
 import os
 
+from PyQt5.QtWidgets import QWidget
+
 from OutsideYT import foldername_forbidden_symbols
 
 
@@ -57,3 +59,13 @@ def check_folder_name(fname: str):
         if i in fname:
             fname = fname.replace(i, '_')
     return fname
+
+
+def change_enabled_tab_elements(dialog_settings, page: str, state: bool):
+    current_tab = dialog_settings.OutsideYT.findChild(QWidget, page)
+    tab_elements = current_tab.findChildren(QWidget)
+
+    for el in tab_elements:
+        el.setEnabled(state)
+    dialog_settings.Download_Start.setText("Start" if state else "Stop")
+    dialog_settings.Download_Start.setEnabled(True)

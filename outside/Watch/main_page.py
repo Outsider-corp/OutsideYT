@@ -8,7 +8,7 @@ from outside import TableModels as CommonTables
 from OutsideYT import app_settings_watchers
 
 from ..asinc_functions import SeekThreads, WatchThread
-from ..functions import update_checkbox_select_all
+from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
     open_UsersList_Dialog
 from ..message_boxes import error_func
@@ -48,7 +48,8 @@ def update_watch(ui, parent):
         partial(dialogs.open_advanced_settings, parent=parent, table=watch_table))
 
     ui.Watch_url_add_Button.clicked.connect(
-        partial(add_video_from_textbox, table=watch_table, textbox=ui.Watch_url_textBox))
+        partial(add_video_from_textbox, table=watch_table, textbox=ui.Watch_url_textBox,
+                dialog_settings=ui))
 
     ui.Watch_Start.clicked.connect(
         partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))
@@ -70,13 +71,10 @@ def update_watch(ui, parent):
 
 
 def start_watch(dialog, dialog_settings, table):
-
     def finish_video(video):
-            watch_threads_check.remove(video)
+        watch_threads_check.remove(video)
 
     watch_threads_check = []
-    current_tab = dialog_settings.OutsideYT.findChild(QWidget, 'WatchPage')
-    tab_elements = current_tab.findChildren(QWidget)
 
     for num, video in table.model().get_data().iterrows():
         group = video['Watchers Group']
@@ -88,10 +86,7 @@ def start_watch(dialog, dialog_settings, table):
             continue
 
         if not watch_threads_check:
-            for el in tab_elements:
-                el.setEnabled(False)
-            dialog_settings.Watch_Start.setText("Stop")
-            dialog_settings.Watch_Start.setEnabled(True)
+            change_enabled_tab_elements(dialog_settings, 'WatchPage', False)
             dialog_settings.Watch_Table.hideColumn(
                 list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
             dialog_settings.Watch_Table.setColumnHidden(
@@ -112,10 +107,8 @@ def start_watch(dialog, dialog_settings, table):
             list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
         dialog_settings.Watch_Table.setColumnHidden(
             list(dialog_settings.Watch_Table.model().get_data().columns).index('id'), False)
-        for el in tab_elements:
-            el.setEnabled(True)
-        dialog_settings.Watch_Start.setText("Start")
+        change_enabled_tab_elements(dialog_settings, 'WatchPage', True)
 
-    seek_threads = SeekThreads(watch_threads_check, tab_elements, dialog_settings)
+    seek_threads = SeekThreads(watch_threads_check, dialog_settings)
     seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))
     seek_threads.start()

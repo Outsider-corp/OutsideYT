@@ -111,7 +111,7 @@ selection-background-color: rgb(15, 15, 15);</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -467,6 +467,18 @@ selection-background-color: rgb(15, 15, 15);</string>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="minimumSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
@@ -722,6 +734,24 @@ selection-background-color: rgb(15, 15, 15);</string>
           </item>
           <item alignment="Qt::AlignRight">
            <widget class="QPushButton" name="Watch_Start">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
@@ -1111,6 +1141,24 @@ selection-background-color: rgb(15, 15, 15);</string>
           </item>
           <item alignment="Qt::AlignRight">
            <widget class="QPushButton" name="Download_Start">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>122</width>
+              <height>31</height>
+             </size>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
@@ -1152,7 +1200,7 @@ selection-background-color: rgb(15, 15, 15);</string>
      <x>0</x>
      <y>0</y>
      <width>1031</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOutside_YouTube">
