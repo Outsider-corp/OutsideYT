@@ -40,12 +40,14 @@ def create_video_folder(table, video_info: dict, saving_path: str):
                             else:
                                 f.write(video_info[key])
                     elif file.endswith(tuple(OutsideYT.image_extensions)):
-                        img_url = f'https://i.ytimg.com/vi/{video_info["videoId"]}/maxresdefault.jpg'
+                        img_url = (f'https://i.ytimg.com/vi/{video_info["videoId"]}'
+                                   f'/maxresdefault.jpg')
                         img = download_image(img_url)
                         if img:
                             with open(os.path.join(save_dir, file), 'wb') as f:
                                 f.write(img)
-
+            return True
     except KeyError as key:
         # error_func(f'{key} not found on video page')
         pass
+    return False

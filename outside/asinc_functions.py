@@ -98,7 +98,7 @@ class GetVideoInfoThread(QThread):
         self._add_args = kwargs
 
     async def progress_bar_inc(self):
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.03)
         if self.progress_bar:
             async with self.lock:
                 self.progress += 1
@@ -183,15 +183,16 @@ class DownloadThread(GetVideoInfoThread):
         self._saving_path = saving_path
 
     def run(self):
-
+        completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
         if self.download_info:
             self.run_loop()
             if self.progress_label:
                 self.progress_label.setText('Creating files...')
             if self.progress_bar:
                 self.progress_bar.setValue(0)
-            save_videos_info(table=self._table, videos_info=self.results,
-                             saving_path=self._saving_path)
+                save_videos_info(table=self._table, videos_info=self.results,
+                                 saving_path=self._saving_path,
+                                 completed_tasks_info=completed_tasks_info)
 
         if self.download_video:
             start_video_download(self._dialog, self._dialog_settings, self._table)
@@ -199,6 +200,7 @@ class DownloadThread(GetVideoInfoThread):
             self.progress_bar.setValue(0)
         if self.progress_label:
             self.progress_label.clear()
+        self._table.model()._data["Selected"] = [not i for i in completed_tasks_info]
 
 
 def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,
@@ -224,6 +226,7 @@ def start_video_download(dialog, dialog_settings, table: QTableView):
     pass
 
 
-def save_videos_info(table, videos_info: List, saving_path: str):
-    for video in videos_info:
-        create_video_folder(table, video_info=video, saving_path=saving_path)
+def save_videos_info(table, videos_info: List, saving_path: str, completed_tasks_info: List):
+    for num, video in enumerate(videos_info):
+        if create_video_folder(table, video_info=video, saving_path=saving_path):
+            completed_tasks_info[num] = True
