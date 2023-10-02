@@ -51,3 +51,4 @@ def create_video_folder(table, video_info: dict, saving_path: str):
         # error_func(f'{key} not found on video page')
         pass
     return False
+

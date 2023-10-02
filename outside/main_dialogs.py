@@ -168,6 +168,11 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
                         data[group] = {}
                     data[group][account] = gmail
                 table_settings.update_groups(data)
+            if table_type != 'watch':
+                dialog_settings.Download_Save_to_ComboBox = update_combobox(
+                    dialog_settings.Download_Save_to_ComboBox, table_settings.accounts.keys(),
+                    table_settings.def_account
+                )
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
 
@@ -301,21 +306,24 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         #     error_func("Not valid link.", dialog)
 
     def import_links_from_file():
-        exts = OutsideYT.text_extensions
-        file, _ = QtWidgets.QFileDialog.getOpenFileName(None,
-                                                        f'Select File with Links', '',
-                                                        f"Text Files ("
-                                                        f"{' '.join('*' + ex for ex in exts)})")
-        if not file:
-            return
+        try:
+            exts = OutsideYT.text_extensions
+            file, _ = QtWidgets.QFileDialog.getOpenFileName(None,
+                                                            f'Select File with Links', '',
+                                                            f"Text Files ("
+                                                            f"{' '.join('*' + ex for ex in exts)})")
+            if not file:
+                return
 
-        group = dialog_settings.Group_comboBox.currentText() if \
-            table.model().table_type == 'watch' else None
-        dialog.accept()
+            group = dialog_settings.Group_comboBox.currentText() if \
+                table.model().table_type == 'watch' else None
+            dialog.accept()
 
-        with open(file, 'r', encoding='UTF-8') as f:
-            links = f.readlines()
-        get_videos_info(table=table, links=links, group=group)
+            with open(file, 'r', encoding='UTF-8') as f:
+                links = f.readlines()
+            get_videos_info(table=table, links=links, group=group)
+        except Exception as e:
+            print(f'Error on importing links...\n{e}')
 
     def select_channel():
         text = select_page('channel')
@@ -408,26 +416,32 @@ def get_videos_info(table, links: List, group=None):
             _add_video_to_table(table, video_info=video, group=group)
         table.model().progress_label.clear()
         vids_thread.deleteLater()
-
-    table.model().progress_label.setText('Get info about videos...')
-    vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
-                                     progress_label=table.model().progress_label)
-    vids_thread.start()
-    vids_thread.finished.connect(return_func)
+    try:
+        table.model().progress_label.setText('Get info about videos...')
+        vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
+                                         progress_label=table.model().progress_label)
+        vids_thread.start()
+        vids_thread.finished.connect(return_func)
+    except Exception as e:
+        print(f'Error on get video info...\n{e}')
 
 
 def get_playlist_info(table, link: str, group: str = None):
     pass
 
 
-def _add_video_to_table(table, video_info, group=None):
+def _add_video_to_table(table, video_info, group=None, force_add=False):
     if video_info:
         try:
+            link = get_video_id(video_info['link'])
+            if not force_add and link in table.model().get_data()['Link'].to_list():
+                print(f'{video_info["title"]} is already added.')
+                return
             table.model().insertRows(row_content={'Watchers Group': group,
                                                   'Video': video_info['title'],
                                                   'Channel': video_info['author'],
                                                   'Duration': video_info['lengthSeconds'],
-                                                  'Link': get_video_id(video_info['link'])})
+                                                  'Link': link})
         except KeyError:
             pass
 

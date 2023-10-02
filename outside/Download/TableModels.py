@@ -106,15 +106,16 @@ class DownloadModel(QAbstractTableModel):
             row_content = {}
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
-        for col in self.get_data().columns:
+        new_row = pd.Series(index=self.get_data().columns)
+        for col in new_row.index:
             if col == 'id':
-                self._data.loc[row_count, col] = row_count + 1
+                new_row[col] = row_count + 1
                 continue
             if col in row_content and row_content[col] is not None:
-                self._data.loc[row_count, col] = row_content[col]
+                new_row[col] = row_content[col]
             else:
-                self._data.loc[row_count, col] = DownloadModel.default_content[col]
-        row_count += count
+                new_row[col] = DownloadModel.default_content[col]
+        self._data.loc[row_count] = new_row
         self.endInsertRows()
         self.update()
         return True
@@ -142,3 +143,4 @@ class DownloadModel(QAbstractTableModel):
 
     def get_data(self):
         return self._data
+

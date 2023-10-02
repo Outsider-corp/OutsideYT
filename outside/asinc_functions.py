@@ -1,38 +1,18 @@
 import asyncio
+import os
 import time
 
 from typing import List
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread, QMetaObject, Qt, QGenericArgument, pyqtSignal, QModelIndex
+from PyQt5.QtCore import QMutex, QThread, QMetaObject, Qt, QGenericArgument, pyqtSignal, \
+    QModelIndex, QEventLoop
 from PyQt5.QtWidgets import QProgressBar, QWidget, QTableView
 
 import OutsideYT
 from outside.Download.functions import _get_download_saving_path, create_video_folder
-from outside.YT_functions import get_video_info, watching
-from outside.functions import get_video_link
+from outside.YT_functions import get_video_info, watching, download_video
+from outside.functions import get_video_link, check_folder_name
 from outside.message_boxes import error_func
-
-
-class WorkerThread(QThread):
-
-    def __init__(self, progress_bar, process, total_steps: int) -> None:
-        super().__init__()
-        self.progress_bar = progress_bar
-        self.process = process
-        self.total_steps = total_steps
-
-    def run(self):
-        print('start progress bar...')
-        for i in self.process():
-            if self.total_steps == 0:
-                self.total_steps = i
-                continue
-            if i == 'End':
-                break
-            time.sleep(0.1)
-            progress = int((i / self.total_steps) * 100)
-            self.progress_bar.setValue(progress)
-        self.progress_bar.setValue(0)
 
 
 class ProgressMutex:
@@ -60,28 +40,6 @@ class SeekThreads(QThread):
             pass
 
 
-class WatchThreadOneProgressBar(QThread):
-    def __init__(self, progress_bar, process, group_progress) -> None:
-        super().__init__()
-        self.progress_bar = progress_bar
-        self.process = process
-        self.group_progress = group_progress
-
-    def run(self):
-        print('start progress bar...')
-        for i in self.process():
-            if i == 'End':
-                break
-            time.sleep(0.1)
-
-            self.group_progress.mutex.lock()
-            self.group_progress.progress += 1
-            self.group_progress.mutex.unlock()
-
-            progress = int((self.group_progress.progress / self.group_progress.total_steps) * 100)
-            self.progress_bar.setValue(progress)
-
-
 class GetVideoInfoThread(QThread):
     _loop = asyncio.new_event_loop()
 
@@ -96,31 +54,42 @@ class GetVideoInfoThread(QThread):
         self.total_steps = len(tasks)
         self.progress = 0
         self._add_args = kwargs
+        self.semaphore = asyncio.Semaphore(OutsideYT.semaphore_limit)
 
     async def progress_bar_inc(self):
         await asyncio.sleep(0.03)
-        if self.progress_bar:
-            async with self.lock:
+        async with self.lock:
+            if self.progress_bar:
                 self.progress += 1
                 new_val = int(self.progress / self.total_steps * 100)
                 self.progress_bar.setValue(new_val)
 
+    async def worker(self, link, session):
+        async with self.semaphore:
+            return await get_video_info(link, session,
+                                        progress_inc=self.progress_bar_inc, **self._add_args)
+
     async def start_loop(self):
-        async with aiohttp.ClientSession() as session:
-            atasks = [get_video_info(link.strip(), session,
-                                     progress_inc=self.progress_bar_inc, **self._add_args) for link
-                      in self.tasks]
-            self.results = await asyncio.gather(*atasks)
+        try:
+            async with aiohttp.ClientSession() as session:
+                atasks = [self.worker(link.strip(), session) for link in self.tasks]
+                self.results = await asyncio.gather(*atasks)
+        except Exception as e:
+            print(f"Error in loop...\n{e}")
 
     def run_loop(self):
-        if self.progress_label:
-            self.progress_label.setText('Get info about videos...')
-        if self.progress_bar:
-            self.progress_bar.setValue(0)
-        asyncio.set_event_loop(GetVideoInfoThread._loop)
-        GetVideoInfoThread._loop.run_until_complete(self.start_loop())
-        if self.progress_bar:
-            self.progress_bar.setValue(0)
+        try:
+            asyncio.set_event_loop(GetVideoInfoThread._loop)
+            self.semaphore = asyncio.Semaphore(OutsideYT.semaphore_limit)
+            if self.progress_label:
+                self.progress_label.setText('Get info about videos...')
+            if self.progress_bar:
+                self.progress_bar.setValue(0)
+            GetVideoInfoThread._loop.run_until_complete(self.start_loop())
+            if self.progress_bar:
+                self.progress_bar.setValue(0)
+        except Exception as e:
+            print(f"Error in starting loop...\n{e}")
 
     def run(self):
         self.run_loop()
@@ -172,61 +141,72 @@ class WatchThread(QThread):
 class DownloadThread(GetVideoInfoThread):
     def __init__(self, table, dialog, dialog_settings, saving_path: str,
                  tasks: list, progress_bar=None, progress_label=None, parent=None,
-                 download_info=True, download_video=True, **kwargs):
+                 download_info_key=True, download_video_key=True, **kwargs):
         super().__init__(tasks=tasks, progress_bar=progress_bar,
                          progress_label=progress_label, parent=parent, **kwargs)
         self._table = table
         self._dialog = dialog
         self._dialog_settings = dialog_settings
-        self.download_info = download_info
-        self.download_video = download_video
+        self.download_info_key = download_info_key
+        self.download_video_key = download_video_key
         self._saving_path = saving_path
+        self.completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
 
     def run(self):
-        completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
-        if self.download_info:
+        if self.download_info_key:
             self.run_loop()
             if self.progress_label:
                 self.progress_label.setText('Creating files...')
             if self.progress_bar:
                 self.progress_bar.setValue(0)
-                save_videos_info(table=self._table, videos_info=self.results,
-                                 saving_path=self._saving_path,
-                                 completed_tasks_info=completed_tasks_info)
+            save_videos_info(table=self._table, videos_info=self.results,
+                             saving_path=self._saving_path,
+                             completed_tasks_info=self.completed_tasks_info,
+                             progress_bar=self.progress_bar)
 
-        if self.download_video:
-            start_video_download(self._dialog, self._dialog_settings, self._table)
+        if self.download_video_key:
+            self.completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
+            if self.progress_label:
+                self.progress_label.setText('Downloading videos...')
+            if self.progress_bar:
+                self.progress_bar.setValue(0)
+            start_video_download(table=self._table, saving_path=self._saving_path,
+                                 completed_tasks_info=self.completed_tasks_info,
+                                 params=OutsideYT.download_video_params,
+                                 progress_bar=self.progress_bar,
+                                 progress_label=self.progress_label,
+                                 add_to_folder=self.download_info_key)
         if self.progress_bar:
             self.progress_bar.setValue(0)
         if self.progress_label:
             self.progress_label.clear()
-        self._table.model()._data["Selected"] = [not i for i in completed_tasks_info]
 
 
-def start_operation(dialog, dialog_settings, page: str, progress_bar: QProgressBar, process,
-                    total_steps: int = 0):
-    current_tab = dialog.findChild(QWidget, page)
-    tab_elements = current_tab.findChildren(QWidget)
-
-    def finish_operation():
-        for el in tab_elements:
-            el.setEnabled(True)
-        dialog_settings.worker_thread.deleteLater()
-
-    for el in tab_elements:
-        el.setEnabled(False)
-
-    dialog_settings.worker_thread = WorkerThread(progress_bar, process=process,
-                                                 total_steps=total_steps)
-    dialog_settings.worker_thread.finished.connect(finish_operation)
-    dialog_settings.worker_thread.start()
-
-
-def start_video_download(dialog, dialog_settings, table: QTableView):
-    pass
+def start_video_download(table: QTableView, saving_path: str, completed_tasks_info: List,
+                         params: dict, progress_bar, progress_label, add_to_folder: bool):
+    data = table.model().get_data()
+    cnt_videos = len(data)
+    for num, video in data.iterrows():
+        if progress_label:
+            progress_label.setText(f"{num + 1}/{cnt_videos} - {video['Video']}")
+        if progress_bar:
+            progress_bar.setValue(0)
+        if add_to_folder:
+            saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
+            os.makedirs(os.path.join(saving_path), exist_ok=True)
+        if download_video(video['Video'], video['Link'], params, saving_path, progress_bar):
+            completed_tasks_info[num] = True
+    if progress_label:
+        progress_label.clear()
+    if progress_label:
+        progress_bar.setValue(0)
 
 
-def save_videos_info(table, videos_info: List, saving_path: str, completed_tasks_info: List):
+def save_videos_info(table, videos_info: List, saving_path: str, completed_tasks_info: List,
+                     progress_bar):
+    cnt_videos = len(videos_info)
     for num, video in enumerate(videos_info):
         if create_video_folder(table, video_info=video, saving_path=saving_path):
+            if progress_bar:
+                progress_bar.setValue((num + 1) / cnt_videos * 100)
             completed_tasks_info[num] = True

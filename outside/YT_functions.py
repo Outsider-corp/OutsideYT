@@ -5,6 +5,8 @@ import pickle
 import random
 import sys
 import time
+from functools import partial
+
 import aiohttp
 import requests
 
@@ -320,11 +322,13 @@ async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
                                     for cards in cards_items:
                                         if 'videoDescriptionInfocardsSectionRenderer' in cards:
                                             cards_list = cards[
-                                                'videoDescriptionInfocardsSectionRenderer']['infocards']
+                                                'videoDescriptionInfocardsSectionRenderer'][
+                                                'infocards']
                                             video_info_raw['cards'] = dict()
                                             for ind, card in enumerate(cards_list):
-                                                card_info = card['compactInfocardRenderer']['content'][
-                                                    'structuredDescriptionVideoLockupRenderer']
+                                                card_info = \
+                                                    card['compactInfocardRenderer']['content'][
+                                                        'structuredDescriptionVideoLockupRenderer']
                                                 video_info_raw['cards'].update({
                                                     get_video_id(card_info[
                                                                      'navigationEndpoint'][
@@ -452,9 +456,25 @@ def download_image(url: str):
         return res.content
 
 
-def download_video(link: str, progress_bar=None, **kwargs):
-    pass
+def _progress_hook_download_video(progress_dict, progress_bar):
+        if progress_dict['status'] == 'downloading' and 'downloaded_bytes' in progress_dict:
+            progress_bar.setValue(
+                int(progress_dict['downloaded_bytes'] / progress_dict['total_bytes'] * 100))
 
+
+def download_video(videoname: str, link: str, params: dict, saving_path: str, progress_bar,
+                   **kwargs):
+    try:
+        ylp_options = {'ffmpeg_location': params['ffmpeg_location'],
+                       'format': f"{params['format']}",
+                       'outtmpl': os.path.join(saving_path, f'{videoname}.{params["ext"]}'),
+                       'progress_hooks': [
+                           partial(_progress_hook_download_video, progress_bar=progress_bar)]}
+        with yt_dlp.YoutubeDL(ylp_options) as ydl:
+            ydl.download([link])
+        return True
+    except:
+        return False
 
 def open_video_in_browser(url):
     target = f'https://youtu.be/{url}'

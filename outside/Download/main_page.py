@@ -73,7 +73,9 @@ def update_download(ui, parent):
 def start_download(dialog, dialog_settings, table: QTableView):
     def finish(thread):
         change_enabled_tab_elements(dialog_settings, 'DownloadPage', True)
-        table.model().progress_label.clear()
+        table.model()._data["Selected"] = [not i for i in thread.completed_tasks_info]
+        if not all(thread.completed_tasks_info):
+            dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
         thread.deleteLater()
 
     data = table.model().get_data()
@@ -85,7 +87,6 @@ def start_download(dialog, dialog_settings, table: QTableView):
     if len(data) and any(data['Selected']) and any(
             [dialog_settings.Download_Info_checkBox.isChecked(),
              dialog_settings.Download_Video_checkBox.isChecked()]):
-
         change_enabled_tab_elements(dialog_settings, 'DownloadPage', False)
 
         links = [get_video_link(i) for i in table.model().get_data()['Link'].to_list()]
@@ -93,12 +94,12 @@ def start_download(dialog, dialog_settings, table: QTableView):
                                          dialog_settings=dialog_settings,
                                          saving_path=saving_path,
                                          tasks=links, progress_bar=table.model().progress_bar,
+                                         progress_label=table.model().progress_label,
                                          cards=True,
-                                         download_info=dialog_settings.
-                                         Download_Info_checkBox.isChecked(),
-                                         download_videos=dialog_settings.
-                                         Download_Video_checkBox.isChecked())
+                                         download_info_key=dialog_settings
+                                         .Download_Info_checkBox.isChecked(),
+                                         download_video_key=dialog_settings
+                                         .Download_Video_checkBox.isChecked())
 
         download_thread.finished.connect(partial(finish, download_thread))
         download_thread.start()
-
