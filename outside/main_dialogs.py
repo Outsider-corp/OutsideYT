@@ -321,7 +321,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
             with open(file, 'r', encoding='UTF-8') as f:
                 links = f.readlines()
-            get_videos_info(table=table, links=links, group=group)
+            add_args = ['cards',
+                        'streamingData'] if table.model().table_type == 'download' else None
+            get_videos_info(table=table, links=links, group=group, add_args=add_args)
         except Exception as e:
             print(f'Error on importing links...\n{e}')
 
@@ -410,18 +412,24 @@ def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings)
                                 f'{table.model().table_type.capitalize()}Page', True)
 
 
-def get_videos_info(table, links: List, group=None):
-    def return_func():
-        for video in vids_thread.results:
-            _add_video_to_table(table, video_info=video, group=group)
-        table.model().progress_label.clear()
-        vids_thread.deleteLater()
+def get_videos_info(table, links: List, group=None, add_args=None):
+    def return_func(thread):
+        try:
+            print(13)
+            for video in thread.results:
+                _add_video_to_table(table, video_info=video, group=group)
+            table.model().progress_label.clear()
+            thread.deleteLater()
+        except Exception as e:
+            print(f'Error on add video info to table...\n{e}')
+
     try:
         table.model().progress_label.setText('Get info about videos...')
         vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
-                                         progress_label=table.model().progress_label)
+                                         progress_label=table.model().progress_label,
+                                         additional_args=add_args)
+        vids_thread.finished.connect(partial(return_func, vids_thread))
         vids_thread.start()
-        vids_thread.finished.connect(return_func)
     except Exception as e:
         print(f'Error on get video info...\n{e}')
 
@@ -437,11 +445,14 @@ def _add_video_to_table(table, video_info, group=None, force_add=False):
             if not force_add and link in table.model().get_data()['Link'].to_list():
                 print(f'{video_info["title"]} is already added.')
                 return
-            table.model().insertRows(row_content={'Watchers Group': group,
-                                                  'Video': video_info['title'],
-                                                  'Channel': video_info['author'],
-                                                  'Duration': video_info['lengthSeconds'],
-                                                  'Link': link})
+            row_content = {'Watchers Group': group,
+                           'Video': video_info['title'],
+                           'Channel': video_info['author'],
+                           'Duration': video_info['lengthSeconds'],
+                           'Link': link,
+                           '_download_info': video_info
+                           }
+            table.model().insertRows(row_content=row_content)
         except KeyError:
             pass
 

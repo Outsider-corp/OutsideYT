@@ -30,6 +30,8 @@ def update_download(ui, parent):
     download_table.setModel(download_model)
     download_table = CommonTables.table_universal(download_table)
     download_table.hideColumn(list(download_table.model().get_data().columns).index('Selected'))
+    download_table.hideColumn(
+        list(download_table.model().get_data().columns).index('_download_info'))
     download_table.setVerticalHeader(CommonTables.HeaderView(download_table))
     download_table.horizontalHeader().setFont(QtGui.QFont('Arial', 12))
     width = parent.width()
@@ -72,11 +74,14 @@ def update_download(ui, parent):
 
 def start_download(dialog, dialog_settings, table: QTableView):
     def finish(thread):
-        change_enabled_tab_elements(dialog_settings, 'DownloadPage', True)
-        table.model()._data["Selected"] = [not i for i in thread.completed_tasks_info]
-        if not all(thread.completed_tasks_info):
-            dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
-        thread.deleteLater()
+        try:
+            change_enabled_tab_elements(dialog_settings, 'DownloadPage', True)
+            table.model()._data["Selected"] = [not i for i in thread.completed_tasks_info]
+            if not all(thread.completed_tasks_info):
+                dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
+            thread.deleteLater()
+        except Exception as e:
+            print(f"Error on download finish...\n{e}")
 
     data = table.model().get_data()
     try:
@@ -87,19 +92,19 @@ def start_download(dialog, dialog_settings, table: QTableView):
     if len(data) and any(data['Selected']) and any(
             [dialog_settings.Download_Info_checkBox.isChecked(),
              dialog_settings.Download_Video_checkBox.isChecked()]):
-        change_enabled_tab_elements(dialog_settings, 'DownloadPage', False)
+        try:
+            change_enabled_tab_elements(dialog_settings, 'DownloadPage', False)
 
-        links = [get_video_link(i) for i in table.model().get_data()['Link'].to_list()]
-        download_thread = DownloadThread(table=table, dialog=dialog,
-                                         dialog_settings=dialog_settings,
-                                         saving_path=saving_path,
-                                         tasks=links, progress_bar=table.model().progress_bar,
-                                         progress_label=table.model().progress_label,
-                                         cards=True,
-                                         download_info_key=dialog_settings
-                                         .Download_Info_checkBox.isChecked(),
-                                         download_video_key=dialog_settings
-                                         .Download_Video_checkBox.isChecked())
+            download_thread = DownloadThread(table=table,
+                                             saving_path=saving_path,
+                                             progress_bar=table.model().progress_bar,
+                                             progress_label=table.model().progress_label,
+                                             download_info_key=dialog_settings
+                                             .Download_Info_checkBox.isChecked(),
+                                             download_video_key=dialog_settings
+                                             .Download_Video_checkBox.isChecked())
 
-        download_thread.finished.connect(partial(finish, download_thread))
-        download_thread.start()
+            download_thread.finished.connect(partial(finish, download_thread))
+            download_thread.start()
+        except Exception as e:
+            print(f"Error on download_start...\n{e}")

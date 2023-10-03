@@ -6,6 +6,7 @@ import random
 import sys
 import time
 from functools import partial
+from typing import List
 
 import aiohttp
 import requests
@@ -289,8 +290,9 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
         error_func(f"Error.\n {e}")
 
 
-async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
+async def get_video_info(link, session: aiohttp.ClientSession, args: List, **kwargs):
     """Функция для получения информации о видео."""
+    print(4)
     try:
         async with session.get(link) as response:
             if response.status == 200:
@@ -301,7 +303,7 @@ async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
                 for script_tag in script_tags:
                     script_text = script_tag.get_text()
 
-                    if ('cards' in kwargs and 'cards' not in video_info_raw and
+                    if ('cards' in args and 'cards' not in video_info_raw and
                             'ytInitialData' in script_text):
                         try:
                             ytInitialData = json.loads(script_text.replace(
@@ -345,14 +347,16 @@ async def get_video_info(link, session: aiohttp.ClientSession, **kwargs):
                             video_info_raw['cards'] = {}
                         if 'progress_inc' in kwargs:
                             await kwargs['progress_inc']()
-
                     elif ('link' not in video_info_raw
                           and 'ytInitialPlayerResponse' in script_text):
+                        print(5)
                         ytInitialPlayerResponse = json.loads(script_text.replace(
                             'var ytInitialPlayerResponse = ', '')[:-1])
                         video_info_raw.update(ytInitialPlayerResponse['videoDetails'])
                         video_info_raw['link'] = link
-                        if 'cards' not in kwargs:
+                        if 'streamingData' in args:
+                            video_info_raw.update(ytInitialPlayerResponse['streamingData'])
+                        if 'cards' not in args:
                             if 'progress_inc' in kwargs:
                                 await kwargs['progress_inc']()
                             return video_info_raw
@@ -456,25 +460,41 @@ def download_image(url: str):
         return res.content
 
 
-def _progress_hook_download_video(progress_dict, progress_bar):
-        if progress_dict['status'] == 'downloading' and 'downloaded_bytes' in progress_dict:
-            progress_bar.setValue(
-                int(progress_dict['downloaded_bytes'] / progress_dict['total_bytes'] * 100))
+def _progress_hook_download_video(progress_dict: dict, progress_bar, total_size: int):
+    if progress_dict['status'] == 'downloading' and 'downloaded_bytes' in progress_dict:
+        progress_bar.setValue(
+            int(progress_dict['downloaded_bytes'] / total_size * 100))
 
 
-def download_video(videoname: str, link: str, params: dict, saving_path: str, progress_bar,
-                   **kwargs):
+def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str, progress_bar,
+                       **kwargs):
     try:
-        ylp_options = {'ffmpeg_location': params['ffmpeg_location'],
-                       'format': f"{params['format']}",
-                       'outtmpl': os.path.join(saving_path, f'{videoname}.{params["ext"]}'),
+        total_size = _get_size_video(link, params)
+        ylp_options = {'ffmpeg_location': r'outside/bin/ffmpeg.exe',
+                       'format': 'bestvideo+bestaudio/best',
+                       'outtmpl': os.path.join(saving_path, f'{videoname}.mp4'),
                        'progress_hooks': [
-                           partial(_progress_hook_download_video, progress_bar=progress_bar)]}
+                           partial(_progress_hook_download_video, progress_bar=progress_bar,
+                                   total_size=total_size)]}
         with yt_dlp.YoutubeDL(ylp_options) as ydl:
             ydl.download([link])
         return True
-    except:
+    except Exception as e:
+        print(f'Error on downloading video...\n{e}')
         return False
+
+
+def _select_format_video(video_info: dict, params: dict):
+    pass
+
+
+def _get_size_video(link: str, params: dict):
+    return 11680830700
+
+
+def _download_video(link: str, params: dict, saving_path: str, progress_bar, **kwargs):
+    pass
+
 
 def open_video_in_browser(url):
     target = f'https://youtu.be/{url}'

@@ -29,7 +29,25 @@ save_cookies_time = 60 * 60 * 24 * 30
 semaphore_limit = 20
 
 download_video_params = {
-    'format': 'bestvideo+bestaudio/best',
+    'format': 'best',
     'ffmpeg_location': r'outside/bin/ffmpeg.exe',
-    'ext': 'mp4'
 }
+
+formats = {'full': ['best',
+                    'standard',
+                    'worst'],
+           'video_quality': ['2160p',
+                             '1440p',
+                             '1080p',
+                             '720p',
+                             '480p',
+                             '360p',
+                             '240p',
+                             '144p'],
+           'video_type': ['mp4', 'webm'],
+           'audio_quality': ['AUDIO_QUALITY_LOW',
+                             'AUDIO_QUALITY_MEDIUM',
+                             ],
+           'audio_type': ['mp4', 'webm']
+
+           }

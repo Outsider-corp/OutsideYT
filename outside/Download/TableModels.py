@@ -5,10 +5,10 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 
 class DownloadModel(QAbstractTableModel):
-    columns = ['id', 'Video', 'Channel', 'Duration', 'Link', 'Selected']
+    columns = ['id', 'Video', 'Channel', 'Duration', 'Link', 'Selected', '_download_info']
 
     default_content = {'id': None, 'Video': '', 'Channel': '', 'Duration': '0', 'Link': '',
-                       'Selected': True}
+                       'Selected': True, '_download_info': None}
 
     def __init__(self, data=None, oldest_settings=None, table_progress_bar=None,
                  table_progress_label=None) -> None:
@@ -64,7 +64,7 @@ class DownloadModel(QAbstractTableModel):
             if role == Qt.CheckStateRole and column == 'id':
                 return Qt.Checked if self._data.loc[index.row(), 'Selected'] else Qt.Unchecked
             if role == Qt.DisplayRole:
-                if column == 'Selected':
+                if column in ['Selected', '_download_info']:
                     return None
                 if column == 'Duration':
                     duration = ''
