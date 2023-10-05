@@ -25,6 +25,7 @@ filenames_video_details = {"Title.txt": 'title', "Description.txt": 'shortDescri
 foldername_forbidden_symbols = '`<>:"/\|?*'
 
 wait_time_url_uploads = 5
+wait_time_async_loops = 0.5
 save_cookies_time = 60 * 60 * 24 * 30
 semaphore_limit = 20
 

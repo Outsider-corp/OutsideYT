@@ -416,14 +416,17 @@ def get_videos_info(table, links: List, group=None, add_args=None):
     def return_func(thread):
         try:
             print(13)
-            for video in thread.results:
+            results = thread.results
+            thread.quit()
+            thread.wait()
+            thread.terminate()
+            print(14)
+            for video in results:
                 _add_video_to_table(table, video_info=video, group=group)
-            table.model().progress_label.clear()
-            thread.deleteLater()
         except Exception as e:
             print(f'Error on add video info to table...\n{e}')
-
     try:
+        links = [link for link in links if link not in table.model().get_data()['Link'].to_list()]
         table.model().progress_label.setText('Get info about videos...')
         vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
                                          progress_label=table.model().progress_label,

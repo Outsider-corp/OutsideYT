@@ -302,7 +302,7 @@ async def get_video_info(link, session: aiohttp.ClientSession, args: List, **kwa
                 video_info_raw = dict()
                 for script_tag in script_tags:
                     script_text = script_tag.get_text()
-
+                    print('.', end="")
                     if ('cards' in args and 'cards' not in video_info_raw and
                             'ytInitialData' in script_text):
                         try:
@@ -458,6 +458,7 @@ def download_image(url: str):
     res = requests.get(url)
     if res.status_code == 200:
         return res.content
+    return None
 
 
 def _progress_hook_download_video(progress_dict: dict, progress_bar, total_size: int):
