@@ -1,9 +1,11 @@
 import glob
 import os
+import time
 from functools import partial
 from typing import List
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QTableView
 
 import outside.Watch.context_menu as watch_context
 import OutsideYT
@@ -290,7 +292,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         if text:
             group = dialog_settings.Group_comboBox.currentText() if \
                 table.model().table_type == 'watch' else None
-            get_videos_info(table, links=[text], group=group)
+            get_videos_info(table, links=[text], group=group, dialog_settings=parent_settings)
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -323,7 +325,8 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
                 links = f.readlines()
             add_args = ['cards',
                         'streamingData'] if table.model().table_type == 'download' else None
-            get_videos_info(table=table, links=links, group=group, add_args=add_args)
+            get_videos_info(table=table, links=links, group=group, add_args=add_args,
+                            dialog_settings=parent_settings)
         except Exception as e:
             print(f'Error on importing links...\n{e}')
 
@@ -399,8 +402,6 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
 
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings):
-    change_enabled_tab_elements(dialog_settings,
-                                f'{table.model().table_type.capitalize()}Page', False)
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
         get_videos_info(table, [text])
@@ -408,31 +409,38 @@ def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings)
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)
         textbox.clear()
-    change_enabled_tab_elements(dialog_settings,
-                                f'{table.model().table_type.capitalize()}Page', True)
 
 
-def get_videos_info(table, links: List, group=None, add_args=None):
+def get_videos_info(table, links: List, dialog_settings, group=None, add_args=None):
     def return_func(thread):
         try:
             print(13)
             results = thread.results
             thread.quit()
-            thread.wait()
-            thread.terminate()
-            print(14)
-            for video in results:
-                _add_video_to_table(table, video_info=video, group=group)
+            if thread.wait():
+                print(14)
+                for video in results:
+                    _add_video_to_table(table, video_info=video, group=group)
         except Exception as e:
             print(f'Error on add video info to table...\n{e}')
+        finally:
+            change_enabled_tab_elements(dialog_settings=dialog_settings,
+                                        page_name=table.model().table_type.capitalize(),
+                                        state=True)
+
     try:
-        links = [link for link in links if link not in table.model().get_data()['Link'].to_list()]
+        change_enabled_tab_elements(dialog_settings=dialog_settings,
+                                    page_name=table.model().table_type.capitalize(),
+                                    state=False)
+        links_add = [link for link in links if
+                     link not in table.model().get_data()['Link'].to_list()]
         table.model().progress_label.setText('Get info about videos...')
-        vids_thread = GetVideoInfoThread(tasks=links, progress_bar=table.model().progress_bar,
+        vids_thread = GetVideoInfoThread(tasks=links_add, progress_bar=table.model().progress_bar,
                                          progress_label=table.model().progress_label,
                                          additional_args=add_args)
         vids_thread.finished.connect(partial(return_func, vids_thread))
         vids_thread.start()
+
     except Exception as e:
         print(f'Error on get video info...\n{e}')
 
@@ -486,3 +494,10 @@ def update_settings_combobox_with_type(dialog_settings, items, table_type):
 def update_settings_from_file():
     OutsideYT.app_settings_uploaders.update_settings()
     OutsideYT.app_settings_watchers.update_settings()
+
+
+def cancel_page_action(dialog_settings, table: QTableView):
+    table_type = table.model().table_type
+    if getattr(dialog_settings, f'{table_type.lower()}_thread'):
+        dialog_settings.download_thread.terminate()
+    change_enabled_tab_elements(dialog_settings, table_type, True)

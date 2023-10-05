@@ -454,11 +454,11 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
         print(f"Error. \n {e}")
 
 
-def download_image(url: str):
+def download_image(url: str, path: str):
     res = requests.get(url)
     if res.status_code == 200:
-        return res.content
-    return None
+        with open(path, 'wb') as f:
+            f.write(res.content)
 
 
 def _progress_hook_download_video(progress_dict: dict, progress_bar, total_size: int):

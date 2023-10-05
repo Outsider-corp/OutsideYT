@@ -63,11 +63,11 @@ def check_folder_name(fname: str):
     return fname
 
 
-def change_enabled_tab_elements(dialog_settings, page: str, state: bool):
-    current_tab = dialog_settings.OutsideYT.findChild(QWidget, page)
+def change_enabled_tab_elements(dialog_settings, page_name: str, state: bool):
+    current_tab = dialog_settings.OutsideYT.findChild(QWidget, f'{page_name.capitalize()}Page}')
     tab_elements = current_tab.findChildren(QWidget)
 
     for el in tab_elements:
         el.setEnabled(state)
-    dialog_settings.Download_Start.setText("Start" if state else "Stop")
-    dialog_settings.Download_Start.setEnabled(True)
+    getattr(dialog_settings, f'{page_name.capitalize()}_Start').setText("Start" if state else "Stop")
+    getattr(dialog_settings, f'{page_name.capitalize()}_Start').setEnabled(True)

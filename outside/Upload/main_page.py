@@ -89,7 +89,7 @@ def start_upload(dialog, dialog_settings, table):
     #                                 folder="Uploaders"),
     #                 total_steps=7)
     print('Start Upload!')
-    change_enabled_tab_elements(dialog_settings, 'UploadPage', False)
+    change_enabled_tab_elements(dialog_settings, 'Upload', False)
 
     for num, video in table.model().get_data().iterrows():
         upload_video(user=video['User'],
@@ -107,4 +107,4 @@ def start_upload(dialog, dialog_settings, table):
                      driver_headless=not dialog_settings.Upload_ShowBrowser_checkBox.isChecked()
                      )
 
-    change_enabled_tab_elements(dialog_settings, 'UploadPage', True)
+    change_enabled_tab_elements(dialog_settings, 'Upload', True)

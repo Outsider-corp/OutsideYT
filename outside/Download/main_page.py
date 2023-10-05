@@ -9,9 +9,8 @@ from outside import TableModels as CommonTables
 from .dialogs import select_saving_path, open_advanced_settings
 from .functions import _get_download_saving_path
 from ..asinc_functions import DownloadThread
-from ..functions import update_checkbox_select_all, update_combobox, get_video_link, \
-    change_enabled_tab_elements
-from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox
+from ..functions import update_checkbox_select_all, update_combobox, change_enabled_tab_elements
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, cancel_page_action
 from ..message_boxes import error_func
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
@@ -51,7 +50,7 @@ def update_download(ui, parent):
                 dialog_settings=ui))
 
     ui.Download_Start.clicked.connect(
-        partial(start_download, dialog=parent, dialog_settings=ui, table=download_table))
+        partial(download_button, dialog_settings=ui, table=download_table))
 
     ui.Download_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                            checkbox=ui.Download_SelectAll_CheckBox,
@@ -72,16 +71,21 @@ def update_download(ui, parent):
     return download_table, ui
 
 
-def start_download(dialog, dialog_settings, table: QTableView):
+def start_download(dialog_settings, table: QTableView):
     def finish(thread):
         try:
-            change_enabled_tab_elements(dialog_settings, 'DownloadPage', True)
-            table.model()._data["Selected"] = [not i for i in thread.completed_tasks_info]
-            if not all(thread.completed_tasks_info):
+            comp_info = thread.completed_tasks_info
+            thread.quit()
+            thread.wait()
+            thread.terminate()
+            dialog_settings.download_thread = None
+            table.model()._data["Selected"] = [not i for i in comp_info]
+            if not all(comp_info):
                 dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
-            thread.deleteLater()
         except Exception as e:
             print(f"Error on download finish...\n{e}")
+        finally:
+            change_enabled_tab_elements(dialog_settings, 'Download', True)
 
     data = table.model().get_data()
     try:
@@ -93,18 +97,25 @@ def start_download(dialog, dialog_settings, table: QTableView):
             [dialog_settings.Download_Info_checkBox.isChecked(),
              dialog_settings.Download_Video_checkBox.isChecked()]):
         try:
-            change_enabled_tab_elements(dialog_settings, 'DownloadPage', False)
+            change_enabled_tab_elements(dialog_settings, 'Download', False)
 
-            download_thread = DownloadThread(table=table,
-                                             saving_path=saving_path,
-                                             progress_bar=table.model().progress_bar,
-                                             progress_label=table.model().progress_label,
-                                             download_info_key=dialog_settings
-                                             .Download_Info_checkBox.isChecked(),
-                                             download_video_key=dialog_settings
-                                             .Download_Video_checkBox.isChecked())
-
-            download_thread.finished.connect(partial(finish, download_thread))
-            download_thread.start()
+            dialog_settings.download_thread = DownloadThread(table=table,
+                                                             saving_path=saving_path,
+                                                             progress_bar=table.model().progress_bar,
+                                                             progress_label=table.model().progress_label,
+                                                             download_info_key=dialog_settings
+                                                             .Download_Info_checkBox.isChecked(),
+                                                             download_video_key=dialog_settings
+                                                             .Download_Video_checkBox.isChecked())
+            dialog_settings.download_thread.finished.connect(
+                partial(finish, dialog_settings.download_thread))
+            dialog_settings.download_thread.start()
         except Exception as e:
             print(f"Error on download_start...\n{e}")
+
+
+def download_button(dialog_settings, table: QTableView):
+    if dialog_settings.Download_Start.text == "Start":
+        start_download(dialog_settings=dialog_settings, table=table)
+    elif dialog_settings.Download_Start.text == "Stop":
+        cancel_page_action(dialog_settings, table)

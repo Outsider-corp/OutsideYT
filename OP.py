@@ -7,7 +7,6 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QStyleFactory
 
 from outside.Download.main_page import update_download
-from outside.asinc_functions import GetVideoInfoThread
 from outside.main_dialogs import update_settings_from_file
 from outside.Upload.main_page import update_upload
 from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside

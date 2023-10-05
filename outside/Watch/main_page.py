@@ -86,7 +86,7 @@ def start_watch(dialog, dialog_settings, table):
             continue
 
         if not watch_threads_check:
-            change_enabled_tab_elements(dialog_settings, 'WatchPage', False)
+            change_enabled_tab_elements(dialog_settings, 'Watch', False)
             dialog_settings.Watch_Table.hideColumn(
                 list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
             dialog_settings.Watch_Table.setColumnHidden(
@@ -107,7 +107,7 @@ def start_watch(dialog, dialog_settings, table):
             list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
         dialog_settings.Watch_Table.setColumnHidden(
             list(dialog_settings.Watch_Table.model().get_data().columns).index('id'), False)
-        change_enabled_tab_elements(dialog_settings, 'WatchPage', True)
+        change_enabled_tab_elements(dialog_settings, 'Watch', True)
 
     seek_threads = SeekThreads(watch_threads_check, dialog_settings)
     seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))
