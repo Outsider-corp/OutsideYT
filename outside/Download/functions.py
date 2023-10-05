@@ -22,15 +22,12 @@ def _get_download_saving_path(dialog_settings):
     return saving_path
 
 
-def create_video_folder(table, video_info: dict, saving_path: str):
+def create_video_folder(video_info: dict, saving_path: str):
     try:
-        print(1.3)
         if video_info:
             save_dir = os.path.join(saving_path, check_folder_name(video_info['title']))
             os.makedirs(os.path.join(save_dir), exist_ok=True)
-            print(1.4)
             for file, key in OutsideYT.filenames_video_details.items():
-                print(key)
                 if key in video_info and video_info[key]:
                     if file.endswith(tuple(OutsideYT.json_extensions)):
                         json.dump(video_info[key],

@@ -38,7 +38,7 @@ def edit_watchers_groups(parent, parent_settings):
                                                 f'All changes will be lost!'):
                 dialog.reject()
         else:
-            dialog.reject()
+             dialog.reject()
 
     def add_group():
         dialog_settings.Groups_Table.model().insertRows()

@@ -1,7 +1,7 @@
 from functools import partial
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QTableView
+from PyQt5.QtWidgets import QTableView, QWidget
 
 from OutsideYT import app_settings_uploaders
 from . import TableModels, context_menu
@@ -80,7 +80,7 @@ def start_download(dialog_settings, table: QTableView):
             thread.terminate()
             dialog_settings.download_thread = None
             table.model()._data["Selected"] = [not i for i in comp_info]
-            if not all(comp_info):
+            if not all(table.model()._data["Selected"]):
                 dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
         except Exception as e:
             print(f"Error on download finish...\n{e}")
@@ -115,7 +115,8 @@ def start_download(dialog_settings, table: QTableView):
 
 
 def download_button(dialog_settings, table: QTableView):
-    if dialog_settings.Download_Start.text == "Start":
+    if dialog_settings.Download_Start.text() == "Start":
         start_download(dialog_settings=dialog_settings, table=table)
-    elif dialog_settings.Download_Start.text == "Stop":
+    elif dialog_settings.Download_Start.text() == "Stop":
+        print(20)
         cancel_page_action(dialog_settings, table)

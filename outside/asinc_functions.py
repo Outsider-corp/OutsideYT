@@ -4,7 +4,7 @@ import time
 
 from typing import List
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread
+from PyQt5.QtCore import QMutex, QThread, pyqtSignal
 from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
@@ -91,6 +91,7 @@ class GetVideoInfoThread(QThread):
         self.total_steps = len(tasks)
         self.progress = 0
         self._add_args = additional_args if additional_args else []
+        self.semaphore = asyncio.Semaphore(OutsideYT.async_limit)
 
     def update_progress_info(self, label_text: str = None, bar_value: int = 0):
         if self.progress_bar:
@@ -114,8 +115,9 @@ class GetVideoInfoThread(QThread):
 
     async def worker(self, link, session):
         print(3)
-        return await get_video_info(link, session,
-                                    progress_inc=self.progress_bar_inc, args=self._add_args)
+        async with self.semaphore:
+            return await get_video_info(link, session,
+                                        progress_inc=self.progress_bar_inc, args=self._add_args)
 
     async def start_loop(self):
         try:
@@ -123,10 +125,7 @@ class GetVideoInfoThread(QThread):
             async with aiohttp.ClientSession() as session:
                 print(2)
                 atasks = [self.worker(link.strip(), session) for link in self.tasks]
-                for batch in range(len(atasks) // OutsideYT.async_limit + 1):
-                    atasks_part = atasks[
-                                  batch * OutsideYT.async_limit:(batch + 1) * OutsideYT.async_limit]
-                    self.results.extend(await asyncio.gather(*atasks_part))
+                self.results = await asyncio.gather(*atasks)
         except Exception as e:
             print(f"Error in loop...\n{e}")
 
@@ -148,6 +147,8 @@ class GetVideoInfoThread(QThread):
 
 
 class DownloadThread(QThread):
+    stop_signal = False
+
     def __init__(self, table, saving_path: str, progress_bar=None, progress_label=None, parent=None,
                  download_info_key=True, download_video_key=True, **kwargs):
         super().__init__(parent)
@@ -172,57 +173,67 @@ class DownloadThread(QThread):
                 self.progress_label.clear()
 
     def run(self):
-        print(1)
         time.sleep(OutsideYT.wait_time_threads)
         if self.download_info_key:
             self.update_progress_info('Creating files...', 0)
             save_videos_info(table=self._table,
                              saving_path=self._saving_path,
                              completed_tasks_info=self.completed_tasks_info,
-                             progress_bar=self.progress_bar)
+                             progress_bar=self.progress_bar,
+                             thread=self)
         print(2)
         if self.download_video_key:
-            self.completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
+            self.completed_tasks_info = [False for _ in
+                                         range(len(self._table.model().get_data()))]
             self.update_progress_info('Downloading videos...', 0)
             start_video_download(table=self._table, saving_path=self._saving_path,
                                  completed_tasks_info=self.completed_tasks_info,
                                  params=OutsideYT.download_video_params,
-                                 progress_bar=self.progress_bar,
-                                 progress_label=self.progress_label,
-                                 add_to_folder=self.download_info_key)
+                                 add_to_folder=self.download_info_key,
+                                 thread=self)
         print(3)
         self.update_progress_info()
+        DownloadThread.stop_signal = False
+
+    def stop(self):
+        self.stop_signal = True
+        self.wait(0)
 
 
 def start_video_download(table: QTableView, saving_path: str, completed_tasks_info: List,
-                         params: dict, progress_bar, progress_label, add_to_folder: bool):
+                         params: dict, add_to_folder: bool,
+                         thread):
     data = table.model().get_data()
-    cnt_videos = len(data)
-    for num, video in data.iterrows():
+    videos = data[data['Selected'] > 0]
+    cnt_videos = len(videos)
+    print(2.1)
+    for num, video in videos.iterrows():
         try:
-            if progress_label:
-                progress_label.setText(f"{num + 1}/{cnt_videos} - {video['Video']}")
-            if progress_bar:
-                progress_bar.setValue(0)
+            thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
+            print(2.2)
             if add_to_folder:
                 saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
                 os.makedirs(os.path.join(saving_path), exist_ok=True)
-            if download_video_dlp(video['Video'], video['Link'], params, saving_path, progress_bar):
+                print(2.3)
+            if download_video_dlp(video['Video'], video['Link'], params, saving_path,
+                                  thread.progress_bar):
                 completed_tasks_info[num] = True
+            if thread.stop_signal:
+                break
         except Exception as e:
             print(f'Error on start downloading...\n{e}')
 
 
 def save_videos_info(table, saving_path: str, completed_tasks_info: List,
-                     progress_bar):
+                     progress_bar, thread):
     print(1.1)
-    videos_info = table.model().get_data()
+    data = table.model()._data
+    videos_info = data.loc[data['Selected'] > 0]
     cnt_videos = len(videos_info)
     for num, video in videos_info.iterrows():
-        print(1.2)
-        if video['Selected'] and create_video_folder(table, video_info=video['_download_info'],
-                                                     saving_path=saving_path):
-            print(1.5)
+        if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
             if hasattr(progress_bar, 'setValue'):
                 progress_bar.setValue(int((num + 1) / cnt_videos * 100))
             completed_tasks_info[num] = True
+        if thread.stop_signal:
+            break

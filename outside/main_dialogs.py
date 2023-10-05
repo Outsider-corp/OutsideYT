@@ -498,6 +498,8 @@ def update_settings_from_file():
 
 def cancel_page_action(dialog_settings, table: QTableView):
     table_type = table.model().table_type
+    print(20.3)
     if getattr(dialog_settings, f'{table_type.lower()}_thread'):
-        dialog_settings.download_thread.terminate()
-    change_enabled_tab_elements(dialog_settings, table_type, True)
+        print(20.6)
+        getattr(dialog_settings, f'{table_type.lower()}_thread').stop_signal = True
+        print(20.7)
