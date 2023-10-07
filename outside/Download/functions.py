@@ -27,9 +27,9 @@ def create_video_folder(video_info: dict, saving_path: str):
         if video_info:
             save_dir = os.path.join(saving_path, check_folder_name(video_info['title']))
             os.makedirs(os.path.join(save_dir), exist_ok=True)
-            for file, key in OutsideYT.filenames_video_details.items():
+            for file, key in OutsideYT.FILENAMES_VIDEO_DETAILS.items():
                 if key in video_info and video_info[key]:
-                    if file.endswith(tuple(OutsideYT.json_extensions)):
+                    if file.endswith(tuple(OutsideYT.JSON_EXTENSIONS)):
                         json.dump(video_info[key],
                                   open(os.path.join(save_dir, file), 'w', encoding="UTF-8"))
                     elif file.endswith('.txt'):
@@ -38,7 +38,7 @@ def create_video_folder(video_info: dict, saving_path: str):
                                 f.write(", ".join(video_info[key]))
                             else:
                                 f.write(video_info[key])
-                    elif file.endswith(tuple(OutsideYT.image_extensions)):
+                    elif file.endswith(tuple(OutsideYT.IMAGE_EXTENSIONS)):
                         img_url = (f'https://i.ytimg.com/vi/{video_info["videoId"]}'
                                    f'/maxresdefault.jpg')
                         download_image(img_url, path=os.path.join(save_dir, file))

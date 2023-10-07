@@ -8,9 +8,9 @@ from PyQt5.QtWidgets import QFileDialog, QStyledItemDelegate, QTableView
 from outside.functions import find_files
 from OutsideYT import (
     app_settings_uploaders,
-    image_extensions,
-    text_extensions,
-    video_extensions,
+    IMAGE_EXTENSIONS,
+    TEXT_EXTENSIONS,
+    VIDEO_EXTENSIONS,
 )
 
 
@@ -194,9 +194,9 @@ class OpenFileLocationDelegate(QStyledItemDelegate):
 
 def open_location(table, index, ext: str):
     exts = {
-        'Video': video_extensions,
-        'Preview': image_extensions,
-        'Text': text_extensions,
+        'Video': VIDEO_EXTENSIONS,
+        'Preview': IMAGE_EXTENSIONS,
+        'Text': TEXT_EXTENSIONS,
     }
     file, _ = QFileDialog.getOpenFileName(None, f'Select {ext.capitalize()}', '',
                                           f"{ext.capitalize()} Files ({' '.join('*' + ex for ex in exts[ext.capitalize()])})")
@@ -210,12 +210,12 @@ def add_video_for_uploading(table: QTableView, path, user=None):
         return
     if user is None:
         user = app_settings_uploaders.def_account
-    video = find_files(video_extensions, folder=path)
-    title = find_files(text_extensions, folder=path, name='Title')
-    description = find_files(text_extensions, folder=path, name='Description')
-    playlist = find_files(text_extensions, folder=path, name='Playlist')
-    preview = find_files(image_extensions, folder=path)
-    tags = find_files(text_extensions, folder=path, name='Tags')
+    video = find_files(VIDEO_EXTENSIONS, folder=path)
+    title = find_files(TEXT_EXTENSIONS, folder=path, name='Title')
+    description = find_files(TEXT_EXTENSIONS, folder=path, name='Description')
+    playlist = find_files(TEXT_EXTENSIONS, folder=path, name='Playlist')
+    preview = find_files(IMAGE_EXTENSIONS, folder=path)
+    tags = find_files(TEXT_EXTENSIONS, folder=path, name='Tags')
     table.model().insertRows(row_content={'User': user,
                                           'Video': video,
                                           'Title': title,

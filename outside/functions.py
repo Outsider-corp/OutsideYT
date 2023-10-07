@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import QWidget
 
-from OutsideYT import foldername_forbidden_symbols
+from OutsideYT import FOLDERNAME_FORBIDDEN_SYMBOLS
 
 
 def update_combobox(combobox, items: list, def_value: str):
@@ -55,7 +55,7 @@ def get_video_link(video_id: str):
 
 
 def check_folder_name(fname: str):
-    for i in foldername_forbidden_symbols:
+    for i in FOLDERNAME_FORBIDDEN_SYMBOLS:
         if i in fname:
             fname = fname.replace(i, '_')
     while fname.endswith('.'):

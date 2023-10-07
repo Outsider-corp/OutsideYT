@@ -309,7 +309,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
     def import_links_from_file():
         try:
-            exts = OutsideYT.text_extensions
+            exts = OutsideYT.TEXT_EXTENSIONS
             file, _ = QtWidgets.QFileDialog.getOpenFileName(None,
                                                             f'Select File with Links', '',
                                                             f"Text Files ("
@@ -404,7 +404,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings):
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
-        get_videos_info(table, [text])
+        get_videos_info(table, [text], dialog_settings)
         textbox.clear()
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)
@@ -418,7 +418,7 @@ def get_videos_info(table, links: List, dialog_settings, group=None, add_args=No
             results = thread.results
             thread.quit()
             if thread.wait():
-                print(14)
+                print(results)
                 for video in results:
                     _add_video_to_table(table, video_info=video, group=group)
         except Exception as e:

@@ -1,4 +1,5 @@
 import asyncio
+import http.client
 import json
 import os
 import pickle
@@ -6,7 +7,7 @@ import random
 import sys
 import time
 from functools import partial
-from typing import List
+from typing import List, Dict
 
 import aiohttp
 import requests
@@ -14,14 +15,15 @@ import requests
 import selenium.common.exceptions
 import webbrowser
 import yt_dlp
-# from asyncselenium.webdriver.chrome.async_webdriver import AsyncChromeDriver
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+import OutsideYT
+from outside.exceptions import MaxRetriesError, RequestMethodTypeError
 from outside.functions import get_video_id
 from outside.message_boxes import error_func, waiting_func
-from OutsideYT import project_folder, save_cookies_time, wait_time_url_uploads
+from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -106,7 +108,7 @@ def get_google_login(login: str, mail: str, folder: str):
             cookies = driver.get_cookies()
             for i, val in enumerate(cookies):
                 if 'expiry' in val:
-                    cookies[i]['expiry'] = int(time.time() + save_cookies_time)
+                    cookies[i]['expiry'] = int(time.time() + SAVE_COOKIES_TIME)
             pickle.dump(cookies,
                         open(os.path.join(project_folder, 'outside', 'oyt_info',
                                           folder.lower(), filename), 'wb'))
@@ -144,19 +146,19 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
             url = 'https://youtube.com'
             url2 = 'https://studio.youtube.com/'
             driver.get(url)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             for cookie in pickle.load(open(f'outside/oyt_info/uploaders/{user}_cookies', 'rb')):
                 driver.add_cookie(cookie)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
             driver.get(url2)
-            driver.implicitly_wait(wait_time_url_uploads // 2)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
             driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
             driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(video)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
             title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                      f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
@@ -181,7 +183,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
             if preview:
                 try:
                     driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(preview)
-                    driver.implicitly_wait(wait_time_url_uploads)
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
                 except Exception:
                     print('Превью невозможно загрузить')
 
@@ -191,7 +193,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                                                                 f'[@class="dropdown style-scope'
                                                                 f' ytcp-video-metadata-playlists"]')
                     playlist_el.click()
-                    driver.implicitly_wait(wait_time_url_uploads // 2)
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     if not isinstance(playlist, (tuple, list)):
                         pass
                     for i in playlist:
@@ -208,28 +210,28 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                     try:
                         driver.find_element(By.XPATH,
                                             f'//*[@class="done-button action-button style-scope ytcp-playlist-dialog"]/div').click()
-                        driver.implicitly_wait(wait_time_url_uploads // 2)
+                        driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     except:
                         pass
 
             if tags:
                 driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
-                driver.implicitly_wait(wait_time_url_uploads)
+                driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
                 tags_el = driver.find_element(By.XPATH, f'//*[@id="tags-container"]/'
                                                         f'*[@id="outer"]/*[@id="child-input"]/'
                                                         f'*[@slot="body"]/*[@id="chip-bar"]/div/*[@id="text-input"]')
                 tags_el.send_keys(tags)
-                driver.implicitly_wait(wait_time_url_uploads)
+                driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
             # Добавить добавление подсказок
 
             if ends:
                 try:
                     driver.find_element(By.XPATH, f'//*[@id="endscreens-button"]').click()
-                    driver.implicitly_wait(wait_time_url_uploads)
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
                     ends_el = driver.find_element(By.XPATH,
                                                   f'//*[@id="cards-row"]')
@@ -246,10 +248,10 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                             if 'playlist' not in end_el.text.lower() and 'плейлист' not in end_el.text.lower():
                                 break
                     end_el.find_element(By.XPATH, '..').click()
-                    driver.implicitly_wait(wait_time_url_uploads // 2)
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     time.sleep(2)
                     driver.find_element(By.XPATH, f'//*[@id="save-button"]').click()
-                    driver.implicitly_wait(wait_time_url_uploads // 2)
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     time.sleep(2)
                 except Exception as e:
                     print(f'Невозможно поставить конечные заставки\n{e}')
@@ -257,7 +259,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(1)
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
-            driver.implicitly_wait(wait_time_url_uploads // 2)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
             if True:
                 # if publish:
@@ -274,7 +276,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                 elif access == 'Public':
                     publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
 
-            driver.implicitly_wait(wait_time_url_uploads // 2)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
             while True:
                 try:
                     driver.find_element(By.XPATH,
@@ -284,15 +286,16 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                 except:
                     continue
             driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             print(f'\033[32m\033[1mВидео {os.path.basename(video)} было успешно загружено!\033[0m')
     except Exception as e:
         error_func(f"Error.\n {e}")
 
 
-async def get_video_info(link, session: aiohttp.ClientSession, args: List, **kwargs):
+async def get_video_info(link, session: aiohttp.ClientSession, args: List = None, **kwargs):
     """Функция для получения информации о видео."""
     print(4)
+    args = args or []
     try:
         async with session.get(link) as response:
             if response.status == 200:
@@ -430,16 +433,16 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
         with DriverContext(headless=driver_headless) as driver:
             url_yt = 'https://www.youtube.com/'
             driver.get(url_yt)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             file_cookies = f'outside/oyt_info/watchers/{user}_cookies'
             if not os.path.exists(file_cookies):
                 raise Exception(f'Cookies for {user} are not found.')
             cookies = pickle.load(open(file_cookies, 'rb'))
             for cookie in cookies:
                 driver.add_cookie(cookie)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             driver.get(url)
-            driver.implicitly_wait(wait_time_url_uploads)
+            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             button = driver.find_element(By.XPATH, '//button[@class="ytp-play-button ytp-button"]')
             button.click()
             for i in range(duration):
@@ -461,7 +464,7 @@ def download_image(url: str, path: str):
             f.write(res.content)
 
 
-def _progress_hook_download_video(progress_dict: dict, progress_bar, total_size: int):
+def _on_progress_download_video_ylp(progress_dict: dict, progress_bar, total_size: int):
     if progress_dict['status'] == 'downloading' and 'downloaded_bytes' in progress_dict:
         progress_bar.setValue(
             int(progress_dict['downloaded_bytes'] / total_size * 100))
@@ -470,12 +473,12 @@ def _progress_hook_download_video(progress_dict: dict, progress_bar, total_size:
 def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str, progress_bar,
                        **kwargs):
     try:
-        total_size = _get_size_video(link, params)
+        total_size = 1000000
         ylp_options = {'ffmpeg_location': r'outside/bin/ffmpeg.exe',
                        'format': 'bestvideo+bestaudio/best',
                        'outtmpl': os.path.join(saving_path, f'{videoname}.mp4'),
                        'progress_hooks': [
-                           partial(_progress_hook_download_video, progress_bar=progress_bar,
+                           partial(_on_progress_download_video_ylp, progress_bar=progress_bar,
                                    total_size=total_size)]}
         with yt_dlp.YoutubeDL(ylp_options) as ydl:
             ydl.download([link])
@@ -485,16 +488,203 @@ def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str
         return False
 
 
-def _select_format_video(video_info: dict, params: dict):
-    pass
+class OutsideDownloadVideoYT:
+    """Creates object of download video."""
 
+    def __init__(self, link: str, video_info: Dict, params: Dict,
+                 ffmpeg_location: str = OutsideYT.FFMPEG_LOCATION):
+        """
+        Initialization of class.
+        Args:
+            link: str - youtube video link
+            video_info: Dict - parsed info from video page
+            params: Dict - parameters of download video. Has keys:
+                'video_quality' - quality of video part
+                    (4320p, 2160p, 1440p, 1080p, 720p, 480p, 360p, 240p, 144p)
+                'video_ext' - extension of video part (MP4, WEBM)
+                'audio_quality' - quality of audio part ()
+                'audio_ext' - extension of audio part(MP4, WEBM)
+                'full_quality' - type of quality (best - best of available;
+                 worst - worst of available; normal - gets settings from OutsideYT)
+        """
+        self.link = link
+        self.video_info = video_info
+        self.params = params
+        self.ffmpeg_location = ffmpeg_location
 
-def _get_size_video(link: str, params: dict):
-    return 11680830700
+    @staticmethod
+    def _get_quality(vars: Dict, quality: str, ext: str, choice: str, normal_q: str = '',
+                     normal_ext: str = ''):
+        if choice == 'best':
+            return list(vars.keys())
+        elif choice == 'worst':
+            return list(vars.keys())[::-1]
+        elif choice == 'normal':
+            quality = normal_q
+            ext = normal_ext
+        if ext:
+            var = {key: val for key, val in vars.items() if val[1] == ext}
+            if var:
+                vars = var
+        keys = list(vars.keys())
+        for key in keys:
+            if vars[key][0] != quality:
+                vars.pop(key)
+            else:
+                return list(vars.keys())
+        raise ValueError
 
+    def _find_itag(self, itags):
+        for itag in itags:
+            for format in ['formats', 'adaptiveFormats']:
+                for video_itag in self.video_info[format]:
+                    if video_itag['itag'] == itag:
+                        return video_itag
 
-def _download_video(link: str, params: dict, saving_path: str, progress_bar, **kwargs):
-    pass
+    def _get_video_info_with_format(self) -> Dict:
+
+        v_itags = OutsideDownloadVideoYT._get_quality(OutsideYT.VIDEO_ITAG,
+                                                      self.params.get('video_quality',
+                                                                      ''),
+                                                      self.params.get('video_ext',
+                                                                      ''),
+                                                      self.params.get('full_quality', 'normal'),
+                                                      OutsideYT.DEFAULT_VIDEO_QUALITY,
+                                                      OutsideYT.DEFAULT_VIDEO_EXT)
+        a_itags = OutsideDownloadVideoYT._get_quality(OutsideYT.AUDIO_ITAG,
+                                                      self.params.get('audio_quality',
+                                                                      ''),
+                                                      self.params.get('audio_ext',
+                                                                      ''),
+                                                      self.params.get('full_quality', 'normal'),
+                                                      OutsideYT.DEFAULT_AUDIO_QUALITY,
+                                                      OutsideYT.DEFAULT_AUDIO_EXT)
+        v_info = self._find_itag(v_itags)
+        a_info = self._find_itag(a_itags)
+        video_info_stream = {'audio': a_info,
+                             'video': v_info}
+        return video_info_stream
+
+    def _execute_request(self, url: str,
+                         method: str,
+                         timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
+                         add_headers: Dict = None,
+                         data=None):
+        headers = {"User-Agent": "Mozilla/5.0", "accept-language": "en-US,en"}
+        if add_headers:
+            headers.update(add_headers)
+        if data:
+            if not isinstance(data, bytes):
+                data = bytes(json.dumps(data), encoding='UTF-8')
+        if not url.lower().startswith('http'):
+            raise ValueError("Invalid URL")
+        if method.lower() == 'get':
+            return requests.get(url, data=data, headers=headers, timeout=timeout)
+        elif method.lower() == 'post':
+            return requests.post(url, data=data, headers=headers, timeout=timeout)
+        else:
+            raise RequestMethodTypeError()
+
+    def _stream(self, link: str, timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
+                max_retries: int = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES):
+        file_size = OutsideYT.DEFAULT_CHUNK_SIZE
+        downloaded = 0
+
+        while downloaded < file_size:
+            stop_pos = min(downloaded + OutsideYT.DEFAULT_CHUNK_SIZE, file_size) - 1
+            range_header = f'bytes={downloaded}-{stop_pos}'
+            tries = 0
+
+            while True:
+                if tries >= max_retries:
+                    raise MaxRetriesError()
+
+                try:
+                    response = self._execute_request(link + f'&range={downloaded}-{stop_pos}',
+                                                     method='GET',
+                                                     timeout=timeout)
+
+                except requests.exceptions.InvalidURL as e:
+                    print(f'{e}')
+                    raise
+                except http.client.IncompleteRead:
+                    pass
+                else:
+                    break
+                tries += 1
+
+            if file_size == OutsideYT.DEFAULT_CHUNK_SIZE:
+                try:
+                    resp = self._execute_request(link + '&range=0-99999999999',
+                                                 method='get',
+                                                 timeout=timeout)
+                    content_range = resp.info()['Content-Length']
+                    file_size = int(content_range)
+                except (KeyError, IndexError, ValueError) as e:
+                    print(f'Error on downloading video...\n{e}')
+
+            while True:
+                chunk = response.content
+                if not chunk:
+                    break
+                downloaded += len(chunk)
+                yield chunk
+        return
+
+    def _add_video_audio(self, videofile: str, audiofile: str):
+        ...
+
+    def __download_one_format(self, url: str, filesize: int,
+                              saving_path: str, progress_bar=None,
+                              timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
+                              max_retries: int = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES):
+
+        with open(saving_path, 'wb') as file:
+            bytes_downloaded = 0
+            try:
+                for chunk in self._stream(url, timeout=timeout,
+                                          max_retries=max_retries):
+                    bytes_downloaded += len(chunk)
+                    file.write(chunk)
+                    self._on_progress_download_video(bytes_downloaded, filesize, progress_bar)
+            except requests.exceptions.HTTPError as e:
+                raise
+
+    def download_video(self, saving_path: str, progress_bar=None, **kwargs):
+        video_info_stream = self._get_video_info_with_format()
+
+        if 'simple_download' in video_info_stream:
+            url = video_info_stream['simple_download']['downlink']
+            filesize = video_info_stream['simple_download']['filesize']
+            ext = video_info_stream['simple_download']['ext']
+            self.__download_one_format(url, filesize, saving_path=f'{saving_path}.{ext}',
+                                       progress_bar=progress_bar)
+        else:
+            audiofile = videofile = None
+            if 'audio' in video_info_stream:
+                url = video_info_stream['audio']['url']
+                filesize = video_info_stream['audio']['contentLength']
+                ext = video_info_stream['audio']['mimeType'].split(';')[0].split('/')[1].upper()
+                audiofile = f'{saving_path}_audio.{ext}'
+                self.__download_one_format(url, filesize, saving_path=audiofile,
+                                           progress_bar=progress_bar)
+
+            if 'video' in video_info_stream:
+                url = video_info_stream['video']['url']
+                filesize = video_info_stream['video']['contentLength']
+                ext = video_info_stream['video']['mimeType'].split(';')[0].split('/')[1].upper()
+                videofile = f'{saving_path}_video.{ext}'
+                self.__download_one_format(url, filesize, saving_path=videofile,
+                                           progress_bar=progress_bar)
+            if audiofile and videofile:
+                self._add_video_audio(videofile, audiofile)
+        return True
+
+    @staticmethod
+    def _on_progress_download_video(value: int, total_size: int, progress_bar=None):
+        if progress_bar:
+            progress_bar.setValue(
+                int(value / total_size * 100))
 
 
 def open_video_in_browser(url):

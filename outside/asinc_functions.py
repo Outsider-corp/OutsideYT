@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
 from outside.Download.functions import create_video_folder
-from outside.YT_functions import get_video_info, watching, download_video_dlp
+from outside.YT_functions import get_video_info, watching, download_video_dlp, \
+    OutsideDownloadVideoYT
 from outside.functions import check_folder_name
 from outside.message_boxes import error_func
 
@@ -91,7 +92,7 @@ class GetVideoInfoThread(QThread):
         self.total_steps = len(tasks)
         self.progress = 0
         self._add_args = additional_args if additional_args else []
-        self.semaphore = asyncio.Semaphore(OutsideYT.async_limit)
+        self.semaphore = asyncio.Semaphore(OutsideYT.ASYNC_LIMIT)
 
     def update_progress_info(self, label_text: str = None, bar_value: int = 0):
         if self.progress_bar:
@@ -138,9 +139,9 @@ class GetVideoInfoThread(QThread):
             print(f"Error in starting loop...\n{e}")
 
     def run(self):
-        time.sleep(OutsideYT.wait_time_threads)
+        time.sleep(OutsideYT.WAIT_TIME_THREAD)
         self.run_loop()
-        time.sleep(OutsideYT.wait_time_threads)
+        time.sleep(OutsideYT.WAIT_TIME_THREAD)
         print(11)
         self.update_progress_info()
         print(12)
@@ -173,7 +174,7 @@ class DownloadThread(QThread):
                 self.progress_label.clear()
 
     def run(self):
-        time.sleep(OutsideYT.wait_time_threads)
+        time.sleep(OutsideYT.WAIT_TIME_THREAD)
         if self.download_info_key:
             self.update_progress_info('Creating files...', 0)
             save_videos_info(table=self._table,
@@ -213,11 +214,15 @@ def start_video_download(table: QTableView, saving_path: str, completed_tasks_in
             print(2.2)
             if add_to_folder:
                 saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
-                os.makedirs(os.path.join(saving_path), exist_ok=True)
+                os.makedirs(saving_path, exist_ok=True)
                 print(2.3)
-            if download_video_dlp(video['Video'], video['Link'], params, saving_path,
-                                  thread.progress_bar):
-                completed_tasks_info[num] = True
+                # if download_video_dlp(video['Video'], video['Link'], params, saving_path,
+                #                       thread.progress_bar):
+                video_down = OutsideDownloadVideoYT(video['Link'], video['_download_info'],
+                                                    params={'full_quality': 'normal'})
+                if video_down.download_video(saving_path=saving_path,
+                                             progress_bar=thread.progress_bar):
+                    completed_tasks_info[num] = True
             if thread.stop_signal:
                 break
         except Exception as e:
