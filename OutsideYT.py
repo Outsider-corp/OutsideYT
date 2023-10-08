@@ -1,4 +1,5 @@
 import os
+from decouple import config
 
 from outside.oyt_info import settings
 
@@ -135,3 +136,6 @@ DEFAULT_AUDIO_EXT = 'WEBM'
 HDR = [330, 331, 332, 333, 334, 335, 336, 337]
 _3D = [82, 83, 84, 85, 100, 101, 102]
 LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
+
+
+ACCESS_TOKEN = config('YT_KEY')

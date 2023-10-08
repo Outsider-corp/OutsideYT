@@ -292,12 +292,13 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
         error_func(f"Error.\n {e}")
 
 
-async def get_video_info(link, session: aiohttp.ClientSession, args: List = None, **kwargs):
+async def get_video_info(link, session: aiohttp.ClientSession, headers=None, args: List = None,
+                         **kwargs):
     """Функция для получения информации о видео."""
     print(4)
     args = args or []
     try:
-        async with session.get(link) as response:
+        async with session.get(link, headers=headers) as response:
             if response.status == 200:
                 res_text = await response.text()
                 soup = bs(res_text, 'html.parser')
@@ -372,6 +373,17 @@ async def get_video_info(link, session: aiohttp.ClientSession, args: List = None
     if 'progress_inc' in kwargs:
         await kwargs['progress_inc']()
     return None
+
+
+async def post_video_info(link, session: aiohttp.ClientSession, headers=None, **kwargs):
+    data = OutsideDownloadVideoYT.full_data
+    base_headers = OutsideDownloadVideoYT.base_headers
+    if headers:
+        base_headers.update(headers)
+    url = f'https://www.youtube.com/youtubei/v1/player?videoId={get_video_id(link)}&key={OutsideYT.ACCESS_TOKEN}&contentCheckOk=True&racyCheckOk=True'
+    async with session.post(url, data=data, headers=base_headers) as res:
+        data = await res.json()
+    return data
 
 
 def get_playlist_info(link):
@@ -490,7 +502,9 @@ def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str
 
 class OutsideDownloadVideoYT:
     """Creates object of download video."""
-
+    full_data = b"{'context': {'client': {'androidSdkVersion': 30, 'clientName': 'ANDROID_EMBEDDED_PLAYER', 'clientScreen': 'EMBED', 'clientVersion': '17.31.35'}}}"
+    base_headers = {'Content-Type': 'application/json',
+               'User-Agent': 'com.google.android.apps.youtube.music/'}
     def __init__(self, link: str, video_info: Dict, params: Dict,
                  ffmpeg_location: str = OutsideYT.FFMPEG_LOCATION):
         """
@@ -511,6 +525,16 @@ class OutsideDownloadVideoYT:
         self.video_info = video_info
         self.params = params
         self.ffmpeg_location = ffmpeg_location
+
+    @staticmethod
+    def get_api_headers():
+        headers = {
+            'Content-Type': 'application/json',
+            'key': OutsideYT.ACCESS_TOKEN,
+            'contentCheckOk': True,
+            'racyCheckOk': True
+        }
+        headers.update({'Authorization': f'Bearer {OutsideYT.ACCESS_TOKEN}'})
 
     @staticmethod
     def _get_quality(vars: Dict, quality: str, ext: str, choice: str, normal_q: str = '',
@@ -592,7 +616,6 @@ class OutsideDownloadVideoYT:
 
         while downloaded < file_size:
             stop_pos = min(downloaded + OutsideYT.DEFAULT_CHUNK_SIZE, file_size) - 1
-            range_header = f'bytes={downloaded}-{stop_pos}'
             tries = 0
 
             while True:
@@ -615,19 +638,7 @@ class OutsideDownloadVideoYT:
                     break
                 tries += 1
 
-            # if file_size == OutsideYT.DEFAULT_CHUNK_SIZE:
-            #     try:
-            #         resp = self._execute_request(link + '&range=0-99999999999',
-            #                                      method='get',
-            #                                      timeout=timeout,
-            #                                      stream=False)
-            #         content_range = len(resp.content)
-            #         file_size = int(content_range)
-            #         print(f'filesize = {file_size}')
-            #     except (KeyError, IndexError, ValueError) as e:
-            #         print(f'Error on downloading video...\n{e}')
-
-            for chunk in response.iter_content(chunk_size=100000):
+            for chunk in response.iter_content(chunk_size=OutsideYT.DEFAULT_CHUNK_SIZE):
                 if chunk:
                     downloaded += len(chunk)
                     print(f'downloaded - {downloaded}')
@@ -654,7 +665,8 @@ class OutsideDownloadVideoYT:
             except requests.exceptions.HTTPError as e:
                 raise
 
-    def download_video(self, saving_path: str, progress_bar=None, **kwargs):
+    def download_video(self, saving_path: str, progress_bar=None, u_dummy_audio=None,
+                       u_dummy_video=None, **kwargs):
         video_info_stream = self._get_video_info_with_format()
 
         if 'simple_download' in video_info_stream:
@@ -666,7 +678,7 @@ class OutsideDownloadVideoYT:
         else:
             audiofile = videofile = None
             if 'audio' in video_info_stream:
-                url = video_info_stream['audio']['url']
+                url = u_dummy_audio or video_info_stream['audio']['url']
                 filesize = int(video_info_stream['audio']['contentLength'])
                 ext = video_info_stream['audio']['mimeType'].split(';')[0].split('/')[1].upper()
                 audiofile = f'{saving_path}_audio.{ext}'
@@ -674,7 +686,7 @@ class OutsideDownloadVideoYT:
                                            progress_bar=progress_bar)
 
             if 'video' in video_info_stream:
-                url = video_info_stream['video']['url']
+                url = u_dummy_video or video_info_stream['video']['url']
                 filesize = int(video_info_stream['video']['contentLength'])
                 ext = video_info_stream['video']['mimeType'].split(';')[0].split('/')[1].upper()
                 videofile = f'{saving_path}_video.{ext}'

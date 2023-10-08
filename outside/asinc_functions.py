@@ -11,7 +11,7 @@ import OutsideYT
 from outside.Download.functions import create_video_folder
 from outside.YT_functions import get_video_info, watching, download_video_dlp, \
     OutsideDownloadVideoYT
-from outside.functions import check_folder_name
+from outside.functions import check_folder_name, get_video_link
 from outside.message_boxes import error_func
 
 
@@ -47,7 +47,7 @@ class WatchThread(QThread):
                  offsets: List = None) -> None:
         super().__init__(parent)
         self._table = table
-        self._video = table.model().get_data().loc[table_row, "Link"]
+        self._video = get_video_link(table.model().get_data().loc[table_row, "Link"], type='embed')
         self._durations = table.model().get_data().loc[table_row, "Duration"]
         self._users = list(OutsideYT.app_settings_watchers.groups[
                                table.model().get_data().loc[table_row, "Watchers Group"]].keys())
@@ -114,18 +114,20 @@ class GetVideoInfoThread(QThread):
                 new_val = int(self.progress / self.total_steps * 100)
                 self.progress_bar.setValue(new_val)
 
-    async def worker(self, link, session):
+    async def worker(self, link, session, headers):
         print(3)
         async with self.semaphore:
             return await get_video_info(link, session,
-                                        progress_inc=self.progress_bar_inc, args=self._add_args)
+                                        progress_inc=self.progress_bar_inc, args=self._add_args,
+                                        headers = headers)
 
     async def start_loop(self):
         try:
             print(1)
+            headers = OutsideDownloadVideoYT.get_api_headers()
             async with aiohttp.ClientSession() as session:
                 print(2)
-                atasks = [self.worker(link.strip(), session) for link in self.tasks]
+                atasks = [self.worker(link.strip(), session, headers=headers) for link in self.tasks]
                 self.results = await asyncio.gather(*atasks)
         except Exception as e:
             print(f"Error in loop...\n{e}")

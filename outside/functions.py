@@ -50,8 +50,13 @@ def get_video_id(link: str):
     return video_id
 
 
-def get_video_link(video_id: str):
-    return f'https://youtube.com/watch?v={video_id}'
+def get_video_link(video_id: str, type: str = 'full'):
+    if type == 'full':
+        return f'https://youtube.com/watch?v={video_id}'
+    elif type == 'embed':
+        return f'https://youtube.com/embed/{video_id}'
+    else:
+        return f'https://youtu.be/{video_id}'
 
 
 def check_folder_name(fname: str):
