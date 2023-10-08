@@ -8,9 +8,11 @@ import sys
 import time
 from functools import partial
 from typing import List, Dict
+from urllib.error import HTTPError, URLError
 
 import aiohttp
 import requests
+from urllib.request import Request, urlopen
 
 import selenium.common.exceptions
 import webbrowser
@@ -577,14 +579,11 @@ class OutsideDownloadVideoYT:
         if data:
             if not isinstance(data, bytes):
                 data = bytes(json.dumps(data), encoding='UTF-8')
-        if not url.lower().startswith('http'):
-            raise ValueError("Invalid URL")
-        if method.lower() == 'get':
-            return requests.get(url, data=data, headers=headers, timeout=timeout, stream=stream)
-        elif method.lower() == 'post':
-            return requests.post(url, data=data, headers=headers, timeout=timeout, stream=stream)
+        if url.lower().startswith('http'):
+            req = Request(url, data, headers, method=method)
         else:
-            raise RequestMethodTypeError()
+            raise ValueError("Invalid URL")
+        return urlopen(req, timeout=timeout)
 
     def _stream(self, link: str, file_size: int, timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
                 max_retries: int = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES):
@@ -592,7 +591,6 @@ class OutsideDownloadVideoYT:
 
         while downloaded < file_size:
             stop_pos = min(downloaded + OutsideYT.DEFAULT_CHUNK_SIZE, file_size) - 1
-            range_header = f'bytes={downloaded}-{stop_pos}'
             tries = 0
 
             while True:
@@ -606,32 +604,27 @@ class OutsideDownloadVideoYT:
                                                      timeout=timeout,
                                                      stream=True)
                     print('excellent 1st execute')
-                except requests.exceptions.InvalidURL as e:
-                    print(f'{e}')
-                    raise
+                except URLError as e:
+                    if isinstance(e.reason, int):
+                        pass
+                    else:
+                        raise
                 except http.client.IncompleteRead:
                     pass
                 else:
                     break
                 tries += 1
-
-            # if file_size == OutsideYT.DEFAULT_CHUNK_SIZE:
-            #     try:
-            #         resp = self._execute_request(link + '&range=0-99999999999',
-            #                                      method='get',
-            #                                      timeout=timeout,
-            #                                      stream=False)
-            #         content_range = len(resp.content)
-            #         file_size = int(content_range)
-            #         print(f'filesize = {file_size}')
-            #     except (KeyError, IndexError, ValueError) as e:
-            #         print(f'Error on downloading video...\n{e}')
-
-            for chunk in response.iter_content(chunk_size=100000):
-                if chunk:
-                    downloaded += len(chunk)
-                    print(f'downloaded - {downloaded}')
-                    yield chunk
+            print('Start writing to file...')
+            while True:
+                print(1)
+                chunk = response.read()
+                print(2)
+                if not chunk:
+                    break
+                print(3)
+                downloaded += len(chunk)
+                print(f'downloaded - {downloaded}')
+                yield chunk
         return
 
     def _add_video_audio(self, videofile: str, audiofile: str):
@@ -651,8 +644,10 @@ class OutsideDownloadVideoYT:
                     file.write(chunk)
                     if progress_bar:
                         self._on_progress_download_video(bytes_downloaded, filesize, progress_bar)
-            except requests.exceptions.HTTPError as e:
-                raise
+            except HTTPError as e:
+                if e.code != 404:
+                    raise
+                print("GG")
 
     def download_video(self, saving_path: str, progress_bar=None, **kwargs):
         video_info_stream = self._get_video_info_with_format()
