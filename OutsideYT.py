@@ -29,7 +29,7 @@ WAIT_TIME_ASYNC_LOOPS = 0.8
 WAIT_TIME_THREAD = 0.5
 SAVE_COOKIES_TIME = 60 * 60 * 24 * 30
 ASYNC_LIMIT = 20
-VIDEO_DOWNLOAD_TIMEOUT = 30
+VIDEO_DOWNLOAD_TIMEOUT = 5
 VIDEO_DOWNLOAD_MAX_RETRIES = 3
 DEFAULT_CHUNK_SIZE = 9437184
 
@@ -115,21 +115,21 @@ VIDEO_ITAG = {272: ('4320p', 'WEBM'), 702: ('4320p', 'MP4'), 571: ('4320p', 'MP4
               694: ('144p', 'MP4'), 394: ('144p', 'MP4'), 160: ('144p', 'MP4')}
 
 AUDIO_ITAG = {                                          #FIXME
-    258: ("384kbps", 'MP4'),
-    172: ("256kbps", 'WEBM'),
-    141: ("256kbps", 'MP4'),
-    256: ("192kbps", 'MP4'),
-    251: ("160kbps", 'WEBM'),
-    171: ("128kbps", 'WEBM'),
-    140: ("128kbps", 'MP4'),
-    250: ("70kbps", 'WEBM'),
-    249: ("50kbps", 'WEBM'),
-    139: ("48kbps", 'MP4'),
+    258: ("384", 'MP4'),
+    172: ("256", 'WEBM'),
+    141: ("256", 'MP4'),
+    256: ("192", 'MP4'),
+    251: ("160", 'WEBM'),
+    171: ("128", 'WEBM'),
+    140: ("128", 'MP4'),
+    250: ("70", 'WEBM'),
+    249: ("50", 'WEBM'),
+    139: ("48", 'MP4'),
 }
 
 DEFAULT_VIDEO_QUALITY = '1080p'
 DEFAULT_VIDEO_EXT = 'WEBM'
-DEFAULT_AUDIO_QUALITY = '256kbps'
+DEFAULT_AUDIO_QUALITY = '256'
 DEFAULT_AUDIO_EXT = 'WEBM'
 
 HDR = [330, 331, 332, 333, 334, 335, 336, 337]

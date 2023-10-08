@@ -569,7 +569,8 @@ class OutsideDownloadVideoYT:
                          method: str,
                          timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
                          add_headers: Dict = None,
-                         data=None):
+                         data=None,
+                         stream=False):
         headers = {"User-Agent": "Mozilla/5.0", "accept-language": "en-US,en"}
         if add_headers:
             headers.update(add_headers)
@@ -579,15 +580,14 @@ class OutsideDownloadVideoYT:
         if not url.lower().startswith('http'):
             raise ValueError("Invalid URL")
         if method.lower() == 'get':
-            return requests.get(url, data=data, headers=headers, timeout=timeout)
+            return requests.get(url, data=data, headers=headers, timeout=timeout, stream=stream)
         elif method.lower() == 'post':
-            return requests.post(url, data=data, headers=headers, timeout=timeout)
+            return requests.post(url, data=data, headers=headers, timeout=timeout, stream=stream)
         else:
             raise RequestMethodTypeError()
 
-    def _stream(self, link: str, timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
+    def _stream(self, link: str, file_size: int, timeout: int = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT,
                 max_retries: int = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES):
-        file_size = OutsideYT.DEFAULT_CHUNK_SIZE
         downloaded = 0
 
         while downloaded < file_size:
@@ -600,10 +600,12 @@ class OutsideDownloadVideoYT:
                     raise MaxRetriesError()
 
                 try:
+                    print(f'trying...{tries}')
                     response = self._execute_request(link + f'&range={downloaded}-{stop_pos}',
                                                      method='GET',
-                                                     timeout=timeout)
-
+                                                     timeout=timeout,
+                                                     stream=True)
+                    print('excellent 1st execute')
                 except requests.exceptions.InvalidURL as e:
                     print(f'{e}')
                     raise
@@ -613,22 +615,23 @@ class OutsideDownloadVideoYT:
                     break
                 tries += 1
 
-            if file_size == OutsideYT.DEFAULT_CHUNK_SIZE:
-                try:
-                    resp = self._execute_request(link + '&range=0-99999999999',
-                                                 method='get',
-                                                 timeout=timeout)
-                    content_range = resp.info()['Content-Length']
-                    file_size = int(content_range)
-                except (KeyError, IndexError, ValueError) as e:
-                    print(f'Error on downloading video...\n{e}')
+            # if file_size == OutsideYT.DEFAULT_CHUNK_SIZE:
+            #     try:
+            #         resp = self._execute_request(link + '&range=0-99999999999',
+            #                                      method='get',
+            #                                      timeout=timeout,
+            #                                      stream=False)
+            #         content_range = len(resp.content)
+            #         file_size = int(content_range)
+            #         print(f'filesize = {file_size}')
+            #     except (KeyError, IndexError, ValueError) as e:
+            #         print(f'Error on downloading video...\n{e}')
 
-            while True:
-                chunk = response.content
-                if not chunk:
-                    break
-                downloaded += len(chunk)
-                yield chunk
+            for chunk in response.iter_content(chunk_size=100000):
+                if chunk:
+                    downloaded += len(chunk)
+                    print(f'downloaded - {downloaded}')
+                    yield chunk
         return
 
     def _add_video_audio(self, videofile: str, audiofile: str):
@@ -643,10 +646,11 @@ class OutsideDownloadVideoYT:
             bytes_downloaded = 0
             try:
                 for chunk in self._stream(url, timeout=timeout,
-                                          max_retries=max_retries):
+                                          max_retries=max_retries, file_size=filesize):
                     bytes_downloaded += len(chunk)
                     file.write(chunk)
-                    self._on_progress_download_video(bytes_downloaded, filesize, progress_bar)
+                    if progress_bar:
+                        self._on_progress_download_video(bytes_downloaded, filesize, progress_bar)
             except requests.exceptions.HTTPError as e:
                 raise
 
@@ -663,7 +667,7 @@ class OutsideDownloadVideoYT:
             audiofile = videofile = None
             if 'audio' in video_info_stream:
                 url = video_info_stream['audio']['url']
-                filesize = video_info_stream['audio']['contentLength']
+                filesize = int(video_info_stream['audio']['contentLength'])
                 ext = video_info_stream['audio']['mimeType'].split(';')[0].split('/')[1].upper()
                 audiofile = f'{saving_path}_audio.{ext}'
                 self.__download_one_format(url, filesize, saving_path=audiofile,
@@ -671,7 +675,7 @@ class OutsideDownloadVideoYT:
 
             if 'video' in video_info_stream:
                 url = video_info_stream['video']['url']
-                filesize = video_info_stream['video']['contentLength']
+                filesize = int(video_info_stream['video']['contentLength'])
                 ext = video_info_stream['video']['mimeType'].split(';')[0].split('/')[1].upper()
                 videofile = f'{saving_path}_video.{ext}'
                 self.__download_one_format(url, filesize, saving_path=videofile,
