@@ -9,7 +9,7 @@ Functions:
 6) Save your accounts in cookies and load them when needed.
 
 Technologies used:
-- Python 3.9+
+- Python 3.11+
 - PyQt5 (for interfaces)
 - pandas (for working with tables)
 - requests, aiohttp, selenium, BeautifulSoup (for parsing)
