@@ -114,20 +114,20 @@ class GetVideoInfoThread(QThread):
                 new_val = int(self.progress / self.total_steps * 100)
                 self.progress_bar.setValue(new_val)
 
-    async def worker(self, link, session, headers):
+    async def worker(self, link, session, headers=None):
+        headers = headers or {}
         print(3)
         async with self.semaphore:
             return await get_video_info(link, session,
                                         progress_inc=self.progress_bar_inc, args=self._add_args,
-                                        headers = headers)
+                                        headers=headers)
 
     async def start_loop(self):
         try:
             print(1)
-            headers = OutsideDownloadVideoYT.get_api_headers()
             async with aiohttp.ClientSession() as session:
                 print(2)
-                atasks = [self.worker(link.strip(), session, headers=headers) for link in self.tasks]
+                atasks = [self.worker(link.strip(), session) for link in self.tasks]
                 self.results = await asyncio.gather(*atasks)
         except Exception as e:
             print(f"Error in loop...\n{e}")

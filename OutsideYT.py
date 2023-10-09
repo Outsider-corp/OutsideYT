@@ -1,7 +1,8 @@
 import os
-from decouple import config
 
 from outside.oyt_info import settings
+
+ACCESS_TOKEN = ''
 
 project_folder = os.getcwd()
 app_settings_uploaders = settings.SettingsUsers(
@@ -35,29 +36,6 @@ VIDEO_DOWNLOAD_MAX_RETRIES = 3
 DEFAULT_CHUNK_SIZE = 9437184
 
 FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
-
-download_video_params = {
-    'format': 'best',
-    'ffmpeg_location': r'outside/bin/ffmpeg.exe',
-}
-
-formats = {'full': ['best',
-                    'standard',
-                    'worst'],
-           'video_quality': ['2160p',
-                             '1440p',
-                             '1080p',
-                             '720p',
-                             '480p',
-                             '360p',
-                             '240p',
-                             '144p'],
-           'video_type': ['mp4', 'webm'],
-           'audio_quality': ['AUDIO_QUALITY_LOW',
-                             'AUDIO_QUALITY_MEDIUM',
-                             ],
-           'audio_type': ['mp4', 'webm']
-           }
 
 SIMPLE_VIDEO_ITAG = {
     38: ("3072p", "192kbps"),
@@ -115,7 +93,7 @@ VIDEO_ITAG = {272: ('4320p', 'WEBM'), 702: ('4320p', 'MP4'), 571: ('4320p', 'MP4
               133: ('240p', 'MP4'), 330: ('144p', 'WEBM'), 278: ('144p', 'WEBM'),
               694: ('144p', 'MP4'), 394: ('144p', 'MP4'), 160: ('144p', 'MP4')}
 
-AUDIO_ITAG = {                                          #FIXME
+AUDIO_ITAG = {  # FIXME
     258: ("384", 'MP4'),
     172: ("256", 'WEBM'),
     141: ("256", 'MP4'),
@@ -136,6 +114,3 @@ DEFAULT_AUDIO_EXT = 'WEBM'
 HDR = [330, 331, 332, 333, 334, 335, 336, 337]
 _3D = [82, 83, 84, 85, 100, 101, 102]
 LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
-
-
-ACCESS_TOKEN = config('YT_KEY')
