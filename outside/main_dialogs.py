@@ -418,9 +418,9 @@ def get_videos_info(table, links: List, dialog_settings, group=None, add_args=No
             results = thread.results
             thread.quit()
             if thread.wait():
-                print(results)
                 for video in results:
                     _add_video_to_table(table, video_info=video, group=group)
+            thread.terminate()
         except Exception as e:
             print(f'Error on add video info to table...\n{e}')
         finally:

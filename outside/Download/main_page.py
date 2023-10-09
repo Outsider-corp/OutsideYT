@@ -77,11 +77,11 @@ def start_download(dialog_settings, table: QTableView):
             comp_info = thread.completed_tasks_info
             thread.quit()
             thread.wait()
-            thread.terminate()
-            dialog_settings.download_thread = None
             table.model()._data["Selected"] = [not i for i in comp_info]
             if not all(table.model()._data["Selected"]):
                 dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
+            thread.terminate()
+            dialog_settings.download_thread = None
         except Exception as e:
             print(f"Error on download finish...\n{e}")
         finally:

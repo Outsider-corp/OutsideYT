@@ -185,6 +185,7 @@ class DownloadThread(QThread):
                              progress_bar=self.progress_bar,
                              thread=self)
         print(2)
+        time.sleep(OutsideYT.WAIT_TIME_THREAD)
         if self.download_video_key:
             self.completed_tasks_info = [False for _ in
                                          range(len(self._table.model().get_data()))]
@@ -195,12 +196,14 @@ class DownloadThread(QThread):
                                  add_to_folder=self.download_info_key,
                                  thread=self)
         print(3)
+        time.sleep(OutsideYT.WAIT_TIME_THREAD)
         self.update_progress_info()
         DownloadThread.stop_signal = False
 
     def stop(self):
         self.stop_signal = True
         self.wait(0)
+        self.thread().terminate()
 
 
 def start_video_download(table: QTableView, saving_path: str, completed_tasks_info: List,
@@ -218,12 +221,11 @@ def start_video_download(table: QTableView, saving_path: str, completed_tasks_in
                 saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
                 os.makedirs(saving_path, exist_ok=True)
                 print(2.3)
-                # if download_video_dlp(video['Video'], video['Link'], params, saving_path,
-                #                       thread.progress_bar):
-                video_down = OutsideDownloadVideoYT(video['Link'], video['_download_info'],
-                                                    params={'full_quality': 'normal'})
-                if video_down.download_video(saving_path=saving_path,
-                                             progress_bar=thread.progress_bar):
+                video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
+                                                    video_info=video['_download_info'],
+                                                    params=params, progress_bar=thread.progress_bar)
+                print(2.4)
+                if video_down.download_video(saving_path=saving_path):
                     completed_tasks_info[num] = True
             if thread.stop_signal:
                 break

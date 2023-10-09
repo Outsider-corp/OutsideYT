@@ -20,8 +20,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 import OutsideYT
-from outside.exceptions import MaxRetriesError, RequestMethodTypeError
-from outside.functions import get_video_id, check_folder_name
+from outside.exceptions import MaxRetriesError, RequestMethodTypeError, StatusCodeRequestError
+from outside.functions import get_video_id, check_folder_name, get_video_link
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS
 
@@ -429,9 +429,10 @@ class OutsideDownloadVideoYT:
     __DEFAULT_VIDEO_EXT = OutsideYT.DEFAULT_VIDEO_EXT
     __DEFAULT_AUDIO_QUALITY = OutsideYT.DEFAULT_AUDIO_QUALITY
     __DEFAULT_AUDIO_EXT = OutsideYT.DEFAULT_AUDIO_EXT
+    __DEFAULT_K_MS_TO_SIZE = 200
 
-    def __init__(self, link: str, params: Dict, video_info: Dict = None,
-                 api_video_info: Dict = None,
+    def __init__(self, link: str, params: Dict, video_info=None,
+                 api_video_info=None,
                  ffmpeg_location: str = None,
                  progress_bar=None):
         """
@@ -455,12 +456,13 @@ class OutsideDownloadVideoYT:
             video_info: Dict - parsed info from video page
             ffmpeg_location: str - ffmpeg.exe location
         """
-        self.link = link
+        self.video_id = get_video_id(link)
+        self.link = get_video_link(self.video_id, 'embed')
         self._video_info = video_info
         self._api_video_info = api_video_info
         self.params = params
-        self._itags = []
-        self._itags_api = []
+        self._itags = None
+        self._itags_api = None
         self.ffmpeg_location = ffmpeg_location or OutsideDownloadVideoYT.__FFMPEG_LOCATION
         self.progress_bar = progress_bar
         self.__progress_size = None
@@ -567,6 +569,7 @@ class OutsideDownloadVideoYT:
 
     @classmethod
     def get_api_video_info(cls, link: str, api_key, headers=None, **kwargs):
+        print('get_api')
         data = cls.full_data
         base_headers = cls.base_headers
         if headers:
@@ -575,28 +578,43 @@ class OutsideDownloadVideoYT:
                f'videoId={get_video_id(link)}&key={api_key}&'
                f'contentCheckOk=True&racyCheckOk=True')
         res = requests.post(url, data=data, headers=base_headers)
-        data = res.json()
-        return data
+        print('res_after')
+        if res.status_code == 200:
+            data = res.json()
+            return data
+        else:
+            raise StatusCodeRequestError(res.reason)
+
+    def _get_api_video_info(self, link: str, headers=None, **kwargs):
+        return self.get_api_video_info(link, api_key=self.__api_key, headers=headers, **kwargs)
 
     def _find_itag(self, itags: List, video_info: Dict):
         if 'streamingData' in video_info:
-            video_info = {fmt: val for fmt, val in video_info['streamingData']}
+            video_info = {fmt: val for fmt, val in video_info['streamingData'].items() if
+                          isinstance(video_info['streamingData'], dict)}
         for itag in itags:
             for fmt in ['formats', 'adaptiveFormats']:
-                for video_itag in video_info[fmt]:
+                for i, video_itag in enumerate(video_info[fmt]):
                     if video_itag['itag'] == itag:
+                        if 'contentLength' not in video_itag:
+                            video_itag['contentLength'] = self.__DEFAULT_K_MS_TO_SIZE * int(
+                                video_itag['approxDurationMs'])
                         return video_itag
 
     def get_itags_from_params(self, video_info):
+        print('2...')
         if self.params.get('simple', True):
+            print('2..1')
             params = self.params.get('video', {})
+            print(2.47)
             itags_list = self._get_quality_itags(vars=self.__SIMPLE_VIDEO_ITAGS,
                                                  quality=params.get('video_quality', ''),
                                                  ext=params.get('video_ext', ''),
                                                  choice=params.get('full_quality', 'normal'),
                                                  normal_q=self.__DEFAULT_VIDEO_QUALITY,
                                                  normal_ext=self.__DEFAULT_VIDEO_EXT)
-            self._itags = [self._find_itag(itags_list, video_info)]
+            print(2.49)
+            return [self._find_itag(itags_list, video_info)]
         else:
             params = self.params.get('video', {})
             v_itags = self._get_quality_itags(self.__VIDEO_ITAGS,
@@ -613,11 +631,11 @@ class OutsideDownloadVideoYT:
                                               params.get('full_quality', 'normal'),
                                               self.__DEFAULT_AUDIO_QUALITY,
                                               self.__DEFAULT_AUDIO_EXT)
-            self._itags = [self._find_itag(v_itags, video_info),
-                           self._find_itag(a_itags, video_info)]
+            return [self._find_itag(v_itags, video_info),
+                    self._find_itag(a_itags, video_info)]
 
     def _post_video_info(self, headers=None, **kwargs):
-        return self.get_api_video_info(self.link, headers=headers, **kwargs)
+        return self._get_api_video_info(self.link, headers=headers, **kwargs)
 
     def _get_video_info(self, *args, **kwargs):
         return self.get_player_video_info(self.link, *args, **kwargs)
@@ -668,12 +686,15 @@ class OutsideDownloadVideoYT:
                 else:
                     break
                 tries += 1
-
+            key_add = False
             for chunk in response.iter_content(chunk_size=self.__CHUNK_SIZE):
                 if chunk:
+                    key_add = True
                     downloaded += len(chunk)
                     print(f'downloaded - {downloaded}')
                     yield chunk
+            if not key_add:
+                break
         return
 
     def _add_video_audio(self, videofile: str, audiofile: str):
@@ -699,37 +720,44 @@ class OutsideDownloadVideoYT:
             saving_path: str - saving path for the video
             use_api: bool - use YouTube API or not
         """
-        if use_api:
-            if not self._itags_api:
-                self.get_itags_from_params(self.api_video_info)
-            itags = self._itags_api
-            video_info = self.api_video_info
-        else:
-            if not self._itags:
-                self.get_itags_from_params(self.player_video_info)
-            itags = self._itags
-            video_info = self.player_video_info
-
-        files = []
-        self.__progress_size = sum([int(i['contentLength']) for i in itags])
-        for i, itag in enumerate(itags):
-            url = itag['url']
-            filesize = itag['contentLength']
-            ext = itag['mimeType'].split(';')[0].split('/')[1].lower()
-            file_path = os.path.join(saving_path,
-                                     f'{check_folder_name(video_info["title"])}'
-                                     f'{f"_{i}" if len(itags) == 2 else ""}.{ext}')
-            files.append(file_path)
-            self.__download_one_format(url, filesize, file_path)
-
-        if len(files) == 2:
-            self._add_video_audio(*files)
-        return True
+        try:
+            print(2.45)
+            if use_api:
+                print(2.46)
+                if self._itags_api is None:
+                    print(2.465)
+                    self._itags_api = self.get_itags_from_params(self.api_video_info)
+                itags = self._itags_api
+                video_info = self.api_video_info
+            else:
+                if self._itags is None:
+                    self._itags = self.get_itags_from_params(self.player_video_info)
+                itags = self._itags
+                video_info = self.player_video_info
+            print(2.5)
+            files = []
+            self.__progress_size = sum([int(i['contentLength']) for i in itags])
+            for i, itag in enumerate(itags):
+                url = itag['url']
+                filesize = int(itag['contentLength'])
+                ext = itag['mimeType'].split(';')[0].split('/')[1].lower()
+                file_path = os.path.join(saving_path,
+                                         f'{check_folder_name(video_info["videoDetails"]["title"])}'
+                                         f'{f"_{i}" if len(itags) == 2 else ""}.{ext}')
+                files.append(file_path)
+                self.__download_one_format(url, filesize, file_path)
+            print(2.6)
+            if len(files) == 2:
+                self._add_video_audio(*files)
+            return True
+        except Exception as e:
+            print(f'Error on download_streams...\n{e}')
+            return False
 
     def _on_progress_download_video(self, add_value: int):
         value = 0
         while True:
-            value += add_value
+            value += int(add_value)
             self.progress_bar.setValue(int(value / self.__progress_size * 100))
             if value >= self.__progress_size:
                 break

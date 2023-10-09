@@ -7,3 +7,8 @@ class MaxRetriesError(OutsideError):
 
 class RequestMethodTypeError(OutsideError):
     """Unable method for request"""
+
+class StatusCodeRequestError(OutsideError):
+    """Status Code of request is not 200"""
+    def __init__(self, reason):
+        print(f'{reason}')

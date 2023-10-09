@@ -2,7 +2,7 @@ import os
 
 from outside.oyt_info import settings
 
-ACCESS_TOKEN = ''
+ACCESS_TOKEN = 'AIzaSyDb9kArHzQ_zKDtoH0kFYiXrCiUvCBduIY'
 
 project_folder = os.getcwd()
 app_settings_uploaders = settings.SettingsUsers(
@@ -114,3 +114,10 @@ DEFAULT_AUDIO_EXT = 'WEBM'
 HDR = [330, 331, 332, 333, 334, 335, 336, 337]
 _3D = [82, 83, 84, 85, 100, 101, 102]
 LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
+
+download_video_params = {'simple': True,
+                   'video': {'video_quality': '1080p',
+                             'video_ext': 'MP4'},
+                   'audio': {'audio_quality': '192',
+                             'audio_ext': 'MP4'},
+                   'full_quality': 'best'}
