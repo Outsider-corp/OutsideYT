@@ -1,4 +1,4 @@
-import typing
+from typing import List, Any
 
 import pandas as pd
 from PyQt5 import QtGui, QtWidgets
@@ -61,7 +61,7 @@ class WatchModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return len(self._data.columns)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> Any:
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal and self._data.columns[section] != 'Selected':
                 return self._data.columns[section]
@@ -70,7 +70,7 @@ class WatchModel(QAbstractTableModel):
             return None
         return None
 
-    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+    def data(self, index: QModelIndex, role: int = ...) -> Any:
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.CheckStateRole and column == 'id':
@@ -95,7 +95,7 @@ class WatchModel(QAbstractTableModel):
                     return self.get_data().loc[index.row(), column]
         return None
 
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+    def setData(self, index: QModelIndex, value: Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
             if role == Qt.CheckStateRole and column == 'id':
@@ -150,7 +150,7 @@ class WatchModel(QAbstractTableModel):
         self.update()
         return True
 
-    def reset_ids(self, new_list=None):
+    def reset_ids(self, new_list: List = None):
         if new_list is None:
             new_list = list(range(1, self.rowCount() + 1))
         self._data.id = list(map(str, new_list))
@@ -158,7 +158,7 @@ class WatchModel(QAbstractTableModel):
     def get_data(self):
         return self._data
 
-    def update_progress_bar(self, index, value):
+    def update_progress_bar(self, index: int, value: int):
         self._data.loc[index, 'Progress'] = value
         qindex = self.index(index, 1, QModelIndex())
         self._tableview.update(qindex)
@@ -204,7 +204,7 @@ class WatchersUsersModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return len(self._data.columns)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> Any:
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self._data.columns[section]
@@ -213,7 +213,7 @@ class WatchersUsersModel(QAbstractTableModel):
             return None
         return None
 
-    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+    def data(self, index: QModelIndex, role: int = ...) -> Any:
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.DisplayRole:
@@ -224,7 +224,7 @@ class WatchersUsersModel(QAbstractTableModel):
             return None
         return None
 
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+    def setData(self, index: QModelIndex, value: Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
             if column == 'Account' and value != self._data.loc[index.row(), column]:
@@ -296,7 +296,7 @@ class WatchersGroupsModel(QAbstractTableModel):
     def columnCount(self, parent: QModelIndex = ...) -> int:
         return len(self._data.columns)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> Any:
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self._data.columns[section]
@@ -305,7 +305,7 @@ class WatchersGroupsModel(QAbstractTableModel):
             return None
         return None
 
-    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+    def data(self, index: QModelIndex, role: int = ...) -> Any:
         if index.isValid():
             column = self._data.columns[index.column()]
             if role == Qt.DisplayRole:
@@ -313,7 +313,7 @@ class WatchersGroupsModel(QAbstractTableModel):
             return None
         return None
 
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
+    def setData(self, index: QModelIndex, value: Any, role: int = ...) -> bool:
         if index.isValid():
             column = list(self._data.keys())[index.column()]
             if column == 'New Group name' and value != self.get_data().loc[index.row(), column]:

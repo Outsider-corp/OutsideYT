@@ -99,11 +99,9 @@ def start_download(dialog_settings, table: QTableView):
              dialog_settings.Download_Video_checkBox.isChecked()]):
         try:
             change_enabled_tab_elements(dialog_settings, 'Download', False)
-
-            dialog_settings.download_thread = DownloadThread(table=table,
+            sel_data = data[data['Selected'] == True].to_dict(orient='records')
+            dialog_settings.download_thread = DownloadThread(videos=sel_data,
                                                              saving_path=saving_path,
-                                                             progress_bar=table.model().progress_bar,
-                                                             progress_label=table.model().progress_label,
                                                              download_info_key=dialog_settings
                                                              .Download_Info_checkBox.isChecked(),
                                                              download_video_key=dialog_settings

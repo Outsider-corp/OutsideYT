@@ -9,7 +9,7 @@ import OutsideYT
 from outside import TableModels as CommonTables
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import WatchThread
+from ..asinc_functions import WatchManager
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
     open_UsersList_Dialog
@@ -73,41 +73,43 @@ def update_watch(ui, parent):
 
 
 def start_watch(dialog, dialog_settings, table: QTableView):
-    def finish_video(video):
-        watch_threads_check.remove(video)
+    def update_progress_watch(id: int, val: int):
+        table.model().update_progress_bar(id, val)
 
     data = table.model().get_data()
     if not (len(data) and any(data['Selected'])):
         error_func(f'0 videos selected for watching', parent=dialog)
         return
 
-    threadpool = QThreadPool()
-    threadpool.setMaxThreadCount(OutsideYT.MAX_THREADS_COUNT)
+    watch_manager = WatchManager(OutsideYT.MAX_THREADS_COUNT)
+    watch_manager.update_progress_watcher_signal.connect(
+        lambda id, val: update_progress_watch(id, val))
+    change_enabled_tab_elements(dialog_settings, 'Watch', False)
+    dialog_settings.Watch_Table.hideColumn(
+        list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
+    dialog_settings.Watch_Table.setColumnHidden(
+        list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
+        False)
 
-    watch_threads_check = []
+    sel_data = data.to_dict(orient='records')
 
-    for num, video in data.iterrows():
+    for num, video in enumerate(sel_data):
+        if not video['Selected']:
+            continue
         group = video['Watchers Group']
         users = app_settings_watchers.groups[group].keys()
         if not users:
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
-        if not video['Selected']:
-            continue
 
-        if not watch_threads_check:
-            change_enabled_tab_elements(dialog_settings, 'Watch', False)
-            dialog_settings.Watch_Table.hideColumn(
-                list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
-            dialog_settings.Watch_Table.setColumnHidden(
-                list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
-                False)
+        watch_manager.add_watcher(num, video, users,
+                                  driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
+                                  isChecked())
 
-        watch_thread = WatchThread(table=table, table_row=num, parent=dialog,
-                                   driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
-                                   isChecked())
-        watch_threads_check.append(num)
-        watch_thread.start()
-        watch_thread.finished.connect(partial(finish_video, video=num))
-
-    threadpool.waitForDone()
+    watch_manager.threadpool.waitForDone()
+    change_enabled_tab_elements(dialog_settings, 'Watch', True)
+    dialog_settings.Watch_Table.hideColumn(
+        list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
+    dialog_settings.Watch_Table.setColumnHidden(
+        list(dialog_settings.Watch_Table.model().get_data().columns).index('id'),
+        False)

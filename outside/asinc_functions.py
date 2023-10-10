@@ -1,9 +1,10 @@
 import asyncio
 import os
+from functools import partial
 
-from typing import List
+from typing import List, Dict
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool
+from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool, QRunnable
 from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
@@ -27,52 +28,65 @@ class ProgressMutex:
         self.mutex.unlock()
 
 
-class WorkerManager(QObject):
-    def __init__(self, threads_list, dialog_settings) -> None:
-        super(WorkerManager, self).__init__()
-        self.threadpool = QThreadPool()
-        self.dialog_settings = dialog_settings
+class Watcher(QRunnable):
+    update_progress_signal = pyqtSignal((int, int))
 
-    def run(self):
-        while self.threads_list:
-            pass
-
-
-class WatchThread(QThread):
-
-    def __init__(self, table, table_row: int, driver_headless=True, parent=None,
-                 offsets: List = None) -> None:
-        super().__init__(parent)
-        self._table = table
-        self._video = get_video_link(table.model().get_data().loc[table_row, "Link"], type='embed')
-        self._durations = table.model().get_data().loc[table_row, "Duration"]
-        self._users = list(OutsideYT.app_settings_watchers.groups[
-                               table.model().get_data().loc[table_row, "Watchers Group"]].keys())
-        self._progress_bar_num = table_row
-        self._lock = asyncio.Lock()
-        sum_offsets = sum(offsets) if offsets else 0
-        self._total_steps = len(self._users) * self._durations + sum_offsets
-        self._progress = 0
+    def __init__(self, id, video_info: Dict, watchers: List, driver_headless=True,
+                 offsets: List = None):
+        super().__init__()
+        self.__id = id
+        self._video_info = video_info
+        self._watchers = watchers
         self.driver_headless = driver_headless
         self._offsets = offsets
-        self.update_progress_signal = pyqtSignal(int)
+
+        sum_offsets = sum(offsets) if offsets else 0
+        self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
+        self._lock = asyncio.Lock()
+        self._progress = 0
 
     async def progress_bar_inc(self):
         async with self._lock:
             self._progress += 1
             new_val = int(self._progress / self._total_steps * 100)
-            self.update_progress_signal.emit(new_val)
+            self.update_progress_signal.emit(self.__id, new_val)
 
     async def start_loop(self):
-        atasks = [watching(self._video, self._durations, user,
+        atasks = [watching(get_video_link(self._video_info['Link'], type='embed'),
+                           self._video_info['Duration'], user,
                            driver_headless=self.driver_headless,
                            progress_inc=self.progress_bar_inc)
-                  for user in self._users]
+                  for user in self._watchers]
         await asyncio.gather(*atasks)
 
     def run(self):
         asyncio.run(self.start_loop())
-        self.update_progress_signal.emit()
+        self.update_progress_signal.emit(id, 0)
+
+
+class WatchManager(QObject):
+    update_progress_watcher_signal = pyqtSignal((int, int))
+
+    def __init__(self, max_workers: int):
+        super(WatchManager, self).__init__()
+        self.threadpool = QThreadPool()
+        self.threadpool.setMaxThreadCount(max_workers)
+        self._watchers = {}
+
+    def add_watcher(self, id, video_info: Dict, watchers: List, offsets: List = None,
+                    driver_headless=True, auto_start=False, **kwargs):
+        watcher = Watcher(id, video_info, watchers, driver_headless, offsets)
+        self._watchers[id] = watcher
+        watcher.update_progress_signal.connect(
+            lambda id, x: self.handle_watcher_progress(id, x))
+        if auto_start:
+            self.start_watcher(id)
+
+    def start_watcher(self, id):
+        self.threadpool.start(self._watchers[id])
+
+    def handle_watcher_progress(self, id: int, value: int):
+        self.update_progress_watcher_signal(id, value)
 
 
 class GetVideoInfoThread(QThread):
@@ -133,14 +147,14 @@ class DownloadThread(QThread):
     add_progress_label_signal = pyqtSignal((bool, str))
     error_signal = pyqtSignal(str)
 
-    def __init__(self, table, saving_path: str, parent=None,
+    def __init__(self, videos: List, saving_path: str, parent=None,
                  download_info_key=True, download_video_key=True, **kwargs):
         super().__init__(parent)
-        self._table = table
         self.download_info_key = download_info_key
         self.download_video_key = download_video_key
         self._saving_path = saving_path
-        self.completed_tasks_info = [False for _ in range(len(self._table.model().get_data()))]
+        self.videos = videos
+        self.completed_tasks_info = [False for _ in range(len(videos))]
 
     def update_progress_info(self, label_text: str = None, bar_value: int = 0):
         self.update_progress_label_signal.emit(label_text)
@@ -155,19 +169,17 @@ class DownloadThread(QThread):
     def show_error(self, text: str):
         self.error_signal.emit(text)
 
-
     def run_download_process(self):
         if self.download_info_key:
             self.update_progress_info('Creating files...')
-            save_videos_info(table=self._table,
+            save_videos_info(videos=self.videos,
                              saving_path=self._saving_path,
                              completed_tasks_info=self.completed_tasks_info,
                              thread=self)
         if self.download_video_key:
-            self.completed_tasks_info = [False for _ in
-                                         range(len(self._table.model().get_data()))]
+            self.completed_tasks_info = [False for _ in range(len(self.videos))]
             self.update_progress_info('Downloading videos...')
-            start_video_download(table=self._table, saving_path=self._saving_path,
+            start_video_download(videos=self.videos, saving_path=self._saving_path,
                                  completed_tasks_info=self.completed_tasks_info,
                                  params=OutsideYT.download_video_params,
                                  add_to_folder=self.download_info_key,
@@ -178,13 +190,11 @@ class DownloadThread(QThread):
         self.update_progress_info()
 
 
-def start_video_download(table: QTableView, saving_path: str, completed_tasks_info: List,
+def start_video_download(videos: List, saving_path: str, completed_tasks_info: List,
                          params: dict, add_to_folder: bool,
                          thread):
-    data = table.model().get_data()
-    videos = data[data['Selected'] > 0]
     cnt_videos = len(videos)
-    for num, video in videos.iterrows():
+    for num, video in enumerate(videos):
         try:
             thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
             if add_to_folder:
@@ -201,11 +211,9 @@ def start_video_download(table: QTableView, saving_path: str, completed_tasks_in
             print(f'Error on start downloading...\n{e}')
 
 
-def save_videos_info(table, saving_path: str, completed_tasks_info: List, thread):
-    data = table.model()._data
-    videos_info = data.loc[data['Selected'] > 0]
-    cnt_videos = len(videos_info)
-    for num, video in videos_info.iterrows():
+def save_videos_info(videos, saving_path: str, completed_tasks_info: List, thread):
+    cnt_videos = len(videos)
+    for num, video in enumerate(videos):
         if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
             thread.update_progress_bar(int((num + 1) / cnt_videos * 100))
             completed_tasks_info[num] = True
