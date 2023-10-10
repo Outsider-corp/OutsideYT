@@ -9,7 +9,7 @@ import OutsideYT
 from outside import TableModels as CommonTables
 from OutsideYT import app_settings_watchers
 
-from ..asinc_functions import SeekThreads, WatchThread
+from ..asinc_functions import WatchThread
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
     open_UsersList_Dialog
@@ -81,8 +81,8 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         error_func(f'0 videos selected for watching', parent=dialog)
         return
 
-    # threadpool = QThreadPool()
-    # threadpool.setMaxThreadCount(OutsideYT.MAX_THREADS_COUNT)
+    threadpool = QThreadPool()
+    threadpool.setMaxThreadCount(OutsideYT.MAX_THREADS_COUNT)
 
     watch_threads_check = []
 
@@ -110,16 +110,4 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         watch_thread.start()
         watch_thread.finished.connect(partial(finish_video, video=num))
 
-    # threadpool.waitForDone()
-    def seek_ends(seek_thread):
-        seek_thread.deleteLater()
-        dialog_settings.Watch_Table.model().reset_progress_bars()
-        dialog_settings.Watch_Table.hideColumn(
-            list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
-        dialog_settings.Watch_Table.setColumnHidden(
-            list(dialog_settings.Watch_Table.model().get_data().columns).index('id'), False)
-        change_enabled_tab_elements(dialog_settings, 'Watch', True)
-
-    seek_threads = SeekThreads(watch_threads_check, dialog_settings)
-    seek_threads.finished.connect(partial(seek_ends, seek_thread=seek_threads))
-    seek_threads.start()
+    threadpool.waitForDone()

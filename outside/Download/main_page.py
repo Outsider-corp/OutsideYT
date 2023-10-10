@@ -116,6 +116,7 @@ def start_download(dialog_settings, table: QTableView):
                 lambda x: update_progress_label(table, x))
             dialog_settings.download_thread.add_progress_label_signal.connect(
                 lambda x, y: add_progress_label(table, x, y))
+            dialog_settings.download_thread.error_signal.connect(lambda x: error_func(x))
             dialog_settings.download_thread.start()
         except Exception as e:
             print(f"Error on download_start...\n{e}")

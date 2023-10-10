@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 import OutsideYT
 from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError
 from outside.functions import get_video_id, get_video_link, check_folder_name
+from outside.message_boxes import error_func
 
 
 class OutsideDownloadVideoYT:
@@ -34,6 +35,7 @@ class OutsideDownloadVideoYT:
                  api_video_info=None,
                  ffmpeg_location: str = None,
                  callback_func=None,
+                 callback_err=None,
                  stop_signal=None):
         """
         Initialization of class.
@@ -66,6 +68,7 @@ class OutsideDownloadVideoYT:
         self._itags_api = None
         self.ffmpeg_location = ffmpeg_location or OutsideDownloadVideoYT.__FFMPEG_LOCATION
         self._callback = callback_func
+        self._callback_err = callback_err
         self.__progress_size = None
         self.__api_key = os.environ.get('YT_KEY', OutsideYT.ACCESS_TOKEN)
         self.__stop_signal = stop_signal
@@ -273,13 +276,16 @@ class OutsideDownloadVideoYT:
                                                      method='GET',
                                                      timeout=timeout,
                                                      stream=True)
-                except requests.exceptions.InvalidURL as e:
+                except requests.exceptions.Timeout:
+                    pass
+                except requests.exceptions.RequestException:
                     raise
                 except http.client.IncompleteRead:
                     pass
                 else:
                     break
                 tries += 1
+
             key_add = False
             for chunk in response.iter_content(chunk_size=self.__CHUNK_SIZE):
                 if chunk:
@@ -312,11 +318,8 @@ class OutsideDownloadVideoYT:
             use_api: bool - use YouTube API or not
         """
         try:
-            print(2.45)
             if use_api:
-                print(2.46)
                 if self._itags_api is None:
-                    print(2.465)
                     self._itags_api = self.get_itags_from_params(self.api_video_info)
                 itags = self._itags_api
                 video_info = self.api_video_info
@@ -325,7 +328,6 @@ class OutsideDownloadVideoYT:
                     self._itags = self.get_itags_from_params(self.player_video_info)
                 itags = self._itags
                 video_info = self.player_video_info
-            print(2.5)
             files = []
             self.__progress_size = sum([int(i['contentLength']) for i in itags])
             for i, itag in enumerate(itags):
@@ -337,12 +339,11 @@ class OutsideDownloadVideoYT:
                                          f'{f"_{i}" if len(itags) == 2 else ""}.{ext}')
                 files.append(file_path)
                 self.__download_one_format(url, filesize, file_path)
-            print(2.6)
             if len(files) == 2:
                 self._add_video_audio(*files)
             return True
         except Exception as e:
-            print(f'Error on download_streams...\n{e}')
+            self._callback_err(f'Error on download video!\n{e}')
             return False
 
     def __get_video_size(self, video_info):

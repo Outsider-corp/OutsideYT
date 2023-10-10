@@ -3,7 +3,7 @@ import os
 
 from typing import List
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread, pyqtSignal
+from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool
 from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
@@ -27,10 +27,10 @@ class ProgressMutex:
         self.mutex.unlock()
 
 
-class SeekThreads(QThread):
+class WorkerManager(QObject):
     def __init__(self, threads_list, dialog_settings) -> None:
-        super().__init__()
-        self.threads_list = threads_list
+        super(WorkerManager, self).__init__()
+        self.threadpool = QThreadPool()
         self.dialog_settings = dialog_settings
 
     def run(self):
@@ -131,6 +131,7 @@ class DownloadThread(QThread):
     update_progress_signal = pyqtSignal(int)
     update_progress_label_signal = pyqtSignal(str)
     add_progress_label_signal = pyqtSignal((bool, str))
+    error_signal = pyqtSignal(str)
 
     def __init__(self, table, saving_path: str, parent=None,
                  download_info_key=True, download_video_key=True, **kwargs):
@@ -150,6 +151,10 @@ class DownloadThread(QThread):
 
     def add_progress_label(self, add_key: bool = False, text: str = ''):
         self.add_progress_label_signal(add_key, text)
+
+    def show_error(self, text: str):
+        self.error_signal.emit(text)
+
 
     def run_download_process(self):
         if self.download_info_key:
@@ -188,7 +193,8 @@ def start_video_download(table: QTableView, saving_path: str, completed_tasks_in
                 video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
                                                     video_info=video['_download_info'],
                                                     params=params,
-                                                    callback_func=thread.update_progress_bar)
+                                                    callback_func=thread.update_progress_bar,
+                                                    callback_err=thread.show_error)
                 if video_down.download_video(saving_path=saving_path):
                     completed_tasks_info[num] = True
         except Exception as e:
