@@ -28,12 +28,13 @@ FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*'
 
 WAIT_TIME_URL_UPLOADS = 5
 WAIT_TIME_ASYNC_LOOPS = 0.8
-WAIT_TIME_THREAD = 0.5
+WAIT_TIME_THREAD = 0.3
 SAVE_COOKIES_TIME = 60 * 60 * 24 * 30
 ASYNC_LIMIT = 20
 VIDEO_DOWNLOAD_TIMEOUT = 5
 VIDEO_DOWNLOAD_MAX_RETRIES = 3
-DEFAULT_CHUNK_SIZE = 9437184
+DEFAULT_CHUNK_SIZE = 1024**2
+MAX_THREADS_COUNT = 5
 
 FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
 
@@ -93,7 +94,7 @@ VIDEO_ITAG = {272: ('4320p', 'WEBM'), 702: ('4320p', 'MP4'), 571: ('4320p', 'MP4
               133: ('240p', 'MP4'), 330: ('144p', 'WEBM'), 278: ('144p', 'WEBM'),
               694: ('144p', 'MP4'), 394: ('144p', 'MP4'), 160: ('144p', 'MP4')}
 
-AUDIO_ITAG = {  # FIXME
+AUDIO_ITAG = {
     258: ("384", 'MP4'),
     172: ("256", 'WEBM'),
     141: ("256", 'MP4'),

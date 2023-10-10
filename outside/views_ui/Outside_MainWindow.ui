@@ -387,31 +387,28 @@ selection-background-color: rgb(15, 15, 15);</string>
           </item>
           <item>
            <widget class="QLabel" name="Upload_Progress_Label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
              <string/>
             </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_8">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QCheckBox" name="Upload_delete_after_upload_checkBox">
@@ -670,31 +667,30 @@ selection-background-color: rgb(15, 15, 15);</string>
           </item>
           <item>
            <widget class="QLabel" name="Watch_Progress_Label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="font">
              <font>
               <family>Arial</family>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <pointsize>9</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
              </font>
             </property>
             <property name="text">
              <string/>
             </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_16">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QCheckBox" name="Watch_ShowBrowser_checkBox">
@@ -1090,6 +1086,12 @@ selection-background-color: rgb(15, 15, 15);</string>
             <property name="text">
              <string/>
             </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -1205,7 +1207,7 @@ selection-background-color: rgb(15, 15, 15);</string>
      <x>0</x>
      <y>0</y>
      <width>1031</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOutside_YouTube">

@@ -3,6 +3,7 @@ from functools import partial
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QTableView, QWidget
 
+import OutsideYT
 from OutsideYT import app_settings_uploaders
 from . import TableModels, context_menu
 from outside import TableModels as CommonTables
@@ -10,7 +11,8 @@ from .dialogs import select_saving_path, open_advanced_settings
 from .functions import _get_download_saving_path
 from ..asinc_functions import DownloadThread
 from ..functions import update_checkbox_select_all, update_combobox, change_enabled_tab_elements
-from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, cancel_page_action
+from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
+    cancel_page_action, update_progress_bar, update_progress_label, add_progress_label
 from ..message_boxes import error_func
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 
@@ -76,11 +78,10 @@ def start_download(dialog_settings, table: QTableView):
         try:
             comp_info = thread.completed_tasks_info
             thread.quit()
-            thread.wait()
+            thread.wait(OutsideYT.WAIT_TIME_THREAD)
             table.model()._data["Selected"] = [not i for i in comp_info]
             if not all(table.model()._data["Selected"]):
                 dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
-            thread.terminate()
             dialog_settings.download_thread = None
         except Exception as e:
             print(f"Error on download finish...\n{e}")
@@ -109,6 +110,12 @@ def start_download(dialog_settings, table: QTableView):
                                                              .Download_Video_checkBox.isChecked())
             dialog_settings.download_thread.finished.connect(
                 partial(finish, dialog_settings.download_thread))
+            dialog_settings.download_thread.update_progress_signal.connect(
+                lambda x: update_progress_bar(table, x))
+            dialog_settings.download_thread.update_progress_label_signal.connect(
+                lambda x: update_progress_label(table, x))
+            dialog_settings.download_thread.add_progress_label_signal.connect(
+                lambda x, y: add_progress_label(table, x, y))
             dialog_settings.download_thread.start()
         except Exception as e:
             print(f"Error on download_start...\n{e}")
@@ -118,5 +125,4 @@ def download_button(dialog_settings, table: QTableView):
     if dialog_settings.Download_Start.text() == "Start":
         start_download(dialog_settings=dialog_settings, table=table)
     elif dialog_settings.Download_Start.text() == "Stop":
-        print(20)
         cancel_page_action(dialog_settings, table)

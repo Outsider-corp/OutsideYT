@@ -3,7 +3,7 @@ import os
 
 import OutsideYT
 from OutsideYT import app_settings_uploaders
-from outside.YT_functions import download_image
+from outside.YT.functions import download_image
 from outside.functions import check_folder_name
 from outside.message_boxes import error_func
 

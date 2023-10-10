@@ -10,5 +10,8 @@ class RequestMethodTypeError(OutsideError):
 
 class StatusCodeRequestError(OutsideError):
     """Status Code of request is not 200"""
-    def __init__(self, reason):
+    def __init__(self, reason=None):
         print(f'{reason}')
+
+class StopThreadError(OutsideError):
+    """Thread was stopped."""

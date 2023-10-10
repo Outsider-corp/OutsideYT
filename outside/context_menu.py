@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QAbstractItemView, QMenu, QStyle
 
 import OutsideYT
 from outside.TableModels import remove_all_rows, remove_row, remove_selected_rows
-from outside.YT_functions import open_video_in_browser
+from outside.YT.functions import open_video_in_browser
 
 
 def add_remove_row(menu, ind, table: QtWidgets.QAbstractItemView, type_deleting: str = ''):

@@ -1,12 +1,9 @@
 import asyncio
-import os
 
 import aiohttp
-import pytube
-import requests
 
-import OutsideYT
-from outside.YT_functions import get_video_info, OutsideDownloadVideoYT, post_video_info
+from outside.YT.functions import get_video_info
+from outside.YT.download_model import OutsideDownloadVideoYT
 
 link = 'https://youtu.be/RIx0JhCno3o'
 link2 = f'https://www.youtube.com/youtubei/v1/player/RIx0JhCno3o/'

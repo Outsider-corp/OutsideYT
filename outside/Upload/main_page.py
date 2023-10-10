@@ -1,15 +1,13 @@
 from functools import partial
 
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import QWidget
 
 import OutsideYT
-import outside.TableModels
 from outside import TableModels as CommonTables
 from outside import main_dialogs
 
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
-from ..YT_functions import upload_video
+from outside.YT.functions import upload_video
 from . import TableModels, context_menu, dialogs
 
 

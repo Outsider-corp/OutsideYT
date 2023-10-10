@@ -12,7 +12,7 @@ from outside.views_py import (
     UpdateTime_Dialog,
     UploadTime_for_Video_Dialog,
 )
-from outside.YT_functions import get_google_login
+from outside.YT.functions import get_google_login
 
 from . import upload_time_max_rows
 

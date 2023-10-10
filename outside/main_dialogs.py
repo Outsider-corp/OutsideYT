@@ -1,6 +1,5 @@
 import glob
 import os
-import time
 from functools import partial
 from typing import List
 
@@ -22,7 +21,7 @@ from outside.views_py import (
     WatchersList_Dialog,
 )
 from outside.Watch.dialogs import edit_watchers_groups
-from outside.YT_functions import get_playlist_info, select_page
+from outside.YT.functions import get_playlist_info, select_page
 
 
 def open_UsersList_Dialog(parent, table_type: str, add_table_class):
@@ -414,7 +413,6 @@ def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings)
 def get_videos_info(table, links: List, dialog_settings, group=None, add_args=None):
     def return_func(thread):
         try:
-            print(13)
             results = thread.results
             thread.quit()
             if thread.wait():
@@ -439,6 +437,8 @@ def get_videos_info(table, links: List, dialog_settings, group=None, add_args=No
                                          progress_label=table.model().progress_label,
                                          additional_args=add_args)
         vids_thread.finished.connect(partial(return_func, vids_thread))
+        vids_thread.update_progress_signal.connect(lambda x: update_progress_bar(table, x))
+        vids_thread.update_progress_label_signal.connect(lambda x: update_progress_label(table, x))
         vids_thread.start()
 
     except Exception as e:
@@ -496,10 +496,32 @@ def update_settings_from_file():
     OutsideYT.app_settings_watchers.update_settings()
 
 
+def update_progress_bar(table: QTableView, value: int):
+    if table.model().progress_bar:
+        table.model().progress_bar.setValue(value)
+
+
+def update_progress_label(table: QTableView, label_text: str):
+    if table.model().progress_label:
+        table.model().progress_label.setText(label_text)
+
+
+def add_progress_label(table: QTableView, add_key: bool, add_text: str):
+    label = table.model().progress_label
+    if label:
+        old_text = label.text()
+        while True:
+            if add_key:
+                print(add_text)
+                label.setText(f'{old_text} / {add_text}')
+                add_key, add_text = yield
+            else:
+                label.setText(old_text)
+                break
+    return
+
+
 def cancel_page_action(dialog_settings, table: QTableView):
     table_type = table.model().table_type
-    print(20.3)
     if getattr(dialog_settings, f'{table_type.lower()}_thread'):
-        print(20.6)
-        getattr(dialog_settings, f'{table_type.lower()}_thread').stop_signal = True
-        print(20.7)
+        getattr(dialog_settings, f'{table_type.lower()}_thread').terminate()

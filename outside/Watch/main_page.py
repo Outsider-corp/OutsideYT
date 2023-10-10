@@ -2,8 +2,10 @@ import time
 from functools import partial
 
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import QThreadPool
+from PyQt5.QtWidgets import QWidget, QTableView
 
+import OutsideYT
 from outside import TableModels as CommonTables
 from OutsideYT import app_settings_watchers
 
@@ -70,13 +72,21 @@ def update_watch(ui, parent):
     return watch_table, ui
 
 
-def start_watch(dialog, dialog_settings, table):
+def start_watch(dialog, dialog_settings, table: QTableView):
     def finish_video(video):
         watch_threads_check.remove(video)
 
+    data = table.model().get_data()
+    if not (len(data) and any(data['Selected'])):
+        error_func(f'0 videos selected for watching', parent=dialog)
+        return
+
+    # threadpool = QThreadPool()
+    # threadpool.setMaxThreadCount(OutsideYT.MAX_THREADS_COUNT)
+
     watch_threads_check = []
 
-    for num, video in table.model().get_data().iterrows():
+    for num, video in data.iterrows():
         group = video['Watchers Group']
         users = app_settings_watchers.groups[group].keys()
         if not users:
@@ -100,6 +110,7 @@ def start_watch(dialog, dialog_settings, table):
         watch_thread.start()
         watch_thread.finished.connect(partial(finish_video, video=num))
 
+    # threadpool.waitForDone()
     def seek_ends(seek_thread):
         seek_thread.deleteLater()
         dialog_settings.Watch_Table.model().reset_progress_bars()
