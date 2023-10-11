@@ -3,6 +3,8 @@ import typing
 import pandas as pd
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 
+from outside.functions import get_video_link
+
 
 class DownloadModel(QAbstractTableModel):
     columns = ['id', 'Video', 'Channel', 'Duration', 'Link', 'Selected', '_download_info']
@@ -76,7 +78,7 @@ class DownloadModel(QAbstractTableModel):
                     return duration
                 if column == 'Link':
                     link = self.get_data().loc[index.row(), column]
-                    return f'youtu.be/{link}'
+                    return get_video_link(link, 'watch')
                 else:
                     return self.get_data().loc[index.row(), column]
         return None

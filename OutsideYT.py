@@ -2,13 +2,14 @@ import os
 
 from outside.oyt_info import settings
 
-ACCESS_TOKEN = 'AIzaSyDb9kArHzQ_zKDtoH0kFYiXrCiUvCBduIY'
+ACCESS_TOKEN = ''
 
 project_folder = os.getcwd()
 app_settings_uploaders = settings.SettingsUsers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_UPLOADERS.json'))
 app_settings_watchers = settings.SettingsWatchers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_WATCHERS.json'))
+chromedriver_location = os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe')
 
 TEXT_EXTENSIONS = ['.txt']
 VIDEO_EXTENSIONS = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
@@ -33,7 +34,7 @@ SAVE_COOKIES_TIME = 60 * 60 * 24 * 30
 ASYNC_LIMIT = 20
 VIDEO_DOWNLOAD_TIMEOUT = 5
 VIDEO_DOWNLOAD_MAX_RETRIES = 3
-DEFAULT_CHUNK_SIZE = 1024**2
+DEFAULT_CHUNK_SIZE = 1024 ** 2
 MAX_THREADS_COUNT = 5
 
 FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
@@ -117,8 +118,8 @@ _3D = [82, 83, 84, 85, 100, 101, 102]
 LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
 
 download_video_params = {'simple': True,
-                   'video': {'video_quality': '1080p',
-                             'video_ext': 'MP4'},
-                   'audio': {'audio_quality': '192',
-                             'audio_ext': 'MP4'},
-                   'full_quality': 'best'}
+                         'video': {'video_quality': '1080p',
+                                   'video_ext': 'MP4'},
+                         'audio': {'audio_quality': '192',
+                                   'audio_ext': 'MP4'},
+                         'full_quality': 'best'}

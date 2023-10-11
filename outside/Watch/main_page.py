@@ -76,14 +76,19 @@ def start_watch(dialog, dialog_settings, table: QTableView):
     def update_progress_watch(id: int, val: int):
         table.model().update_progress_bar(id, val)
 
+    def finish():
+        change_enabled_tab_elements(dialog_settings, 'Watch', True)
+        dialog_settings.Watch_Table.hideColumn(
+            list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
+        dialog_settings.Watch_Table.setColumnHidden(
+            list(dialog_settings.Watch_Table.model().get_data().columns).index('id'), False)
+        table.model().reset_progress_bars()
+
     data = table.model().get_data()
     if not (len(data) and any(data['Selected'])):
         error_func(f'0 videos selected for watching', parent=dialog)
         return
 
-    watch_manager = WatchManager(OutsideYT.MAX_THREADS_COUNT)
-    watch_manager.update_progress_watcher_signal.connect(
-        lambda id, val: update_progress_watch(id, val))
     change_enabled_tab_elements(dialog_settings, 'Watch', False)
     dialog_settings.Watch_Table.hideColumn(
         list(dialog_settings.Watch_Table.model().get_data().columns).index('id'))
@@ -91,25 +96,22 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
         False)
 
+    watch_manager = WatchManager(OutsideYT.MAX_THREADS_COUNT)
+    watch_manager.update_progress_watcher_signal.connect(
+        lambda id, val: update_progress_watch(id, val))
+    watch_manager.finish_signal.connect(finish)
+
     sel_data = data.to_dict(orient='records')
+    table.model().disable_unselected_progress_bars()
 
     for num, video in enumerate(sel_data):
         if not video['Selected']:
             continue
-        group = video['Watchers Group']
-        users = app_settings_watchers.groups[group].keys()
+        group = video.get('Watchers Group', app_settings_watchers.def_group)
+        users = list(app_settings_watchers.groups[group].keys())
         if not users:
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
-
         watch_manager.add_watcher(num, video, users,
                                   driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
-                                  isChecked())
-
-    watch_manager.threadpool.waitForDone()
-    change_enabled_tab_elements(dialog_settings, 'Watch', True)
-    dialog_settings.Watch_Table.hideColumn(
-        list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'))
-    dialog_settings.Watch_Table.setColumnHidden(
-        list(dialog_settings.Watch_Table.model().get_data().columns).index('id'),
-        False)
+                                  isChecked(), auto_start=True)

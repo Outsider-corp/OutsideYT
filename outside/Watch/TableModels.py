@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QStyledItemDelegate,
 )
 
+from outside.functions import get_video_link
 from outside.message_boxes import error_func
 from OutsideYT import app_settings_watchers
 
@@ -86,11 +87,12 @@ class WatchModel(QAbstractTableModel):
                         dur_sec %= 3600
                     duration += f'{dur_sec // 60:02d}:{dur_sec % 60:02d}'
                     return duration
-
+                if column == 'Link':
+                    link = self.get_data().loc[index.row(), column]
+                    return get_video_link(link, 'watch')
                 elif column == 'Count':
                     return len(app_settings_watchers.groups[self.get_data().loc[index.row(),
                     'Watchers Group']])
-
                 else:
                     return self.get_data().loc[index.row(), column]
         return None
@@ -164,8 +166,11 @@ class WatchModel(QAbstractTableModel):
         self._tableview.update(qindex)
 
     def reset_progress_bars(self):
-        self._data['Progress'] = 0
+        self._data.loc['Progress'] = 0
         self.update()
+
+    def disable_unselected_progress_bars(self):
+        self._data.loc[self._data['Selected'] == False, 'Progress'] = -1
 
 
 class WatchersUsersModel(QAbstractTableModel):
@@ -387,6 +392,18 @@ class ProgressBarDelegate(QStyledItemDelegate):
         self.progress_bar.rect = option.rect
         self.progress_bar.fontMetrics = QtGui.QFontMetrics(option.font)
         self.progress_bar.progress = int(index.data())
-        self.progress_bar.text = f'{self.progress_bar.progress}%'
+        if self.progress_bar.progress >= 0:
+            text = f'{self.progress_bar.progress}%'
+            pal = self.progress_bar.palette
+            pal.setColor(QtGui.QPalette.Highlight,
+                         QtGui.QColor(100 + self.progress_bar.progress, 0, 0))
+            self.progress_bar.palette = pal
+        else:
+            text = 'Unselected'
+            self.progress_bar.progress = 100
+            pal = self.progress_bar.palette
+            pal.setColor(QtGui.QPalette.Highlight, QtGui.QColor(134, 134, 134))
+            self.progress_bar.palette = pal
+        self.progress_bar.text = text
         QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar,
                                                    self.progress_bar, painter)

@@ -1,10 +1,12 @@
 import json
 import os
+from typing import List
 
 import OutsideYT
 from OutsideYT import app_settings_uploaders
+from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.YT.functions import download_image
-from outside.functions import check_folder_name
+from outside.functions import check_folder_name, get_video_link
 from outside.message_boxes import error_func
 
 
@@ -48,3 +50,31 @@ def create_video_folder(video_info: dict, saving_path: str):
         pass
     return False
 
+
+def start_video_download(videos: List, saving_path: str, completed_tasks_info: List,
+                         params: dict, add_to_folder: bool,
+                         thread):
+    cnt_videos = len(videos)
+    for num, video in enumerate(videos):
+        try:
+            thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
+            if add_to_folder:
+                saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
+                os.makedirs(saving_path, exist_ok=True)
+                video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
+                                                    video_info=video['_download_info'],
+                                                    params=params,
+                                                    callback_func=thread.update_progress_bar,
+                                                    callback_err=thread.show_error)
+                if video_down.download_video(saving_path=saving_path):
+                    completed_tasks_info[num] = True
+        except Exception as e:
+            print(f'Error on start downloading...\n{e}')
+
+
+def save_videos_info(videos, saving_path: str, completed_tasks_info: List, thread):
+    cnt_videos = len(videos)
+    for num, video in enumerate(videos):
+        if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
+            thread.update_progress_bar(int((num + 1) / cnt_videos * 100))
+            completed_tasks_info[num] = True

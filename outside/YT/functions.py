@@ -15,11 +15,11 @@ import yt_dlp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-import OutsideYT
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.functions import get_video_id
 from outside.message_boxes import error_func, waiting_func
-from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS
+from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
+    chromedriver_location, ACCESS_TOKEN
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -51,9 +51,7 @@ class DriverContext:
         self.driver = None
 
     def __enter__(self):
-        self.driver = webdriver.Chrome(executable_path=
-                                       os.path.join(project_folder, 'outside', '../bin',
-                                                    'chromedriver.exe'),
+        self.driver = webdriver.Chrome(executable_path=chromedriver_location,
                                        options=self.driver_options)
         return self.driver
 
@@ -288,7 +286,7 @@ async def post_video_info(link, session: aiohttp.ClientSession, headers=None, **
     base_headers = OutsideDownloadVideoYT.base_headers
     if headers:
         base_headers.update(headers)
-    url = f'https://www.youtube.com/youtubei/v1/player?videoId={get_video_id(link)}&key={OutsideYT.ACCESS_TOKEN}&contentCheckOk=True&racyCheckOk=True'
+    url = f'https://www.youtube.com/youtubei/v1/player?videoId={get_video_id(link)}&key={ACCESS_TOKEN}&contentCheckOk=True&racyCheckOk=True'
     async with session.post(url, data=data, headers=base_headers) as res:
         data = await res.json()
     return data
@@ -365,7 +363,7 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             button = driver.find_element(By.XPATH, '//button[@class="ytp-play-button ytp-button"]')
             button.click()
-            for i in range(duration):
+            for _ in range(duration):
                 try:
                     driver.current_url
                 except:
@@ -406,6 +404,7 @@ def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str
     except Exception as e:
         print(f'Error on downloading video...\n{e}')
         return False
+
 
 def open_video_in_browser(url):
     target = f'https://youtu.be/{url}'

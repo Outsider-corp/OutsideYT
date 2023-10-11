@@ -1,17 +1,13 @@
 import asyncio
-import os
-from functools import partial
 
 from typing import List, Dict
 import aiohttp
 from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool, QRunnable
-from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
-from outside.Download.functions import create_video_folder
+from outside.Download.functions import start_video_download, save_videos_info
 from outside.YT.functions import get_video_info, watching
-from outside.YT.download_model import OutsideDownloadVideoYT
-from outside.functions import check_folder_name, get_video_link
+from outside.functions import get_video_link
 
 
 class ProgressMutex:
@@ -28,8 +24,12 @@ class ProgressMutex:
         self.mutex.unlock()
 
 
+class WatchSignals(QObject):
+    progress_signal = pyqtSignal((int, int))
+    finished_signal = pyqtSignal()
+
+
 class Watcher(QRunnable):
-    update_progress_signal = pyqtSignal((int, int))
 
     def __init__(self, id, video_info: Dict, watchers: List, driver_headless=True,
                  offsets: List = None):
@@ -39,6 +39,7 @@ class Watcher(QRunnable):
         self._watchers = watchers
         self.driver_headless = driver_headless
         self._offsets = offsets
+        self.signals = WatchSignals()
 
         sum_offsets = sum(offsets) if offsets else 0
         self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
@@ -49,11 +50,11 @@ class Watcher(QRunnable):
         async with self._lock:
             self._progress += 1
             new_val = int(self._progress / self._total_steps * 100)
-            self.update_progress_signal.emit(self.__id, new_val)
+            self.signals.progress_signal.emit(self.__id, new_val)
 
     async def start_loop(self):
-        atasks = [watching(get_video_link(self._video_info['Link'], type='embed'),
-                           self._video_info['Duration'], user,
+        atasks = [watching(get_video_link(self._video_info['Link'], type='watch'),
+                           int(self._video_info['Duration']), user,
                            driver_headless=self.driver_headless,
                            progress_inc=self.progress_bar_inc)
                   for user in self._watchers]
@@ -61,14 +62,16 @@ class Watcher(QRunnable):
 
     def run(self):
         asyncio.run(self.start_loop())
-        self.update_progress_signal.emit(id, 0)
+        self.signals.progress_signal.emit(id, 0)
+        self.signals.finished_signal.emit()
 
 
 class WatchManager(QObject):
     update_progress_watcher_signal = pyqtSignal((int, int))
+    finish_signal = pyqtSignal()
 
     def __init__(self, max_workers: int):
-        super(WatchManager, self).__init__()
+        super().__init__()
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(max_workers)
         self._watchers = {}
@@ -77,8 +80,9 @@ class WatchManager(QObject):
                     driver_headless=True, auto_start=False, **kwargs):
         watcher = Watcher(id, video_info, watchers, driver_headless, offsets)
         self._watchers[id] = watcher
-        watcher.update_progress_signal.connect(
+        watcher.signals.progress_signal.connect(
             lambda id, x: self.handle_watcher_progress(id, x))
+        watcher.signals.finished_signal.connect(self.finish)
         if auto_start:
             self.start_watcher(id)
 
@@ -86,8 +90,11 @@ class WatchManager(QObject):
         self.threadpool.start(self._watchers[id])
 
     def handle_watcher_progress(self, id: int, value: int):
-        self.update_progress_watcher_signal(id, value)
+        self.update_progress_watcher_signal.emit(id, value)
 
+    def finish(self):
+        if self.threadpool.activeThreadCount() == 0:
+            self.finish_signal.emit()
 
 class GetVideoInfoThread(QThread):
     update_progress_signal = pyqtSignal(int)
@@ -190,30 +197,3 @@ class DownloadThread(QThread):
         self.update_progress_info()
 
 
-def start_video_download(videos: List, saving_path: str, completed_tasks_info: List,
-                         params: dict, add_to_folder: bool,
-                         thread):
-    cnt_videos = len(videos)
-    for num, video in enumerate(videos):
-        try:
-            thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
-            if add_to_folder:
-                saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
-                os.makedirs(saving_path, exist_ok=True)
-                video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
-                                                    video_info=video['_download_info'],
-                                                    params=params,
-                                                    callback_func=thread.update_progress_bar,
-                                                    callback_err=thread.show_error)
-                if video_down.download_video(saving_path=saving_path):
-                    completed_tasks_info[num] = True
-        except Exception as e:
-            print(f'Error on start downloading...\n{e}')
-
-
-def save_videos_info(videos, saving_path: str, completed_tasks_info: List, thread):
-    cnt_videos = len(videos)
-    for num, video in enumerate(videos):
-        if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
-            thread.update_progress_bar(int((num + 1) / cnt_videos * 100))
-            completed_tasks_info[num] = True
