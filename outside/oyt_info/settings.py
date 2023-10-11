@@ -73,7 +73,7 @@ class SettingsUsers:
         self.update_settings()
 
     def del_vids_folder(self):
-        self._vids_folder = 'videos' if self.__str__() == 'uploaders' else 'download'
+        self._vids_folder = 'videos'
         self.update_settings()
 
     def add_def_account(self, login: str):
@@ -263,19 +263,14 @@ class SettingsWatchers:
 
     def check_cookies(self):
         folder = os.path.dirname(self.file)
-        os.makedirs(os.path.join(folder, 'watchers'), exist_ok=True)
+        os.makedirs(os.path.join(folder, self.__str__()), exist_ok=True)
         to_del = []
         for group_name, group in self.groups.items():
             for acc_name in group:
-                if not os.path.isfile(os.path.join(folder, 'watchers', f'{acc_name}_cookies')):
-                    to_del.append((group_name, acc_name))  # noqa: PERF401
+                if not os.path.isfile(os.path.join(folder, self.__str__(), f'{acc_name}_cookies')):
+                    to_del.append((group_name, acc_name))
         for acc in to_del:
             self._groups[acc[0]].pop(acc[1])
-        # for group_name, group in self.groups.items():
-        #     if len(group) == 0:
-        #         to_del.append(group_name)
-        # for group in to_del:
-        #     self._groups.pop(group)
         if self.def_group not in self.groups:
             self.del_def_group()
         self.update_settings()

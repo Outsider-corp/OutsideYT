@@ -19,9 +19,9 @@ from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.functions import get_video_id
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
-    chromedriver_location, ACCESS_TOKEN
+    chromedriver_location, ACCESS_TOKEN, app_settings_watchers, app_settings_uploaders
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 class DriverContext:
@@ -78,7 +78,7 @@ def get_google_login(login: str, mail: str, folder: str):
                 if 'expiry' in val:
                     cookies[i]['expiry'] = int(time.time() + SAVE_COOKIES_TIME)
             pickle.dump(cookies,
-                        open(os.path.join(project_folder, 'outside', '../oyt_info',
+                        open(os.path.join(project_folder, 'outside', 'oyt_info',
                                           folder.lower(), filename), 'wb'))
             # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
             added = True
@@ -115,7 +115,9 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
             url2 = 'https://studio.youtube.com/'
             driver.get(url)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            for cookie in pickle.load(open(f'outside/oyt_info/uploaders/{user}_cookies', 'rb')):
+            for cookie in pickle.load(
+                    open(f'outside/oyt_info/{app_settings_uploaders.__str__()}/{user}_cookies',
+                         'rb')):
                 driver.add_cookie(cookie)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
@@ -352,7 +354,7 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
             url_yt = 'https://www.youtube.com/'
             driver.get(url_yt)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            file_cookies = f'outside/oyt_info/watchers/{user}_cookies'
+            file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
             if not os.path.exists(file_cookies):
                 raise Exception(f'Cookies for {user} are not found.')
             cookies = pickle.load(open(file_cookies, 'rb'))

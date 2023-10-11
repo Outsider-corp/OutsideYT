@@ -48,11 +48,11 @@ class WatchModel(QAbstractTableModel):
 
     def flags(self, index: QModelIndex):
         flags = Qt.ItemIsEnabled
-        if self._data.columns[index.column()] == 'id':
+        if self.get_data().columns[index.column()] == 'id':
             flags |= Qt.ItemIsUserCheckable
         else:
             flags |= Qt.ItemIsSelectable
-            if self._data.columns[index.column()] in ['Watchers Group']:
+            if self.get_data().columns[index.column()] in ['Watchers Group']:
                 flags |= Qt.ItemIsEditable
         return flags
 
@@ -138,8 +138,8 @@ class WatchModel(QAbstractTableModel):
 
     def removeRow(self, row: int, parent: QModelIndex = ...) -> bool:
         self.beginRemoveRows(QModelIndex(), row, row)
-        self._data = self._data.drop(index=row)
-        self._data = self._data.reset_index(drop=True)
+        self._data = self.get_data().drop(index=row)
+        self._data = self.get_data().reset_index(drop=True)
         self.reset_ids()
         self.endRemoveRows()
         self.update()
@@ -166,7 +166,7 @@ class WatchModel(QAbstractTableModel):
         self._tableview.update(qindex)
 
     def reset_progress_bars(self):
-        self._data.loc['Progress'] = 0
+        self._data.loc[:, 'Progress'] = 0
         self.update()
 
     def disable_unselected_progress_bars(self):

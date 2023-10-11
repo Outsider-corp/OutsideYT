@@ -37,8 +37,7 @@ def update_watch(ui, parent):
     group_combo_del = CommonTables.ComboBoxDelegate(watch_table,
                                                     app_settings_watchers.groups.keys())
     watch_table.setItemDelegateForColumn(
-        list(watch_table.model().get_data().columns).index('Watchers Group'),
-        group_combo_del)
+        list(watch_table.model().get_data().columns).index('Watchers Group'), group_combo_del)
     progress_del = TableModels.ProgressBarDelegate(parent)
     watch_table.setItemDelegateForColumn(1, progress_del)
 
@@ -65,9 +64,9 @@ def update_watch(ui, parent):
         lambda pos: context_menu.watch_context_menu(pos, parent=parent, table=watch_table))
 
     ui.actionWatchers_2.triggered.connect(
-        partial(open_UsersList_Dialog, parent=parent, table_type='watch',
-                add_table_class=TableModels.WatchersUsersModel,
-                ))
+        partial(open_UsersList_Dialog, parent=parent,
+                table_type=watch_table.model().table_type.lower(),
+                add_table_class=TableModels.WatchersUsersModel ))
 
     return watch_table, ui
 
