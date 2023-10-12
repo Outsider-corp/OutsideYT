@@ -59,14 +59,14 @@ def start_video_download(videos: List, saving_path: str, completed_tasks_info: L
         try:
             thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
             if add_to_folder:
-                saving_path = os.path.join(saving_path, check_folder_name(video['Video']))
-                os.makedirs(saving_path, exist_ok=True)
+                saving_path_video = os.path.join(saving_path, check_folder_name(video['Video']))
+                os.makedirs(saving_path_video, exist_ok=True)
                 video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
                                                     video_info=video['_download_info'],
                                                     params=params,
                                                     callback_func=thread.update_progress_bar,
                                                     callback_err=thread.show_error)
-                if video_down.download_video(saving_path=saving_path):
+                if video_down.download_video(saving_path=saving_path_video):
                     completed_tasks_info[num] = True
         except Exception as e:
             print(f'Error on start downloading...\n{e}')
