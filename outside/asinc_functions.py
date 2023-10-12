@@ -45,6 +45,7 @@ class Watcher(QRunnable):
         # self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
         self._total_steps = len(self._watchers) * 100
         self._lock = asyncio.Lock()
+        self.semaphore = asyncio.Semaphore(OutsideYT.ASYNC_LIMIT)
         self._progress = 0
 
     async def progress_bar_inc(self, val: int = 1):
@@ -53,12 +54,15 @@ class Watcher(QRunnable):
             new_val = int(self._progress / self._total_steps * 100)
             self.signals.progress_signal.emit(self.__id, new_val)
 
-    async def start_loop(self):
-        atasks = [watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
+    async def watching(self, user):
+        async with self.semaphore:
+            await watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
                                       int(self._video_info['Duration']), user,
                                       driver_headless=self.driver_headless,
                                       progress_inc=self.progress_bar_inc)
-                  for user in self._watchers]
+
+    async def start_loop(self):
+        atasks = [self.watching(user) for user in self._watchers]
         await asyncio.gather(*atasks)
 
     def run(self):
