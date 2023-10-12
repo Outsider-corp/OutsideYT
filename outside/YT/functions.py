@@ -5,8 +5,10 @@ import random
 import sys
 import time
 from functools import partial
+from typing import Dict, List
 
 import aiohttp
+import playwright.async_api
 import requests
 
 import selenium.common.exceptions
@@ -14,20 +16,24 @@ import webbrowser
 import yt_dlp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from pyppeteer import launch
+from pyppeteer.browser import Browser
+from playwright.async_api import async_playwright, Playwright
 
 from outside.YT.download_model import OutsideDownloadVideoYT
+from outside.exceptions import BrowserClosedError, NotFoundCookiesError
 from outside.functions import get_video_id
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
-    chromedriver_location, ACCESS_TOKEN, app_settings_watchers, app_settings_uploaders
+    chromedriver_location, app_settings_watchers, app_settings_uploaders, YT_URL, YT_STUDIO_URL, \
+    VIDEO_WATCH_TIMEOUT, chrome_playwright_location
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
-class DriverContext:
-    def __init__(self, add_args: list = None, gpu: bool = False, images: bool = False,
-                 audio: bool = False,
-                 headless: bool = True, download_dir: str = ''):
+class DriverContextSelenium:
+    def __init__(self, headless: bool = True, download_dir: str = '', gpu: bool = False,
+                 images: bool = False, audio: bool = False, add_args: List = None, **kwargs):
         self.driver_options = webdriver.ChromeOptions()
         user_agent = (f'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
                       f' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36')
@@ -51,8 +57,9 @@ class DriverContext:
         self.driver = None
 
     def __enter__(self):
-        self.driver = webdriver.Chrome(executable_path=chromedriver_location,
-                                       options=self.driver_options)
+        if not self.driver:
+            self.driver = webdriver.Chrome(executable_path=chromedriver_location,
+                                           options=self.driver_options)
         return self.driver
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -60,13 +67,74 @@ class DriverContext:
             self.driver.quit()
 
 
+class BrowserContextPyppeteer:
+    def __init__(self, headless: bool = True, download_dir: str = '', gpu: bool = False,
+                 images: bool = False, audio: bool = False, add_args: Dict = None, **kwargs):
+        self.louch_option = {
+            'headless': headless,
+            'executablePath': chromedriver_location
+        }
+        if download_dir:
+            self.louch_option['downloadPath'] = download_dir
+        if add_args:
+            self.louch_option.update(add_args)
+
+        self.browser: Browser = None
+
+    async def __aenter__(self):
+        if not self.browser:
+            self.browser = await launch(self.louch_option)
+        return self.browser
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.browser:
+            await self.browser.close()
+
+
+class BrowserContextPlayWright:
+    def __init__(self, pw: Playwright, cookies: List = None, headless: bool = True,
+                 download_dir: str = '',
+                 gpu: bool = False,
+                 images: bool = False, audio: bool = False, add_args: List = None, **kwargs):
+        self.pw = pw
+        self.options = {
+            'headless': headless,
+            'executable_path': chrome_playwright_location,
+            'timeout': VIDEO_WATCH_TIMEOUT * 1000
+        }
+        add_args = add_args or []
+        if download_dir:
+            self.options['downloads_path'] = download_dir
+        if not gpu:
+            add_args.append('--disable-gpu')
+        if not images:
+            add_args.append('--disable-software-rasterizer')
+        if not audio:
+            add_args.append('--mute-audio')
+        if add_args:
+            self.options['args'] = add_args
+        self.browser = None
+        self.cookies = cookies
+
+    async def __aenter__(self):
+        if not self.browser:
+            self.browser = await self.pw.chromium.launch(**self.options)
+            self.context = await self.browser.new_context()
+            if self.cookies:
+                await self.context.add_cookies(self.cookies)
+        return self.context
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.browser:
+            await self.browser.close()
+
+
 def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
-        with DriverContext(headless=False, images=True) as driver:
+        with DriverContextSelenium(headless=False, images=True) as driver:
             filename = f'{login}_cookies'
-            url = 'https://youtube.com'
-            driver.get(url)
+            driver.get(YT_URL)
             driver.implicitly_wait(7)
             time.sleep(15)
             while True:
@@ -74,9 +142,10 @@ def get_google_login(login: str, mail: str, folder: str):
                 if 'www.youtube.com/watch' in driver.current_url:
                     break
             cookies = driver.get_cookies()
+            save_time = int(time.time() + SAVE_COOKIES_TIME)
             for i, val in enumerate(cookies):
-                if 'expiry' in val:
-                    cookies[i]['expiry'] = int(time.time() + SAVE_COOKIES_TIME)
+                if 'expiry' in val and cookies[i]['expiry'] < save_time:
+                    cookies[i]['expiry'] = save_time
             pickle.dump(cookies,
                         open(os.path.join(project_folder, 'outside', 'oyt_info',
                                           folder.lower(), filename), 'wb'))
@@ -109,11 +178,9 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
     :return:
     """
     try:
-        with DriverContext(headless=driver_headless, images=not driver_headless,
-                           gpu=not driver_headless) as driver:
-            url = 'https://youtube.com'
-            url2 = 'https://studio.youtube.com/'
-            driver.get(url)
+        with DriverContextSelenium(headless=driver_headless, images=not driver_headless,
+                                   gpu=not driver_headless) as driver:
+            driver.get(YT_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             for cookie in pickle.load(
                     open(f'outside/oyt_info/{app_settings_uploaders.__str__()}/{user}_cookies',
@@ -121,7 +188,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                 driver.add_cookie(cookie)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
 
-            driver.get(url2)
+            driver.get(YT_STUDIO_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
             driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
@@ -283,17 +350,6 @@ async def get_video_info(link, session: aiohttp.ClientSession, headers=None, *ar
     return vid_info
 
 
-async def post_video_info(link, session: aiohttp.ClientSession, headers=None, **kwargs):
-    data = OutsideDownloadVideoYT.full_data
-    base_headers = OutsideDownloadVideoYT.base_headers
-    if headers:
-        base_headers.update(headers)
-    url = f'https://www.youtube.com/youtubei/v1/player?videoId={get_video_id(link)}&key={ACCESS_TOKEN}&contentCheckOk=True&racyCheckOk=True'
-    async with session.post(url, data=data, headers=base_headers) as res:
-        data = await res.json()
-    return data
-
-
 def get_playlist_info(link):
     """Функция для получения информации о всех видео в плейлисте."""
     error_func('This action will be update latter...')
@@ -309,10 +365,9 @@ def select_page(type_add: str):
     """
     ans = None
     try:
-        with DriverContext(gpu=True, images=True, headless=False) as driver:
-            yt_url = 'https://www.youtube.com/'
+        with DriverContextSelenium(gpu=True, images=True, headless=False) as driver:
             not_add_urls = []
-            driver.get(yt_url)
+            driver.get(YT_URL)
             driver.implicitly_wait(3)
             if type_add == 'video':
                 url_search = 'www.youtube.com/watch'
@@ -337,8 +392,8 @@ def select_page(type_add: str):
     return ans
 
 
-async def watching(url: str, duration: int, user: str, driver_headless: bool = True,
-                   progress_inc=None):
+async def watching_selenium(url: str, duration: int, user: str, driver_headless: bool = True,
+                            progress_inc=None):
     """
     Start watching video on url link by group watchers.
 
@@ -350,7 +405,7 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
         progress_inc: function - function to increment progress_bar value
     """
     try:
-        with DriverContext(headless=driver_headless) as driver:
+        with DriverContextSelenium(headless=driver_headless) as driver:
             url_yt = 'https://www.youtube.com/'
             driver.get(url_yt)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
@@ -373,6 +428,117 @@ async def watching(url: str, duration: int, user: str, driver_headless: bool = T
                 await asyncio.sleep(1)
                 if progress_inc:
                     await progress_inc()
+    except BaseException as e:
+        print(f"Error. \n {e}")
+
+
+async def watching_pyppeteer(url: str, duration: int, user: str, driver_headless: bool = True,
+                             progress_inc=None):
+    """
+    Start watching video on url link by group watchers.
+
+    Args:
+        url: str - link of YT video
+        duration: int - duration on video
+        user: str - watchers group
+        driver_headless: bool - headless argument for driver
+        progress_inc: function - function to increment progress_bar value
+    """
+    try:
+        async with BrowserContextPyppeteer(headless=driver_headless) as browser:
+            page = await browser.newPage()
+            await page.goto(YT_URL)
+            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+            file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
+            if not os.path.exists(file_cookies):
+                raise NotFoundCookiesError(file_cookies)
+            cookies = pickle.load(open(file_cookies, 'rb'))
+            await page.setCookie(*cookies)
+
+            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+            await page.goto(url)
+            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+            button = await page.waitForXPath('//button[@class="ytp-play-button ytp-button"]')
+            await button.click()
+            progress = await page.querySelector(
+                '[class="ytp-play-progress ytp-swatch-background-color"]')
+            old_progress_value = 0
+            while old_progress_value != 100:
+                try:
+                    style = await page.evaluate(
+                        f'(element) => '
+                        f'window.getComputedStyle(element).getPropertyValue(arguments[0])',
+                        progress, 'transform')
+                except:
+                    raise BrowserClosedError()
+                await asyncio.sleep(1)
+                if progress_inc:
+                    progress_value = int(float(style.replace('scaleX(', '').replace(')', '')) * 100)
+                    if old_progress_value < progress_value:
+                        await progress_inc()
+                        old_progress_value = progress_value
+    except BrowserClosedError:
+        print('Browser was closed.')
+    except BaseException as e:
+        print(f"Error. \n {e}")
+
+
+async def watching_playwright(url: str, duration: int, user: str, driver_headless: bool = True,
+                              progress_inc=None):
+    """
+    Start watching video with Playwright on url link by group watchers.
+
+    Args:
+        url: str - link of YT video
+        duration: int - duration on video
+        user: str - watchers group
+        driver_headless: bool - headless argument for driver
+        progress_inc: function - function to increment progress_bar value
+    """
+    try:
+        async with (async_playwright() as pw):
+            file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
+            if not os.path.exists(file_cookies):
+                raise NotFoundCookiesError(file_cookies)
+            cookies = pickle.load(open(file_cookies, 'rb'))
+            async with BrowserContextPlayWright(pw, headless=driver_headless,
+                                                cookies=cookies) as browser:
+                page = await browser.new_page()
+                await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000, wait_until='load')
+                await page.locator(
+                    f'xpath=//button[@class="ytp-button ytp-settings-button"]').click()
+                qualities = await page.query_selector_all(
+                    f'xpath=//div[@class="ytp-panel-menu"]/div')
+                await qualities[-1].click()
+                qss = (f'xpath=//div[@class="ytp-panel ytp-quality-menu ytp-panel-animate-forward"]'
+                       f'/div[@class="ytp-panel-menu"]/div')
+                qual_select = await page.query_selector_all(qss)
+                await asyncio.sleep(0.2)
+                await qual_select[-2].click()
+                await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
+                await asyncio.sleep(0.5)
+                xpath = "//div[@class=\'ytp-play-progress ytp-swatch-background-color\']"
+                script = (f'document.evaluate("{xpath}", document, null, '
+                          f'XPathResult.FIRST_ORDERED_NODE_TYPE, null)'
+                          f'.singleNodeValue.style["transform"]')
+                old_progress_value = 0
+                while old_progress_value != 100:
+                    try:
+                        style = await page.evaluate(script)
+                    except Exception as e:
+                        print(e)
+                        raise BrowserClosedError()
+                    await asyncio.sleep(1)
+                    if progress_inc:
+                        progress_value = int(
+                            float(style.replace('scaleX(', '').replace(')', '')) * 100)
+                        if old_progress_value < progress_value:
+                            await progress_inc(progress_value - old_progress_value)
+                            old_progress_value = progress_value
+    except NotFoundCookiesError as e:
+        print(f'File cookies not found: {e.cookies}')
+    except BrowserClosedError:
+        print('Browser was closed.')
     except BaseException as e:
         print(f"Error. \n {e}")
 

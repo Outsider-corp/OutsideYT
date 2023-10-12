@@ -10,6 +10,8 @@ app_settings_uploaders = settings.SettingsUsers(
 app_settings_watchers = settings.SettingsWatchers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_WATCHERS.json'))
 chromedriver_location = os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe')
+chrome_playwright_location = os.path.join(project_folder, 'outside', 'bin', 'chrome-win',
+                                          'chrome.exe')
 
 TEXT_EXTENSIONS = ['.txt']
 VIDEO_EXTENSIONS = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
@@ -29,15 +31,19 @@ FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*'
 
 WAIT_TIME_URL_UPLOADS = 5
 WAIT_TIME_ASYNC_LOOPS = 0.8
-WAIT_TIME_THREAD = 0.3
+WAIT_TIME_THREAD = 1
 SAVE_COOKIES_TIME = 60 * 60 * 24 * 30
 ASYNC_LIMIT = 20
 VIDEO_DOWNLOAD_TIMEOUT = 5
+VIDEO_WATCH_TIMEOUT = 30
 VIDEO_DOWNLOAD_MAX_RETRIES = 3
 DEFAULT_CHUNK_SIZE = 1024 ** 2
 MAX_THREADS_COUNT = 5
 
 FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
+
+YT_URL = 'https://www.youtube.com/'
+YT_STUDIO_URL = 'https://studio.youtube.com/'
 
 SIMPLE_VIDEO_ITAG = {
     38: ("3072p", "192kbps"),

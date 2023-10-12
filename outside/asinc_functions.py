@@ -6,7 +6,7 @@ from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool, QRun
 
 import OutsideYT
 from outside.Download.functions import start_video_download, save_videos_info
-from outside.YT.functions import get_video_info, watching
+from outside.YT.functions import get_video_info, watching_selenium, watching_playwright
 from outside.functions import get_video_link
 
 
@@ -31,10 +31,10 @@ class WatchSignals(QObject):
 
 class Watcher(QRunnable):
 
-    def __init__(self, id, video_info: Dict, watchers: List, driver_headless=True,
+    def __init__(self, _id, video_info: Dict, watchers: List, driver_headless=True,
                  offsets: List = None):
         super().__init__()
-        self.__id = id
+        self.__id = _id
         self._video_info = video_info
         self._watchers = watchers
         self.driver_headless = driver_headless
@@ -42,27 +42,28 @@ class Watcher(QRunnable):
         self.signals = WatchSignals()
 
         sum_offsets = sum(offsets) if offsets else 0
-        self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
+        # self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
+        self._total_steps = len(self._watchers) * 100
         self._lock = asyncio.Lock()
         self._progress = 0
 
-    async def progress_bar_inc(self):
+    async def progress_bar_inc(self, val: int = 1):
         async with self._lock:
-            self._progress += 1
+            self._progress += val
             new_val = int(self._progress / self._total_steps * 100)
             self.signals.progress_signal.emit(self.__id, new_val)
 
     async def start_loop(self):
-        atasks = [watching(get_video_link(self._video_info['Link'], type='watch'),
-                           int(self._video_info['Duration']), user,
-                           driver_headless=self.driver_headless,
-                           progress_inc=self.progress_bar_inc)
+        atasks = [watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
+                                      int(self._video_info['Duration']), user,
+                                      driver_headless=self.driver_headless,
+                                      progress_inc=self.progress_bar_inc)
                   for user in self._watchers]
         await asyncio.gather(*atasks)
 
     def run(self):
         asyncio.run(self.start_loop())
-        self.signals.progress_signal.emit(id, 0)
+        self.signals.progress_signal.emit(self.__id, 0)
         self.signals.finished_signal.emit()
 
 
@@ -76,25 +77,26 @@ class WatchManager(QObject):
         self.threadpool.setMaxThreadCount(max_workers)
         self._watchers = {}
 
-    def add_watcher(self, id, video_info: Dict, watchers: List, offsets: List = None,
+    def add_watcher(self, _id, video_info: Dict, watchers: List, offsets: List = None,
                     driver_headless=True, auto_start=False, **kwargs):
-        watcher = Watcher(id, video_info, watchers, driver_headless, offsets)
-        self._watchers[id] = watcher
+        watcher = Watcher(_id, video_info, watchers, driver_headless, offsets)
+        self._watchers[_id] = watcher
         watcher.signals.progress_signal.connect(
-            lambda id, x: self.handle_watcher_progress(id, x))
+            lambda _id1, x: self.handle_watcher_progress(_id1, x))
         watcher.signals.finished_signal.connect(self.finish)
         if auto_start:
-            self.start_watcher(id)
+            self.start_watcher(_id)
 
-    def start_watcher(self, id):
-        self.threadpool.start(self._watchers[id])
+    def start_watcher(self, _id):
+        self.threadpool.start(self._watchers[_id])
 
-    def handle_watcher_progress(self, id: int, value: int):
-        self.update_progress_watcher_signal.emit(id, value)
+    def handle_watcher_progress(self, _id: int, value: int):
+        self.update_progress_watcher_signal.emit(_id, value)
 
     def finish(self):
         if self.threadpool.activeThreadCount() == 0:
             self.finish_signal.emit()
+
 
 class GetVideoInfoThread(QThread):
     update_progress_signal = pyqtSignal(int)
@@ -195,5 +197,3 @@ class DownloadThread(QThread):
     def run(self):
         self.run_download_process()
         self.update_progress_info()
-
-

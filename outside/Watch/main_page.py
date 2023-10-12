@@ -72,6 +72,10 @@ def update_watch(ui, parent):
 
 
 def start_watch(dialog, dialog_settings, table: QTableView):
+
+    def chk_headless():
+        return not dialog_settings.Watch_ShowBrowser_checkBox.isChecked()
+
     def update_progress_watch(id: int, val: int):
         table.model().update_progress_bar(id, val)
 
@@ -112,5 +116,5 @@ def start_watch(dialog, dialog_settings, table: QTableView):
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
         watch_manager.add_watcher(num, video, users,
-                                  driver_headless=not dialog_settings.Watch_ShowBrowser_checkBox.
-                                  isChecked(), auto_start=True)
+                                  driver_headless=chk_headless(),
+                                  auto_start=True)
