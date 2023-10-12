@@ -504,7 +504,9 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
             async with BrowserContextPlayWright(pw, headless=driver_headless,
                                                 cookies=cookies) as browser:
                 page = await browser.new_page()
-                await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000, wait_until='load')
+                await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000,
+                                wait_until='domcontentloaded')
+                await asyncio.sleep(1)
                 await page.locator(
                     f'xpath=//button[@class="ytp-button ytp-settings-button"]').click()
                 qualities = await page.query_selector_all(
@@ -513,10 +515,13 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                 qss = (f'xpath=//div[@class="ytp-panel ytp-quality-menu ytp-panel-animate-forward"]'
                        f'/div[@class="ytp-panel-menu"]/div')
                 qual_select = await page.query_selector_all(qss)
-                await asyncio.sleep(0.2)
-                await qual_select[-2].click()
-                await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
+                try:
+                    await qual_select[-2].click()
+                except:
+                    pass
+                await asyncio.sleep(1)
+                # await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
                 xpath = "//div[@class=\'ytp-play-progress ytp-swatch-background-color\']"
                 script = (f'document.evaluate("{xpath}", document, null, '
                           f'XPathResult.FIRST_ORDERED_NODE_TYPE, null)'
