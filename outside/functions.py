@@ -77,3 +77,11 @@ def change_enabled_tab_elements(dialog_settings, page_name: str, state: bool):
     getattr(dialog_settings, f'{page_name.capitalize()}_Start').setText(
         "Start" if state else "Stop")
     getattr(dialog_settings, f'{page_name.capitalize()}_Start').setEnabled(True)
+
+
+def calc_time_from_string(time: str):
+    time_part = time.split(':')
+    progress_value = int(time_part[-1]) + int(time_part[-2]) * 60
+    if len(time_part) > 2:
+        progress_value += int(time_part[-3]) * 3600
+    return progress_value

@@ -42,8 +42,7 @@ class Watcher(QRunnable):
         self.signals = WatchSignals()
 
         sum_offsets = sum(offsets) if offsets else 0
-        # self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
-        self._total_steps = len(self._watchers) * 100
+        self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
         self._lock = asyncio.Lock()
         self.semaphore = asyncio.Semaphore(OutsideYT.ASYNC_LIMIT)
         self._progress = 0
@@ -64,10 +63,10 @@ class Watcher(QRunnable):
     async def start_loop(self):
         atasks = [self.watching(user) for user in self._watchers]
         await asyncio.gather(*atasks)
+        self.signals.progress_signal.emit(self.__id, 100)
 
     def run(self):
         asyncio.run(self.start_loop())
-        self.signals.progress_signal.emit(self.__id, 0)
         self.signals.finished_signal.emit()
 
 

@@ -22,7 +22,7 @@ from playwright.async_api import async_playwright, Playwright
 
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.exceptions import BrowserClosedError, NotFoundCookiesError
-from outside.functions import get_video_id
+from outside.functions import get_video_id, calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
     chromedriver_location, app_settings_watchers, app_settings_uploaders, YT_URL, YT_STUDIO_URL, \
@@ -504,40 +504,48 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
             async with BrowserContextPlayWright(pw, headless=driver_headless,
                                                 cookies=cookies) as browser:
                 page = await browser.new_page()
+                await page.goto(YT_URL, wait_until='domcontentloaded')
                 await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000,
                                 wait_until='domcontentloaded')
+                # await page.set_extra_http_headers(cookies)
                 await asyncio.sleep(1)
-                await page.locator(
-                    f'xpath=//button[@class="ytp-button ytp-settings-button"]').click()
+                settings_button = f'xpath=//button[@class="ytp-button ytp-settings-button"]'
+                await page.locator(settings_button).click()
                 qualities = await page.query_selector_all(
                     f'xpath=//div[@class="ytp-panel-menu"]/div')
                 await qualities[-1].click()
-                qss = (f'xpath=//div[@class="ytp-panel ytp-quality-menu ytp-panel-animate-forward"]'
+                qss = (f'xpath=//div[@class="ytp-panel ytp-quality-menu"]'
                        f'/div[@class="ytp-panel-menu"]/div')
+                await page.wait_for_selector(qss, state='attached')
                 qual_select = await page.query_selector_all(qss)
-                await asyncio.sleep(1)
                 try:
                     await qual_select[-2].click()
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
                 await asyncio.sleep(1)
-                # await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
-                xpath = "//div[@class=\'ytp-play-progress ytp-swatch-background-color\']"
-                script = (f'document.evaluate("{xpath}", document, null, '
-                          f'XPathResult.FIRST_ORDERED_NODE_TYPE, null)'
-                          f'.singleNodeValue.style["transform"]')
+                await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
+                await asyncio.sleep(0.5)
+                await page.locator(settings_button).click()
+                # xpath = "//div[@class=\'ytp-play-progress ytp-swatch-background-color\']"
+                # script = (f'document.evaluate("{xpath}", document, null, '
+                #           f'XPathResult.FIRST_ORDERED_NODE_TYPE, null)'
+                #           f'.singleNodeValue.style["transform"]')
+                time_xpath = f'//span[@class="ytp-time-current"]'
+
+                real_duration_str = await page.text_content(f'//span[@class="ytp-time-duration"]')
+                real_duration = calc_time_from_string(real_duration_str)
                 old_progress_value = 0
-                while old_progress_value != 100:
+                while old_progress_value < real_duration:
                     try:
-                        style = await page.evaluate(script)
-                    except Exception as e:
-                        print(e)
+                        time_left = await page.text_content(time_xpath)
+                    except:
                         raise BrowserClosedError()
-                    await asyncio.sleep(1)
+                    # await asyncio.sleep(1)
                     if progress_inc:
-                        progress_value = int(
-                            float(style.replace('scaleX(', '').replace(')', '')) * 100)
-                        if old_progress_value < progress_value:
+                        # progress_value = int(
+                        #     float(style.replace('scaleX(', '').replace(')', '')) * 100)
+                        progress_value = calc_time_from_string(time_left)
+                        if old_progress_value != progress_value:
                             await progress_inc(progress_value - old_progress_value)
                             old_progress_value = progress_value
     except NotFoundCookiesError as e:
