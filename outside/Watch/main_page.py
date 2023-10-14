@@ -66,7 +66,7 @@ def update_watch(ui, parent):
     ui.actionWatchers_2.triggered.connect(
         partial(open_UsersList_Dialog, parent=parent,
                 table_type=watch_table.model().table_type.lower(),
-                add_table_class=TableModels.WatchersUsersModel ))
+                add_table_class=TableModels.WatchersUsersModel, parent_settings=ui,))
 
     return watch_table, ui
 

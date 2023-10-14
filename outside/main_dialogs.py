@@ -24,7 +24,7 @@ from outside.Watch.dialogs import edit_watchers_groups
 from outside.YT.functions import get_playlist_info, select_page
 
 
-def open_UsersList_Dialog(parent, table_type: str, add_table_class):
+def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_settings):
     if table_type in ['upload', 'download']:
         table_settings = OutsideYT.app_settings_uploaders
         def_type = 'account'
@@ -170,8 +170,8 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
                     data[group][account] = gmail
                 table_settings.update_groups(data)
             if table_type != 'watch':
-                dialog_settings.Download_Save_to_ComboBox = update_combobox(
-                    dialog_settings.Download_Save_to_ComboBox, table_settings.accounts.keys(),
+                parent_settings.Download_Save_to_ComboBox = update_combobox(
+                    parent_settings.Download_Save_to_ComboBox, table_settings.accounts.keys(),
                     table_settings.def_account
                 )
 
@@ -215,7 +215,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class):
             cook.exec_()
 
         dialog.close()
-        open_UsersList_Dialog(parent, table_type, add_table_class)
+        open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
 
         # dialog_settings.Users_Table.model().update()
         # items = [f"No default {def_type}", *combo_items_default]

@@ -8,7 +8,6 @@ from functools import partial
 from typing import Dict, List
 
 import aiohttp
-import playwright.async_api
 import requests
 
 import selenium.common.exceptions
@@ -16,8 +15,6 @@ import webbrowser
 import yt_dlp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from pyppeteer import launch
-from pyppeteer.browser import Browser
 from playwright.async_api import async_playwright, Playwright
 
 from outside.YT.download_model import OutsideDownloadVideoYT
@@ -65,30 +62,6 @@ class DriverContextSelenium:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.driver:
             self.driver.quit()
-
-
-class BrowserContextPyppeteer:
-    def __init__(self, headless: bool = True, download_dir: str = '', gpu: bool = False,
-                 images: bool = False, audio: bool = False, add_args: Dict = None, **kwargs):
-        self.louch_option = {
-            'headless': headless,
-            'executablePath': chromedriver_location
-        }
-        if download_dir:
-            self.louch_option['downloadPath'] = download_dir
-        if add_args:
-            self.louch_option.update(add_args)
-
-        self.browser: Browser = None
-
-    async def __aenter__(self):
-        if not self.browser:
-            self.browser = await launch(self.louch_option)
-        return self.browser
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.browser:
-            await self.browser.close()
 
 
 class BrowserContextPlayWright:
@@ -143,10 +116,12 @@ def get_google_login(login: str, mail: str, folder: str):
                     break
             cookies = driver.get_cookies()
             save_time = int(time.time() + SAVE_COOKIES_TIME)
+            cookies_login = []
             for i, val in enumerate(cookies):
-                if 'expiry' in val and cookies[i]['expiry'] < save_time:
+                if 'name' in val:
                     cookies[i]['expiry'] = save_time
-            pickle.dump(cookies,
+                    cookies_login.append(cookies[i])
+            pickle.dump(cookies_login,
                         open(os.path.join(project_folder, 'outside', 'oyt_info',
                                           folder.lower(), filename), 'wb'))
             # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
@@ -432,57 +407,6 @@ async def watching_selenium(url: str, duration: int, user: str, driver_headless:
         print(f"Error. \n {e}")
 
 
-async def watching_pyppeteer(url: str, duration: int, user: str, driver_headless: bool = True,
-                             progress_inc=None):
-    """
-    Start watching video on url link by group watchers.
-
-    Args:
-        url: str - link of YT video
-        duration: int - duration on video
-        user: str - watchers group
-        driver_headless: bool - headless argument for driver
-        progress_inc: function - function to increment progress_bar value
-    """
-    try:
-        async with BrowserContextPyppeteer(headless=driver_headless) as browser:
-            page = await browser.newPage()
-            await page.goto(YT_URL)
-            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
-            if not os.path.exists(file_cookies):
-                raise NotFoundCookiesError(file_cookies)
-            cookies = pickle.load(open(file_cookies, 'rb'))
-            await page.setCookie(*cookies)
-
-            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            await page.goto(url)
-            # driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            button = await page.waitForXPath('//button[@class="ytp-play-button ytp-button"]')
-            await button.click()
-            progress = await page.querySelector(
-                '[class="ytp-play-progress ytp-swatch-background-color"]')
-            old_progress_value = 0
-            while old_progress_value != 100:
-                try:
-                    style = await page.evaluate(
-                        f'(element) => '
-                        f'window.getComputedStyle(element).getPropertyValue(arguments[0])',
-                        progress, 'transform')
-                except:
-                    raise BrowserClosedError()
-                await asyncio.sleep(1)
-                if progress_inc:
-                    progress_value = int(float(style.replace('scaleX(', '').replace(')', '')) * 100)
-                    if old_progress_value < progress_value:
-                        await progress_inc()
-                        old_progress_value = progress_value
-    except BrowserClosedError:
-        print('Browser was closed.')
-    except BaseException as e:
-        print(f"Error. \n {e}")
-
-
 async def watching_playwright(url: str, duration: int, user: str, driver_headless: bool = True,
                               progress_inc=None):
     """
@@ -540,7 +464,6 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                         time_left = await page.text_content(time_xpath)
                     except:
                         raise BrowserClosedError()
-                    # await asyncio.sleep(1)
                     if progress_inc:
                         # progress_value = int(
                         #     float(style.replace('scaleX(', '').replace(')', '')) * 100)

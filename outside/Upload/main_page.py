@@ -73,6 +73,7 @@ def update_upload(ui, parent):
 
     ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog,
                                                    parent=parent,
+                                                   parent_settings=ui,
                                                    table_type='upload',
                                                    add_table_class=partial(CommonTables.UsersModel,
                                                                            table_type='upload')))
