@@ -177,7 +177,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
 
-    def chk_cookies(dialog_settings):
+    def chk_cookies():
         def ok(filename, cook_settings):
             if hasattr(cook_settings, 'Group_comboBox'):
                 table_settings.add_account(
@@ -216,10 +216,6 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
 
         dialog.close()
         open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
-
-        # dialog_settings.Users_Table.model().update()
-        # items = [f"No default {def_type}", *combo_items_default]
-        # dialog_settings = update_settings_combobox_with_type(dialog_settings, items)
 
     dialog_settings.CheckCookies_Button.clicked.connect(
         partial(chk_cookies, dialog_settings=dialog_settings))

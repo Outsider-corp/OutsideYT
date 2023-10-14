@@ -55,15 +55,16 @@ class Watcher(QRunnable):
 
     async def watching(self, user):
         async with self.semaphore:
-            await watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
-                                      int(self._video_info['Duration']), user,
-                                      driver_headless=self.driver_headless,
-                                      progress_inc=self.progress_bar_inc)
+            return await watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
+                                             int(self._video_info['Duration']), user,
+                                             driver_headless=self.driver_headless,
+                                             progress_inc=self.progress_bar_inc)
 
     async def start_loop(self):
         atasks = [self.watching(user) for user in self._watchers]
-        await asyncio.gather(*atasks)
-        self.signals.progress_signal.emit(self.__id, 100)
+        results = await asyncio.gather(*atasks)
+        if all(results):
+            self.signals.progress_signal.emit(self.__id, 100)
 
     def run(self):
         asyncio.run(self.start_loop())

@@ -162,6 +162,13 @@ selection-background-color: rgb(15, 15, 15);</string>
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="ALive_Cookies_Button">
+         <property name="text">
+          <string> Check Cookies Life </string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QDialogButtonBox" name="buttonBox">
          <property name="font">
           <font>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\WatchersList_Dialog.ui'
+# Form implementation generated from reading ui file 'outside/views_ui/WatchersList_Dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -88,6 +88,9 @@ class Ui_WatchersList_Dialog(object):
         self.CheckCookies_Button = QtWidgets.QPushButton(WatchersList_Dialog)
         self.CheckCookies_Button.setObjectName("CheckCookies_Button")
         self.horizontalLayout_2.addWidget(self.CheckCookies_Button)
+        self.ALive_Cookies_Button = QtWidgets.QPushButton(WatchersList_Dialog)
+        self.ALive_Cookies_Button.setObjectName("ALive_Cookies_Button")
+        self.horizontalLayout_2.addWidget(self.ALive_Cookies_Button)
         self.buttonBox = QtWidgets.QDialogButtonBox(WatchersList_Dialog)
         font = QtGui.QFont()
         font.setFamily("MS Shell Dlg 2")
@@ -113,6 +116,7 @@ class Ui_WatchersList_Dialog(object):
         self.EditGroups_Button.setText(_translate("WatchersList_Dialog", "  Edit Groups  "))
         self.label.setText(_translate("WatchersList_Dialog", "Default:"))
         self.CheckCookies_Button.setText(_translate("WatchersList_Dialog", " Check Cookies "))
+        self.ALive_Cookies_Button.setText(_translate("WatchersList_Dialog", " Check Cookies Life "))
 
 
 if __name__ == "__main__":

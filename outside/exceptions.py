@@ -30,3 +30,10 @@ class NotFoundCookiesError(OutsideError):
 
     def __init__(self, file_cookies: str):
         self.cookies = file_cookies
+
+
+class OutdatedCookiesError(OutsideError):
+    """Cookies files are outdated."""
+
+    def __init__(self, user: str):
+        self.user = user

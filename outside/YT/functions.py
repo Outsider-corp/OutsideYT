@@ -8,6 +8,7 @@ from functools import partial
 from typing import Dict, List
 
 import aiohttp
+import playwright.async_api
 import requests
 
 import selenium.common.exceptions
@@ -18,7 +19,7 @@ from selenium.webdriver.common.by import By
 from playwright.async_api import async_playwright, Playwright
 
 from outside.YT.download_model import OutsideDownloadVideoYT
-from outside.exceptions import BrowserClosedError, NotFoundCookiesError
+from outside.exceptions import BrowserClosedError, NotFoundCookiesError, OutdatedCookiesError
 from outside.functions import get_video_id, calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
@@ -102,6 +103,20 @@ class BrowserContextPlayWright:
             await self.browser.close()
 
 
+def update_cookies(cookies: List[dict], cookies_file: str):
+    save_time = int(time.time() + SAVE_COOKIES_TIME)
+    cookies_login = []
+    for i, val in enumerate(cookies):
+        if 'name' in val:
+            cookies[i]['expiry'] = save_time
+            cookies_login.append(cookies[i])
+    pickle.dump(cookies_login, open(cookies_file, 'wb'))
+
+async def check_cookies_playwright(page: playwright.async_api.Page):
+    avatar = await page.query_selector('button[id="avatar-btn"]') is not None
+    return avatar
+
+
 def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
@@ -115,15 +130,8 @@ def get_google_login(login: str, mail: str, folder: str):
                 if 'www.youtube.com/watch' in driver.current_url:
                     break
             cookies = driver.get_cookies()
-            save_time = int(time.time() + SAVE_COOKIES_TIME)
-            cookies_login = []
-            for i, val in enumerate(cookies):
-                if 'name' in val:
-                    cookies[i]['expiry'] = save_time
-                    cookies_login.append(cookies[i])
-            pickle.dump(cookies_login,
-                        open(os.path.join(project_folder, 'outside', 'oyt_info',
-                                          folder.lower(), filename), 'wb'))
+            update_cookies(cookies, os.path.join(project_folder, 'outside', 'oyt_info',
+                                                 folder.lower(), filename))
             # subprocess.call(["attrib", "+h", f"oyt_info/{filename}"])
             added = True
     except Exception as e:
@@ -429,9 +437,12 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                                                 cookies=cookies) as browser:
                 page = await browser.new_page()
                 await page.goto(YT_URL, wait_until='domcontentloaded')
+                if not await check_cookies_playwright(page):
+                    raise OutdatedCookiesError(user)
+                cookies = await page.context.cookies()
+                update_cookies(cookies, file_cookies)
                 await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000,
                                 wait_until='domcontentloaded')
-                # await page.set_extra_http_headers(cookies)
                 await asyncio.sleep(1)
                 settings_button = f'xpath=//button[@class="ytp-button ytp-settings-button"]'
                 await page.locator(settings_button).click()
@@ -471,12 +482,16 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                         if old_progress_value != progress_value:
                             await progress_inc(progress_value - old_progress_value)
                             old_progress_value = progress_value
+                return True
     except NotFoundCookiesError as e:
         print(f'File cookies not found: {e.cookies}')
+    except OutdatedCookiesError as e:
+        print(f'Cookies are outdated for user: {e.user}')
     except BrowserClosedError:
         print('Browser was closed.')
     except BaseException as e:
         print(f"Error. \n {e}")
+    return False
 
 
 def download_image(url: str, path: str):
