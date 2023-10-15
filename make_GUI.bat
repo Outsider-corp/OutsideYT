@@ -6,3 +6,4 @@ pyuic5 -x outside/views_ui/SelectUploadVideos_Dialog.ui -o outside/views_py/Sele
 pyuic5 -x outside/views_ui/UpdateTime_Dialog.ui -o outside/views_py/UpdateTime_Dialog.py
 pyuic5 -x outside/views_ui/SelectDownloadVideos_Dialog.ui -o outside/views_py/SelectDownloadVideos_Dialog.py
 pyuic5 -x outside/views_ui/SelectWatchVideos_Dialog.ui -o outside/views_py/SelectWatchVideos_Dialog.py
+pyuic5 -x outside/views_ui/DownloadAdvancedSettings_Dialog.ui -o outside/views_py/DownloadAdvancedSettings_Dialog.py

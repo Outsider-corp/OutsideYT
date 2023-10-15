@@ -7,7 +7,9 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 import OutsideYT
-from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError
+import outside.video_qualities
+from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError, \
+    NoAvailableQualityError
 from outside.functions import get_video_id, get_video_link, check_folder_name
 from outside.message_boxes import error_func
 
@@ -22,13 +24,12 @@ class OutsideDownloadVideoYT:
     __CHUNK_SIZE = OutsideYT.DEFAULT_CHUNK_SIZE
     __TIMEOUT = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT or 10
     __MAX_TRIES = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES or 3
-    __VIDEO_ITAGS = OutsideYT.VIDEO_ITAG
-    __AUDIO_ITAGS = OutsideYT.AUDIO_ITAG
-    __SIMPLE_VIDEO_ITAGS = OutsideYT.SIMPLE_VIDEO_ITAG
-    __DEFAULT_VIDEO_QUALITY = OutsideYT.DEFAULT_VIDEO_QUALITY
-    __DEFAULT_VIDEO_EXT = OutsideYT.DEFAULT_VIDEO_EXT
-    __DEFAULT_AUDIO_QUALITY = OutsideYT.DEFAULT_AUDIO_QUALITY
-    __DEFAULT_AUDIO_EXT = OutsideYT.DEFAULT_AUDIO_EXT
+    __VIDEO_ITAGS = outside.video_qualities.VIDEO_ITAG
+    __AUDIO_ITAGS = outside.video_qualities.AUDIO_ITAG
+    __SIMPLE_VIDEO_ITAGS = outside.video_qualities.SIMPLE_VIDEO_ITAG
+    __DEFAULT_VIDEO_QUALITY = outside.video_qualities.DEFAULT_VIDEO_QUALITY
+    __DEFAULT_VIDEO_EXT = outside.video_qualities.DEFAULT_VIDEO_EXT
+    __DEFAULT_AUDIO_QUALITY = outside.video_qualities.DEFAULT_AUDIO_QUALITY
     __DEFAULT_K_MS_TO_SIZE = 200
 
     def __init__(self, link: str, params: Dict, video_info=None,
@@ -94,20 +95,18 @@ class OutsideDownloadVideoYT:
         elif choice == 'normal':
             quality = normal_q
             ext = normal_ext
+        elif choice == 'equals':
+            vars = {key: val for key, val in vars if val[0] == quality}
         if ext:
-            var = {key: val for key, val in vars.items() if val[1] == ext}
-            if var:
-                vars = var
+            vars = {key: val for key, val in vars.items() if val[1] == ext}
         keys = list(vars.keys())
         if quality:
             for key in keys:
                 if vars[key][0] != quality:
                     vars.pop(key)
                 else:
-                    return list(vars.keys())
-        else:
-            return list(vars.keys())
-        raise ValueError
+                    break
+        return list(vars.keys())
 
     @classmethod
     def get_player_video_info(cls, link: str, *args, **kwargs):
@@ -204,6 +203,7 @@ class OutsideDownloadVideoYT:
                         if 'contentLength' not in video_itag:
                             video_itag['contentLength'] = self.__get_video_size(video_itag)
                         return video_itag
+        raise NoAvailableQualityError()
 
     def get_itags_from_params(self, video_info):
         if self.params.get('simple', True):
@@ -230,7 +230,7 @@ class OutsideDownloadVideoYT:
                                               params.get('audio_ext', ''),
                                               params.get('full_quality', 'normal'),
                                               self.__DEFAULT_AUDIO_QUALITY,
-                                              self.__DEFAULT_AUDIO_EXT)
+                                              self.__DEFAULT_VIDEO_EXT)
             return [self._find_itag(v_itags, video_info),
                     self._find_itag(a_itags, video_info)]
 

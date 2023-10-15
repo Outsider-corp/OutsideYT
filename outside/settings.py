@@ -2,6 +2,7 @@ import json
 import os
 
 import OutsideYT
+import outside.video_qualities
 from outside.message_boxes import error_func, warning_func
 
 
@@ -224,6 +225,7 @@ class SettingsWatchers(AppSettings):
             if login in group:
                 return group_name
         return None
+
     def update_groups(self, groups: dict):
         for g, accs in groups.items():
             self._groups[g] = accs
@@ -289,16 +291,54 @@ class SettingsWatchers(AppSettings):
 
 
 class SettingsDownloads:
-    def __init__(self, saving_path: str):
-        self.__saving_path = saving_path
+    def __init__(self, file: str):
+        self.file = file
+        self.ext = 'Any'
+        self.prefer = outside.video_qualities.DEFAULT_PREFER_QUALITY
+        self.simple_quality_video = 'Any'
+        self.quality_video = 'Any'
+        self.quality_audio = 'Any'
+        self.simple_download = True
+        self.download_type = 'full'
+        if os.path.exists(file):
+            self.read_settings()
+        else:
+            self.update_settings()
 
-    @property
-    def saving_path(self):
-        return self.__saving_path
+    def change_settings(self, **kwargs):
+        """
+        Change settings.
+        Args:
+            kwargs: dict - dict with new values of settings. Available keys:
+            quality_video: str, quality_audio: str, ext: str, prefer: str, simple_download: bool,
+            download_type: str, simple_quality_video: str
+        """
+        for key, val in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, val)
+        self.update_settings()
 
-    def change_path(self, new_path: str):
-        if new_path:
-            self.__saving_path = new_path
+    def update_settings(self):
+        with open(self.file, 'w', encoding='utf-8') as f:
+            settings = {'quality_video': self.quality_video,
+                        'quality_audio': self.quality_audio,
+                        'simple_quality_video': self.simple_quality_video,
+                        'ext': self.ext,
+                        'prefer': self.prefer,
+                        'simple_download': self.simple_download,
+                        'download_type': self.download_type}
+            json.dump(settings, f)
+
+    def read_settings(self):
+        with open(self.file, 'r', encoding='utf-8') as f:
+            settings = json.load(f)
+        self.simple_quality_video = settings['simple_quality_video']
+        self.ext = settings['ext']
+        self.prefer = settings['prefer']
+        self.quality_video = settings['quality_video']
+        self.quality_audio = settings['quality_audio']
+        self.simple_download = settings['simple_download']
+        self.download_type = settings['download_type']
 
 # class AccountSettings:
 #

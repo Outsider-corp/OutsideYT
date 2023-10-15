@@ -37,3 +37,6 @@ class OutdatedCookiesError(OutsideError):
 
     def __init__(self, user: str):
         self.user = user
+
+class NoAvailableQualityError(OutsideError):
+    """No available quality in itags."""

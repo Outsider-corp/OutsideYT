@@ -1,6 +1,13 @@
+from functools import partial
+
 from PyQt5 import QtWidgets
 
-from outside.message_boxes import error_func
+import OutsideYT
+from OutsideYT import app_settings_download
+from outside.video_qualities import VIDEO_EXTS, VIDEO_QUALITIES, SIMPLE_VIDEO_QUALITIES, \
+    AUDIO_QUALITIES, PREFER_QUALITY
+from outside.functions import update_combobox
+from outside.views_py import DownloadAdvancedSettings_Dialog
 
 
 def select_saving_path(dialog_settings):
@@ -20,7 +27,90 @@ def change_saving_path():
         # app_settings_download.change_path(path)
 
 
-def open_advanced_settings(parent, table):
-    error_func('This action will be add later...')
+def open_advanced_settings(parent):
+    def ok():
+        changes_all = {
+            'quality_video': ds.Video_quality_comboBox.currentText(),
+            'quality_audio': ds.Audio_quality_comboBox.currentText(),
+            'simple_quality_video': ds.Video_quality_comboBox.currentText(),
+            'ext': ds.Extensions_comboBox.currentText(),
+            'prefer': ds.Prefer_quality_comboBox.currentText(),
+            'simple_download': ds.Simple_download_checkBox.isChecked(),
+        }
+        if ds.Audio_radioButton.isChecked():
+            changes = {'download_type': 'audio'}
+            changes.update({key: val for key, val in changes_all.items() if key in ['quality_audio',
+                                                                                    'ext',
+                                                                                    'prefer']})
+        elif ds.Video_radioButton.isChecked():
+            changes = {'download_type': 'video'}
+            changes.update({key: val for key, val in changes_all.items() if key in ['quality_video',
+                                                                                    'ext',
+                                                                                    'prefer']})
+        else:
+            changes = {'download_type': 'full'}
+            changes.update(changes_all)
+            if changes['simple_download']:
+                del changes['quality_video']
+            else:
+                del changes['simple_quality_video']
+
+        app_settings_download.change_settings(**changes)
+        dialog.accept()
+
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+    ds = DownloadAdvancedSettings_Dialog.Ui_DownloadSettings_Dialog()
+    ds.setupUi(dialog)
+    ds.Audio_quality_comboBox = update_combobox(ds.Audio_quality_comboBox,
+                                                items=['Any'] + AUDIO_QUALITIES,
+                                                def_value=app_settings_download.quality_audio)
+    ds.Prefer_quality_comboBox = update_combobox(ds.Prefer_quality_comboBox,
+                                                 items=PREFER_QUALITY,
+                                                 def_value=app_settings_download.prefer)
+    ds.Extensions_comboBox = update_combobox(ds.Extensions_comboBox,
+                                             items=['Any'] + VIDEO_EXTS,
+                                             def_value=app_settings_download.ext)
+    ds.Simple_download_checkBox.setChecked(app_settings_download.simple_download)
+    _simple_download(ds)
+    if app_settings_download.download_type == 'audio':
+        ds.Audio_radioButton.setChecked(True)
+        _download_type(ds, 'audio')
+    elif app_settings_download.download_type == 'video':
+        ds.Video_radioButton.setChecked(True)
+        _download_type(ds, 'video')
+    else:
+        ds.Full_video_radioButton.setChecked(True)
+        _download_type(ds, 'full')
+
+    ds.Audio_radioButton.clicked.connect(partial(_download_type, ds=ds, state='audio'))
+    ds.Video_radioButton.clicked.connect(partial(_download_type, ds=ds, state='video'))
+    ds.Full_video_radioButton.clicked.connect(partial(_download_type, ds=ds, state='full'))
+    ds.Simple_download_checkBox.clicked.connect(partial(_simple_download, ds=ds))
+
+    ds.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(ok)
+    ds.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(dialog.reject)
+    dialog.exec_()
 
 
+def _download_type(ds: DownloadAdvancedSettings_Dialog.Ui_DownloadSettings_Dialog, state: str):
+    if state == 'full':
+        ds.Audio_quality_comboBox.setEnabled(True)
+        ds.Video_quality_comboBox.setEnabled(True)
+        ds.Simple_download_checkBox.setVisible(True)
+    else:
+        set_state = state == 'video'
+        ds.Audio_quality_comboBox.setEnabled(not set_state)
+        ds.Video_quality_comboBox.setEnabled(set_state)
+        ds.Simple_download_checkBox.setVisible(False)
+
+
+def _simple_download(ds: DownloadAdvancedSettings_Dialog.Ui_DownloadSettings_Dialog):
+    if ds.Simple_download_checkBox.isChecked():
+        items = ['Any'] + SIMPLE_VIDEO_QUALITIES
+        def_val = app_settings_download.simple_quality_video
+    else:
+        items = ['Any'] + VIDEO_QUALITIES
+        def_val = app_settings_download.quality_video
+    ds.Video_quality_comboBox = update_combobox(ds.Video_quality_comboBox, items=items,
+                                                def_value=def_val)

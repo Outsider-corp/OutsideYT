@@ -40,7 +40,7 @@ def update_download(ui, parent):
         download_table.setColumnWidth(i, size)
 
     ui.Download_advanced_settings_Button.clicked.connect(
-        partial(open_advanced_settings, parent=parent, table=download_table))
+        partial(open_advanced_settings, parent=parent))
 
     ui.Download_SelectVideos_Button.clicked.connect(
         partial(open_watch_down_select_videos, parent=parent, table=download_table,
