@@ -1,15 +1,21 @@
 import json
 import os
 
+import OutsideYT
 from outside.message_boxes import error_func, warning_func
 
 
-class SettingsUsers:
+class AppSettings:
+    """Settings for OutsideYT."""
+
+
+class SettingsUsers(AppSettings):
     def __init__(self, file, videos_folder='videos', settings_type='upload') -> None:
         self._accounts = {}
         self._def_account = ''
         self._vids_folder = videos_folder
         self.settings_type = settings_type
+        self.cookies_folder = os.path.join(OutsideYT.cookies_folder, self.__str__())
         self.file = file
         if file:
             self.read_settings()
@@ -37,15 +43,16 @@ class SettingsUsers:
         else:
             error_func('Аккаунт с таким именем уже существует')
 
-    def del_account(self, login, parent=None, **kwargs):
-        if login in self.accounts and warning_func(
-                f"Are you sure you want to delete account '{login}' ({self.accounts[login]})",
-                parent):
-            self._accounts.pop(login)
-            if self.def_account == login:
-                self.del_def_account()
-            os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f'{login}_cookies'))
-            self.update_settings()
+    def del_account(self, login, parent=None, confirm: bool = False, **kwargs):
+        if login in self.accounts:
+            if confirm or warning_func(
+                    f"Are you sure you want to delete account '{login}' ({self.accounts[login]})",
+                    parent):
+                self._accounts.pop(login)
+                if self.def_account == login:
+                    self.del_def_account()
+                os.remove(os.path.join(self.cookies_folder, f'{login}_cookies'))
+                self.update_settings()
 
     def edit_account(self, old_name: str, new_name: str):
         if new_name in self.accounts:
@@ -57,8 +64,8 @@ class SettingsUsers:
             if self.def_account == old_name:
                 self._def_account = new_name
             os.rename(
-                os.path.join(os.path.dirname(self.file), self.__str__(), f'{old_name}_cookies'),
-                os.path.join(os.path.dirname(self.file), self.__str__(), f'{new_name}_cookies'))
+                os.path.join(self.cookies_folder, f'{old_name}_cookies'),
+                os.path.join(self.cookies_folder, f'{new_name}_cookies'))
             self.update_settings()
 
     def find_account(self, login: str) -> bool:
@@ -111,24 +118,24 @@ class SettingsUsers:
         return
 
     def check_cookies(self):
-        folder = os.path.dirname(self.file)
-        os.makedirs(os.path.join(folder, self.__str__()), exist_ok=True)
+        os.makedirs(self.cookies_folder, exist_ok=True)
         to_del = [acc for acc in self.accounts if not os.path.isfile(
-            os.path.join(folder, self.__str__(), f'{acc}_cookies'))]
+            os.path.join(self.cookies_folder, f'{acc}_cookies'))]
         for acc in to_del:
             self._accounts.pop(acc)
-        if not os.path.isfile(os.path.join(folder, self.__str__(), f'{self.def_account}_cookies')):
+        if not os.path.isfile(os.path.join(self.cookies_folder, f'{self.def_account}_cookies')):
             self.del_def_account()
         else:
             self.update_settings()
 
 
-class SettingsWatchers:
+class SettingsWatchers(AppSettings):
 
     def __init__(self, file: str) -> None:
         self._groups = {'No group': {}}
         self._def_group = 'No group'
         self.file = file
+        self.cookies_folder = os.path.join(OutsideYT.cookies_folder, self.__str__())
         if file:
             self.read_settings()
             self.check_cookies()
@@ -180,21 +187,22 @@ class SettingsWatchers:
             self._groups[group][new_name] = self.groups[group][old_name]
             del self._groups[group][old_name]
             os.rename(
-                os.path.join(os.path.dirname(self.file), self.__str__(), f'{old_name}_cookies'),
-                os.path.join(os.path.dirname(self.file), self.__str__(), f'{new_name}_cookies'))
+                os.path.join(self.cookies_folder, f'{old_name}_cookies'),
+                os.path.join(self.cookies_folder, f'{new_name}_cookies'))
             name = new_name
         if group != new_group and new_group in self.groups:
             self._groups[new_group][name] = self.groups[group][name]
             del self._groups[group][name]
         self.update_settings()
 
-    def del_account(self, group: str, login: str, parent=None):
-        if group in self.groups and login in self.groups[group] and warning_func(
-                f"Are you sure you want to delete account '{login}'"
-                f", group '{group}' ({self.groups[group][login]})", parent):
-            self._groups[group].pop(login)
-            os.remove(os.path.join(os.path.dirname(self.file), self.__str__(), f'{login}_cookies'))
-            self.update_settings()
+    def del_account(self, login: str, group: str = None, parent=None, confirm: bool = False):
+        group = group or self.find_group(login)
+        if group:
+            if confirm or warning_func(f"Are you sure you want to delete account '{login}'"
+                                       f", group '{group}' ({self.groups[group][login]})", parent):
+                self._groups[group].pop(login)
+                os.remove(os.path.join(self.cookies_folder, f'{login}_cookies'))
+                self.update_settings()
 
     def del_group(self, group: str, parent=None):
         if warning_func(f"Are you sure you want to delete group '{group}'?", parent):
@@ -211,6 +219,11 @@ class SettingsWatchers:
     def find_account(self, login):
         return any(login in group for group in self.groups.values())
 
+    def find_group(self, login):
+        for group_name, group in self.groups.items():
+            if login in group:
+                return group_name
+        return None
     def update_groups(self, groups: dict):
         for g, accs in groups.items():
             self._groups[g] = accs
@@ -262,12 +275,11 @@ class SettingsWatchers:
         return
 
     def check_cookies(self):
-        folder = os.path.dirname(self.file)
-        os.makedirs(os.path.join(folder, self.__str__()), exist_ok=True)
+        os.makedirs(self.cookies_folder, exist_ok=True)
         to_del = []
         for group_name, group in self.groups.items():
             for acc_name in group:
-                if not os.path.isfile(os.path.join(folder, self.__str__(), f'{acc_name}_cookies')):
+                if not os.path.isfile(os.path.join(self.cookies_folder, f'{acc_name}_cookies')):
                     to_del.append((group_name, acc_name))
         for acc in to_del:
             self._groups[acc[0]].pop(acc[1])

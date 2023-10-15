@@ -4,15 +4,15 @@ from functools import partial
 from typing import List
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTableView
+from PyQt5.QtWidgets import QTableView, QWidget
 
 import outside.Watch.context_menu as watch_context
 import OutsideYT
 import outside.context_menu
 from outside import TableModels
-from outside.asinc_functions import GetVideoInfoThread
+from outside.asinc_functions import GetVideoInfoThread, CheckCookiesLifeThread
 from outside.functions import update_combobox, get_video_id, change_enabled_tab_elements
-from outside.message_boxes import error_func, warning_func
+from outside.message_boxes import error_func, warning_func, choose_func, info_func
 from outside.Upload.dialogs import google_login
 from outside.views_py import (
     AddUser_Dialog,
@@ -36,8 +36,6 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
     else:
         return
     table_settings.update_settings()
-    cookies_dir = os.path.join(os.path.dirname(table_settings.file),
-                               str(table_settings).lower())
     dialog, dialog_settings = userslist(parent, str(table_settings))
     dialog.setWindowTitle(f'{str(table_settings).capitalize()} List')
     dialog_model = add_table_class()
@@ -187,7 +185,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
                 table_settings.add_account(
                     {filename: cook_settings.Gmail_textbox.text()})
 
-        files = glob.glob(f'{cookies_dir}/*_cookies')
+        files = glob.glob(f'{table_settings.cookies_folder}/*_cookies')
         all_accounts = table_settings.accounts
         for file in files:
             filename = os.path.basename(file).replace('_cookies', '')
@@ -217,8 +215,58 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
         dialog.close()
         open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
 
-    dialog_settings.CheckCookies_Button.clicked.connect(
-        partial(chk_cookies, dialog_settings=dialog_settings))
+    dialog_settings.CheckCookies_Button.clicked.connect(chk_cookies)
+
+    def chk_cookies_life():
+        def change_enabled_elements(state: bool):
+            current_tab = dialog.findChild(QWidget)
+            elements = current_tab.findChildren(QWidget)
+            for el in elements:
+                el.setEnabled(state)
+
+        def finish(thread):
+            if thread.to_delete:
+                accs = {acc: table_settings.accounts[acc] for acc in thread.to_delete}
+                accs_list = [f'  {acc} ({gmail}@gmail.com)' for acc, gmail in accs.items()]
+                ans = choose_func(
+                    text=f'Do you want to delete dead cookies or log in again?\n\n' + '\n'.join(
+                        accs_list),
+                    vars={'Delete dead cookies': 0, 'Re login dead cookies': 1},
+                    standart_var='Delete dead cookies')
+                if ans != -1:
+                    for acc in thread.to_delete:
+                        group_val = table_settings.find_group(
+                            acc) if table_type == 'watch' else None
+                        table_settings.del_account(acc, confirm=True)
+                        if ans == 1:
+                            open_addUsers_Dialog(parent=dialog,
+                                                 parent_settings=dialog_settings,
+                                                 table_settings=table_settings,
+                                                 def_type=def_type,
+                                                 combo_items_default=combo_items_default,
+                                                 dialog_ui=AddUser_Dialog
+                                                 .Ui_AddUser_Dialog if table_type in [
+                                                     'upload',
+                                                     'download']
+                                                 else AddWatcher_Dialog.Ui_AddUser_Dialog,
+                                                 account_val=acc,
+                                                 gmail_val=accs[acc],
+                                                 group_val=group_val)
+                    dialog.close()
+                    open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
+            else:
+                info_func('All cookies are alive!')
+            change_enabled_elements(True)
+
+        if not table_settings.accounts:
+            info_func("You don't have any accounts.")
+            return
+        change_enabled_elements(False)
+        chk_thread = CheckCookiesLifeThread(table_settings)
+        chk_thread.finished.connect(partial(finish, thread=chk_thread))
+        chk_thread.start()
+
+    dialog_settings.ALive_Cookies_Button.clicked.connect(chk_cookies_life)
 
     if table_type == 'watch':
         dialog_settings.EditGroups_Button.clicked.connect(
@@ -228,9 +276,11 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
     dialog.exec_()
 
 
-def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_settings,
-                         def_type: str,
-                         dialog_ui, combo_items_default: list):
+def open_addUsers_Dialog(parent, parent_settings, table_settings,
+                         def_type: str, dialog_ui, combo_items_default: list,
+                         account_val=None,
+                         gmail_val=None,
+                         group_val=None):
     dialog = QtWidgets.QDialog(parent)
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     dialog_settings = dialog_ui()
@@ -238,6 +288,12 @@ def open_addUsers_Dialog(parent: QtWidgets.QTableView, parent_settings, table_se
     items = [f'No {def_type}', *combo_items_default]
     dialog_settings = update_settings_combobox_with_type(dialog_settings, items,
                                                          table_type=str(table_settings).lower())
+    if hasattr(dialog_settings, 'Group_comboBox') and group_val:
+        index = list(items).index(group_val)
+        dialog_settings.Group_comboBox.setCurrentIndex(index)
+    dialog_settings.Account_textbox.setText(account_val)
+    dialog_settings.Gmail_textbox.setText(gmail_val)
+
 
     def ok(parent_settings):
         login = dialog_settings.Account_textbox.text()

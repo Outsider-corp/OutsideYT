@@ -1,36 +1,21 @@
+from typing import Dict, Any
+
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox, QStyleFactory
+from PyQt5.QtWidgets import QMessageBox, QStyleFactory, QPushButton
 
 
 def error_func(text, parent=None):
     error_dialog = QMessageBox(parent) if parent else QMessageBox()
+    error_dialog = _set_box_style(error_dialog, title='Error', text=text)
     error_dialog.setIcon(QtWidgets.QMessageBox.Critical)
-    error_dialog.setText(text)
-    error_dialog.setStyle(QStyleFactory.create('Fusion'))
-    error_dialog.setWindowTitle('Error')
-    error_dialog.setStyleSheet("""
-        background-color: rgb(39, 39, 39);
-        color: rgb(255, 255, 255);
-        alternate-background-color: rgb(39, 39, 39);
-        selection-background-color: rgb(15, 15, 15);
-    """)
-
     error_dialog.exec_()
 
 
 def warning_func(text, parent=None):
     warning_dialog = QMessageBox(parent) if parent else QMessageBox()
+    warning_dialog = _set_box_style(warning_dialog, title='Warning', text=text)
     warning_dialog.setIcon(QtWidgets.QMessageBox.Question)
-    warning_dialog.setText(text)
-    warning_dialog.setStyle(QStyleFactory.create('Fusion'))
-    warning_dialog.setWindowTitle('Warning')
-    warning_dialog.setStyleSheet("""
-        background-color: rgb(39, 39, 39);
-        color: rgb(255, 255, 255);
-        alternate-background-color: rgb(39, 39, 39);
-        selection-background-color: rgb(15, 15, 15);
-    """)
 
     yes_button = warning_dialog.addButton('Yes', QMessageBox.YesRole)
     warning_dialog.addButton('No', QMessageBox.NoRole)
@@ -42,19 +27,11 @@ def warning_func(text, parent=None):
 
 def waiting_func(text: str, time: int):
     waiting_dialog = QMessageBox()
+    waiting_dialog = _set_box_style(waiting_dialog, title='Confirmation', text=f'{text}\n{time}')
     waiting_dialog.setIcon(QtWidgets.QMessageBox.Question)
-    waiting_dialog.setStyle(QStyleFactory.create('Fusion'))
-    waiting_dialog.setWindowTitle('Confirmation')
-    waiting_dialog.setText(f'{text}\n{time}')
     waiting_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     waiting_dialog.setDefaultButton(QMessageBox.No)
     waiting_dialog.setWindowModality(Qt.ApplicationModal)
-    waiting_dialog.setStyleSheet("""
-        background-color: rgb(39, 39, 39);
-        color: rgb(255, 255, 255);
-        alternate-background-color: rgb(39, 39, 39);
-        selection-background-color: rgb(15, 15, 15);
-    """)
 
     def updateCountdown():
         seconds_left = int(waiting_dialog.text().split('\n')[-1])
@@ -72,3 +49,37 @@ def waiting_func(text: str, time: int):
     if result in [QMessageBox.Accepted, QMessageBox.Yes]:
         return True
     return False
+
+
+def choose_func(text: str, vars: Dict, standart_var: Any):
+    def close(event):
+        choose_dialog.close()
+        return -1
+    choose_dialog = QMessageBox()
+    choose_dialog = _set_box_style(choose_dialog, title='Choose option', text=text)
+    for button_text, button_val in vars.items():
+        new_button = QPushButton(button_text)
+        if button_text == standart_var:
+            new_button.setDefault(True)
+        new_button.clicked.connect(lambda: choose_dialog.done(button_val))
+        choose_dialog.addButton(new_button, QMessageBox.ActionRole)
+        choose_dialog.closeEvent = close
+    return choose_dialog.exec_()
+
+def info_func(text: str):
+    info_dialog = QMessageBox()
+    info_dialog = _set_box_style(info_dialog, title='Information', text=text)
+    info_dialog.setIcon(QtWidgets.QMessageBox.Information)
+    info_dialog.exec_()
+
+def _set_box_style(dialog, title: str, text: str = '',):
+    dialog.setStyleSheet("""
+        background-color: rgb(39, 39, 39);
+        color: rgb(255, 255, 255);
+        alternate-background-color: rgb(39, 39, 39);
+        selection-background-color: rgb(15, 15, 15);
+    """)
+    dialog.setStyle(QStyleFactory.create('Fusion'))
+    dialog.setText(text)
+    dialog.setWindowTitle(title)
+    return dialog

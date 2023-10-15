@@ -1,27 +1,17 @@
 import asyncio
+import os
+import pickle
 
 from typing import List, Dict
 import aiohttp
-from PyQt5.QtCore import QMutex, QThread, pyqtSignal, QObject, QThreadPool, QRunnable
+from PyQt5.QtCore import QThread, pyqtSignal, QObject, QThreadPool, QRunnable
+from playwright.async_api import async_playwright
 
 import OutsideYT
 from outside.Download.functions import start_video_download, save_videos_info
-from outside.YT.functions import get_video_info, watching_selenium, watching_playwright
+from outside.YT.functions import get_video_info, watching_playwright, \
+    BrowserContextPlayWright, check_cookies_playwright, update_cookies
 from outside.functions import get_video_link
-
-
-class ProgressMutex:
-    def __init__(self, total_steps: int, progress_bar) -> None:
-        self.mutex = QMutex()
-        self.progress = 0
-        self.total_steps = total_steps
-        self.progress_bar = progress_bar
-
-    def inc(self):
-        self.mutex.lock()
-        self.progress += 1
-        self.progress_bar.setValue(self.progress)
-        self.mutex.unlock()
 
 
 class WatchSignals(QObject):
@@ -201,3 +191,33 @@ class DownloadThread(QThread):
     def run(self):
         self.run_download_process()
         self.update_progress_info()
+
+
+class CheckCookiesLifeThread(QThread):
+
+    def __init__(self, app_settings):
+        super().__init__()
+        self.settings = app_settings
+        self.to_delete = []
+
+    async def check_cookies_life(self, playwright, cookies_file):
+        cookies = pickle.load(open(cookies_file, 'rb'))
+        async with BrowserContextPlayWright(playwright, cookies) as browser:
+            page = await browser.new_page()
+            await page.goto(OutsideYT.YT_URL, wait_until='domcontentloaded',
+                            timeout=OutsideYT.WAIT_TIME_URL_UPLOADS * 1000)
+            if await check_cookies_playwright(page):
+                update_cookies(await page.context.cookies(), cookies_file)
+            else:
+                acc = os.path.basename(cookies_file).replace('_cookies', '')
+                self.to_delete.append(acc)
+
+    async def run_loop(self):
+        async with async_playwright() as pw:
+            atasks = [self.check_cookies_life(pw, os.path.join(self.settings.cookies_folder, file))
+                      for file in os.listdir(self.settings.cookies_folder) if
+                      file.endswith('_cookies')]
+            await asyncio.gather(*atasks)
+
+    def run(self) -> None:
+        asyncio.run(self.run_loop())

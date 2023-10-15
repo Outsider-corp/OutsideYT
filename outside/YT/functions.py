@@ -5,7 +5,7 @@ import random
 import sys
 import time
 from functools import partial
-from typing import Dict, List
+from typing import List
 
 import aiohttp
 import playwright.async_api
@@ -428,7 +428,7 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
         progress_inc: function - function to increment progress_bar value
     """
     try:
-        async with (async_playwright() as pw):
+        async with async_playwright() as pw:
             file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
             if not os.path.exists(file_cookies):
                 raise NotFoundCookiesError(file_cookies)

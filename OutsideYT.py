@@ -1,10 +1,11 @@
 import os
 
-from outside.oyt_info import settings
+from outside import settings
 
 ACCESS_TOKEN = ''
 
 project_folder = os.getcwd()
+cookies_folder = os.path.join(project_folder, 'outside', 'oyt_info')
 app_settings_uploaders = settings.SettingsUsers(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_UPLOADERS.json'))
 app_settings_watchers = settings.SettingsWatchers(
