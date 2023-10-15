@@ -94,8 +94,8 @@ SIMPLE_VIDEO_QUALITIES = [
 AUDIO_QUALITIES = [
     '384 kbps',
     '256 kbps',
-    '162 kbps',
-    '168 kbps',
+    '192 kbps',
+    '160 kbps',
     '128 kbps',
     '70 kbps',
     '50 kbps',
@@ -104,6 +104,6 @@ AUDIO_QUALITIES = [
 PREFER_QUALITY = [
     'Better',
     'Normal',
-    'Worst',
+    'Worse',
     'Equals'
 ]

@@ -1,10 +1,9 @@
 from functools import partial
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QTableView, QWidget
+from PyQt5.QtWidgets import QTableView
 
-import OutsideYT
-from OutsideYT import app_settings_uploaders
+from OutsideYT import app_settings_uploaders, app_settings_download, WAIT_TIME_THREAD
 from . import TableModels, context_menu
 from outside import TableModels as CommonTables
 from .dialogs import select_saving_path, open_advanced_settings
@@ -78,8 +77,8 @@ def start_download(dialog_settings, table: QTableView):
         try:
             comp_info = thread.completed_tasks_info
             thread.quit()
-            thread.wait(OutsideYT.WAIT_TIME_THREAD)
-            table.model()._data["Selected"] = [not i for i in comp_info]
+            thread.wait(WAIT_TIME_THREAD)
+            table.model()._data["Selected"] = comp_info
             if not all(table.model()._data["Selected"]):
                 dialog_settings.Download_SelectAll_CheckBox.setChecked(False)
             dialog_settings.download_thread = None
@@ -99,13 +98,15 @@ def start_download(dialog_settings, table: QTableView):
              dialog_settings.Download_Video_checkBox.isChecked()]):
         try:
             change_enabled_tab_elements(dialog_settings, 'Download', False)
-            sel_data = data[data['Selected'] == True].to_dict(orient='records')
+            sel_data = data.to_dict(orient='records')
+            params = app_settings_download.export_settings_as_dict()
             dialog_settings.download_thread = DownloadThread(videos=sel_data,
                                                              saving_path=saving_path,
                                                              download_info_key=dialog_settings
                                                              .Download_Info_checkBox.isChecked(),
                                                              download_video_key=dialog_settings
-                                                             .Download_Video_checkBox.isChecked())
+                                                             .Download_Video_checkBox.isChecked(),
+                                                             download_params=params)
             dialog_settings.download_thread.finished.connect(
                 partial(finish, dialog_settings.download_thread))
             dialog_settings.download_thread.update_progress_signal.connect(

@@ -318,6 +318,22 @@ class SettingsDownloads:
                 setattr(self, key, val)
         self.update_settings()
 
+    def export_settings_as_dict(self):
+        params = {'simple': self.simple_download,
+                  'video': {
+                      'video_quality': self.simple_quality_video if (
+                          self.simple_download) else self.quality_video,
+                      'video_ext': self.ext
+                  },
+                  'audio': {
+                      'audio_quality': self.quality_audio,
+                      'audio_ext': self.ext
+                  },
+                  'prefer': self.prefer,
+                  'download_type': self.download_type
+                  }
+        return params
+
     def update_settings(self):
         with open(self.file, 'w', encoding='utf-8') as f:
             settings = {'quality_video': self.quality_video,

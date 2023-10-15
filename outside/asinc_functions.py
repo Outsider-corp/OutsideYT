@@ -150,14 +150,15 @@ class DownloadThread(QThread):
     add_progress_label_signal = pyqtSignal((bool, str))
     error_signal = pyqtSignal(str)
 
-    def __init__(self, videos: List, saving_path: str, parent=None,
+    def __init__(self, videos: List, download_params: Dict, saving_path: str, parent=None,
                  download_info_key=True, download_video_key=True, **kwargs):
         super().__init__(parent)
         self.download_info_key = download_info_key
         self.download_video_key = download_video_key
         self._saving_path = saving_path
         self.videos = videos
-        self.completed_tasks_info = [False for _ in range(len(videos))]
+        self.download_params = download_params
+        self.completed_tasks_info = [video['Selected'] for video in self.videos]
 
     def update_progress_info(self, label_text: str = None, bar_value: int = 0):
         self.update_progress_label_signal.emit(label_text)
@@ -180,12 +181,11 @@ class DownloadThread(QThread):
                              completed_tasks_info=self.completed_tasks_info,
                              thread=self)
         if self.download_video_key:
-            self.completed_tasks_info = [False for _ in range(len(self.videos))]
+            self.completed_tasks_info = [video['Selected'] for video in self.videos]
             self.update_progress_info('Downloading videos...')
             start_video_download(videos=self.videos, saving_path=self._saving_path,
                                  completed_tasks_info=self.completed_tasks_info,
-                                 params=OutsideYT.download_video_params,
-                                 add_to_folder=self.download_info_key,
+                                 params=self.download_params,
                                  thread=self)
 
     def run(self):
