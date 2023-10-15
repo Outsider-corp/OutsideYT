@@ -1,0 +1,1 @@
+venv\Scripts\python -m ..\Lib\site-packages\playwright install --with-deps chromium --path=../outside/bin/
