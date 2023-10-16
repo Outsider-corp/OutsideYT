@@ -2,7 +2,7 @@ import asyncio
 import os
 import pickle
 
-from typing import List, Dict
+from typing import List, Dict, Union, Any
 import aiohttp
 from PyQt5.QtCore import QThread, pyqtSignal, QObject, QThreadPool, QRunnable
 from playwright.async_api import async_playwright
@@ -46,7 +46,7 @@ class Watcher(QRunnable):
     async def watching(self, user):
         async with self.semaphore:
             return await watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
-                                             int(self._video_info['Duration']), user,
+                                             user=user,
                                              driver_headless=self.driver_headless,
                                              progress_inc=self.progress_bar_inc)
 
@@ -160,11 +160,11 @@ class DownloadThread(QThread):
         self.download_params = download_params
         self.completed_tasks_info = [video['Selected'] for video in self.videos]
 
-    def update_progress_info(self, label_text: str = None, bar_value: int = 0):
+    def update_progress_info(self, bar_value: int = 0, label_text: str = None):
         self.update_progress_label_signal.emit(label_text)
         self.update_progress_signal.emit(bar_value)
 
-    def update_progress_bar(self, value: int = 0):
+    def update_progress_bar(self, value: int):
         self.update_progress_signal.emit(value)
 
     def add_progress_label(self, add_key: bool = False, text: str = ''):
@@ -175,14 +175,14 @@ class DownloadThread(QThread):
 
     def run_download_process(self):
         if self.download_info_key:
-            self.update_progress_info('Creating files...')
+            self.update_progress_info(label_text='Creating files...')
             save_videos_info(videos=self.videos,
                              saving_path=self._saving_path,
                              completed_tasks_info=self.completed_tasks_info,
                              thread=self)
         if self.download_video_key:
             self.completed_tasks_info = [video['Selected'] for video in self.videos]
-            self.update_progress_info('Downloading videos...')
+            self.update_progress_info(label_text='Downloading videos...')
             start_video_download(videos=self.videos, saving_path=self._saving_path,
                                  completed_tasks_info=self.completed_tasks_info,
                                  params=self.download_params,

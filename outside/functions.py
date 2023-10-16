@@ -63,8 +63,6 @@ def check_folder_name(fname: str):
     for i in FOLDERNAME_FORBIDDEN_SYMBOLS:
         if i in fname:
             fname = fname.replace(i, '_')
-    while fname.endswith('.'):
-        fname = fname[:-1]
     return fname
 
 

@@ -37,6 +37,7 @@ class OutsideDownloadVideoYT:
                  api_video_info=None,
                  ffmpeg_location: str = None,
                  callback_func=None,
+                 callback_info=None,
                  callback_err=None,
                  stop_signal=None):
         """
@@ -62,9 +63,15 @@ class OutsideDownloadVideoYT:
                 'full' - download video with audio,
                 'audio' - download only audio,
                 'video' - download only video)
+            'if_exists' - action if output video_file is already exists
+            ('replace' - delete old video and add a new, 'add' - add video with "_n" suffix,
+            'nothing' - don't download video)
             video_info: Dict - parsed info from video page
             ffmpeg_location: str - ffmpeg.exe location
             callback_func - function that will be called on every step of downloading
+            callback_info - function that will be called on changing type of process
+            callback_err - function that will be called on errors
+            stop_signal - called if download process was stopped
         """
         self.video_id = get_video_id(link)
         self.link = get_video_link(self.video_id, 'embed')
@@ -75,6 +82,7 @@ class OutsideDownloadVideoYT:
         self._itags_api = None
         self.ffmpeg_location = ffmpeg_location or OutsideDownloadVideoYT.__FFMPEG_LOCATION
         self._callback = callback_func
+        self._callback_info = callback_info
         self._callback_err = callback_err
         self.__progress_size = None
         self.__api_key = os.environ.get('YT_KEY', OutsideYT.ACCESS_TOKEN)
@@ -312,8 +320,8 @@ class OutsideDownloadVideoYT:
         return
 
     def __download_one_format(self, url: str, filesize: int, saving_path: str,
-                              timeout: int = __TIMEOUT, max_retries: int = __MAX_TRIES):
-        downloaded = 0
+                              timeout: int = __TIMEOUT, max_retries: int = __MAX_TRIES,
+                              downloaded: int = 0):
         with open(saving_path, 'wb') as file:
             try:
                 for chunk in self._stream(url, timeout=timeout,
@@ -347,13 +355,15 @@ class OutsideDownloadVideoYT:
             self.__progress_size = sum([int(i['contentLength']) for i in itags])
             filename = os.path.join(saving_path,
                                     f'{check_folder_name(video_info["videoDetails"]["title"])}')
+            downloaded = 0
             for i, itag in enumerate(itags):
                 url = itag['url']
                 filesize = int(itag['contentLength'])
                 ext = itag['mimeType'].split(';')[0].split('/')[1].lower()
                 file_path = os.path.join(f'{filename}_{i if len(itags) == 2 else ""}.{ext}')
                 files.append(file_path)
-                self.__download_one_format(url, filesize, file_path)
+                self.__download_one_format(url, filesize, file_path, downloaded=downloaded)
+                downloaded = filesize
                 if i == 1:
                     self._add_video_audio(*files, f'{filename}.{ext}')
             return True
@@ -379,12 +389,24 @@ class OutsideDownloadVideoYT:
         ...
 
     def _add_video_audio(self, file1: str, file2: str, output_file: str):
-        command = [self.__FFMPEG_LOCATION,
-                   '-i', file1,
-                   '-i', file2,
-                   '-c:v', 'copy',
-                   '-c:a', 'copy',
-                   output_file]
-        subprocess.run(command)
+        if_exists = self.params['if_exists']
+        if if_exists != 'nothing':
+            if if_exists == 'replace':
+                os.remove(output_file)
+            elif if_exists == 'add':
+                i = 1
+                of = output_file
+                while os.path.exists(of):
+                    of_list = output_file.split('.')
+                    of = f'{of_list[0]}_{i}.{of_list[1]}'
+                    i += 1
+                output_file = of
+            command = [self.__FFMPEG_LOCATION,
+                       '-i', file1,
+                       '-i', file2,
+                       '-c:v', 'copy',
+                       '-c:a', 'copy',
+                       output_file]
+            subprocess.run(command)
         os.remove(file1)
         os.remove(file2)

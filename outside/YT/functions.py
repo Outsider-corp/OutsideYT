@@ -415,7 +415,7 @@ async def watching_selenium(url: str, duration: int, user: str, driver_headless:
         print(f"Error. \n {e}")
 
 
-async def watching_playwright(url: str, duration: int, user: str, driver_headless: bool = True,
+async def watching_playwright(url: str, user: str, driver_headless: bool = True,
                               progress_inc=None):
     """
     Start watching video with Playwright on url link by group watchers.
@@ -461,10 +461,6 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                 await page.locator('//button[@class="ytp-play-button ytp-button"]').click()
                 await asyncio.sleep(0.5)
                 await page.locator(settings_button).click()
-                # xpath = "//div[@class=\'ytp-play-progress ytp-swatch-background-color\']"
-                # script = (f'document.evaluate("{xpath}", document, null, '
-                #           f'XPathResult.FIRST_ORDERED_NODE_TYPE, null)'
-                #           f'.singleNodeValue.style["transform"]')
                 time_xpath = f'//span[@class="ytp-time-current"]'
 
                 real_duration_str = await page.text_content(f'//span[@class="ytp-time-duration"]')
@@ -476,8 +472,6 @@ async def watching_playwright(url: str, duration: int, user: str, driver_headles
                     except:
                         raise BrowserClosedError()
                     if progress_inc:
-                        # progress_value = int(
-                        #     float(style.replace('scaleX(', '').replace(')', '')) * 100)
                         progress_value = calc_time_from_string(time_left)
                         if old_progress_value != progress_value:
                             await progress_inc(progress_value - old_progress_value)

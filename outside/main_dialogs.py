@@ -1,7 +1,7 @@
 import glob
 import os
 from functools import partial
-from typing import List
+from typing import List, Any
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableView, QWidget
@@ -551,7 +551,6 @@ def update_settings_from_file():
 def update_progress_bar(table: QTableView, value: int):
     if table.model().progress_bar:
         table.model().progress_bar.setValue(value)
-
 
 def update_progress_label(table: QTableView, label_text: str):
     if table.model().progress_label:

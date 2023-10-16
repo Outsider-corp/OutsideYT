@@ -58,7 +58,7 @@ def start_video_download(videos: List, saving_path: str, completed_tasks_info: L
     for num, video in enumerate(videos):
         if video['Selected']:
             try:
-                thread.update_progress_info(f"{num + 1}/{cnt_videos} - {video['Video']}")
+                thread.update_progress_info(label_text=f"{num + 1}/{cnt_videos} - {video['Video']}")
                 saving_path_video = os.path.join(saving_path, check_folder_name(video['Video']))
                 os.makedirs(saving_path_video, exist_ok=True)
                 video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
@@ -69,7 +69,6 @@ def start_video_download(videos: List, saving_path: str, completed_tasks_info: L
                 if video_down.download_video(saving_path=saving_path_video):
                     completed_tasks_info[num] = False
             except NoAvailableQualityError:
-                print("Can't find any settings that meet the selected parameters")
                 thread.show_error("Can't find any settings that meet the selected parameters")
             except Exception as e:
                 print(f'Error on start downloading...\n{e}')

@@ -107,3 +107,9 @@ PREFER_QUALITY = [
     'Worse',
     'Equals'
 ]
+HDR = [330, 331, 332, 333, 334, 335, 336, 337]
+_3D = [82, 83, 84, 85, 100, 101, 102]
+LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
+
+IF_EXISTS_VARS = ['replace', 'add', 'nothing']
+IF_EXISTS_DEFAULT = 'replace'

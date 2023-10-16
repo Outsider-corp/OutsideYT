@@ -300,6 +300,7 @@ class SettingsDownloads:
         self.quality_audio = 'Any'
         self.simple_download = True
         self.download_type = 'full'
+        self.if_exists = outside.video_qualities.IF_EXISTS_DEFAULT
         if os.path.exists(file):
             self.read_settings()
         else:
@@ -311,7 +312,7 @@ class SettingsDownloads:
         Args:
             kwargs: dict - dict with new values of settings. Available keys:
             quality_video: str, quality_audio: str, ext: str, prefer: str, simple_download: bool,
-            download_type: str, simple_quality_video: str
+            download_type: str, simple_quality_video: str, if_exists: str
         """
         for key, val in kwargs.items():
             if hasattr(self, key):
@@ -330,7 +331,8 @@ class SettingsDownloads:
                       'audio_ext': self.ext
                   },
                   'prefer': self.prefer,
-                  'download_type': self.download_type
+                  'download_type': self.download_type,
+                  'if_exists': self.if_exists
                   }
         return params
 
@@ -342,7 +344,8 @@ class SettingsDownloads:
                         'ext': self.ext,
                         'prefer': self.prefer,
                         'simple_download': self.simple_download,
-                        'download_type': self.download_type}
+                        'download_type': self.download_type,
+                        'if_exists': self.if_exists}
             json.dump(settings, f)
 
     def read_settings(self):
@@ -355,6 +358,7 @@ class SettingsDownloads:
         self.quality_audio = settings['quality_audio']
         self.simple_download = settings['simple_download']
         self.download_type = settings['download_type']
+        self.if_exists = settings['if_exists']
 
 # class AccountSettings:
 #

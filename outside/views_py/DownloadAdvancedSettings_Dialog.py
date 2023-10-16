@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'outside/views_ui/DownloadAdvancedSettings_Dialog.ui'
+# Form implementation generated from reading ui file 'P:\PROJECTS\OutsideYT\outside\views_ui\DownloadAdvancedSettings_Dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -207,14 +207,32 @@ class Ui_DownloadSettings_Dialog(object):
         sizePolicy.setHeightForWidth(self.Extensions_comboBox.sizePolicy().hasHeightForWidth())
         self.Extensions_comboBox.setSizePolicy(sizePolicy)
         self.Extensions_comboBox.setMinimumSize(QtCore.QSize(100, 0))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        self.Extensions_comboBox.setFont(font)
         self.Extensions_comboBox.setObjectName("Extensions_comboBox")
         self.horizontalLayout_3.addWidget(self.Extensions_comboBox)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem1)
+        self.label_4 = QtWidgets.QLabel(DownloadSettings_Dialog)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_4.setFont(font)
+        self.label_4.setObjectName("label_4")
+        self.horizontalLayout_3.addWidget(self.label_4)
+        self.If_exists_comboBox = QtWidgets.QComboBox(DownloadSettings_Dialog)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(11)
+        self.If_exists_comboBox.setFont(font)
+        self.If_exists_comboBox.setObjectName("If_exists_comboBox")
+        self.horizontalLayout_3.addWidget(self.If_exists_comboBox)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
         self.verticalLayout_2.addLayout(self.verticalLayout)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem2)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem1)
         self.buttonBox = QtWidgets.QDialogButtonBox(DownloadSettings_Dialog)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
@@ -236,6 +254,7 @@ class Ui_DownloadSettings_Dialog(object):
         self.label_5.setText(_translate("DownloadSettings_Dialog", "Audio Quality"))
         self.label_3.setText(_translate("DownloadSettings_Dialog", "Video Quality"))
         self.label_7.setText(_translate("DownloadSettings_Dialog", "Extension of file"))
+        self.label_4.setText(_translate("DownloadSettings_Dialog", "If videofile exists"))
 
 
 if __name__ == "__main__":

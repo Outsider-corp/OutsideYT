@@ -31,7 +31,7 @@ FILENAMES_VIDEO_DETAILS = {"Title.txt": 'title', "Description.txt": 'shortDescri
                            'Preview.jpg': 'link',
                            'Cards.json': 'cards'}
 
-FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*'
+FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*.'
 
 WAIT_TIME_URL_UPLOADS = 5
 WAIT_TIME_ASYNC_LOOPS = 0.8
@@ -48,14 +48,3 @@ FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
 
 YT_URL = 'https://www.youtube.com/'
 YT_STUDIO_URL = 'https://studio.youtube.com/'
-
-HDR = [330, 331, 332, 333, 334, 335, 336, 337]
-_3D = [82, 83, 84, 85, 100, 101, 102]
-LIVE = [91, 92, 93, 94, 95, 96, 132, 151]
-
-download_video_params = {'simple': True,
-                         'video': {'video_quality': '1080p',
-                                   'video_ext': 'MP4'},
-                         'audio': {'audio_quality': '192',
-                                   'audio_ext': 'MP4'},
-                         'full_quality': 'best'}
