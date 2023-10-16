@@ -81,3 +81,4 @@ def save_videos_info(videos, saving_path: str, completed_tasks_info: List, threa
             if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
                 thread.update_progress_bar(int((num + 1) / cnt_videos * 100))
                 completed_tasks_info[num] = False
+

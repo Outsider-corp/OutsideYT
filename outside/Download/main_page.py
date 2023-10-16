@@ -98,9 +98,9 @@ def start_download(dialog_settings, table: QTableView):
              dialog_settings.Download_Video_checkBox.isChecked()]):
         try:
             change_enabled_tab_elements(dialog_settings, 'Download', False)
-            sel_data = data.to_dict(orient='records')
+            data_list = data.to_dict(orient='records')
             params = app_settings_download.export_settings_as_dict()
-            dialog_settings.download_thread = DownloadThread(videos=sel_data,
+            dialog_settings.download_thread = DownloadThread(videos=data_list,
                                                              saving_path=saving_path,
                                                              download_info_key=dialog_settings
                                                              .Download_Info_checkBox.isChecked(),
@@ -113,8 +113,6 @@ def start_download(dialog_settings, table: QTableView):
                 lambda x: update_progress_bar(table, x))
             dialog_settings.download_thread.update_progress_label_signal.connect(
                 lambda x: update_progress_label(table, x))
-            dialog_settings.download_thread.add_progress_label_signal.connect(
-                lambda x, y: add_progress_label(table, x, y))
             dialog_settings.download_thread.error_signal.connect(lambda x: error_func(x))
             dialog_settings.download_thread.start()
         except Exception as e:

@@ -17,14 +17,14 @@ from OutsideYT import (
 class UploadModel(QAbstractTableModel):
     columns = ['id', 'Selected', 'User', 'Title', 'Publish', 'Video', 'Description',
                'Playlist', 'Preview', 'Tags', 'Ends', 'Cards', 'Access',
-               'Save filename?']
+               'Save filename?', 'Folder']
 
     default_content = {'id': None, 'Selected': True,
                        'User': app_settings_uploaders.def_account,
                        'Title': '', 'Publish': 'Now', 'Video': 'select video',
                        'Description': '', 'Playlist': '', 'Preview': '',
                        'Tags': '', 'Ends': 'random', 'Cards': 2,
-                       'Access': 'Private', 'Save filename?': False}
+                       'Access': 'Private', 'Save filename?': False, "Folder": None}
 
     def __init__(self, data=None, oldest_settings=None, table_progress_bar=None,
                  table_progress_label=None) -> None:
@@ -70,7 +70,8 @@ class UploadModel(QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
         if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal and self._data.columns[section] != 'Selected':
+            if orientation == Qt.Horizontal and self._data.columns[section] not in ['Selected',
+                                                                                    'Folder']:
                 return self._data.columns[section]
             elif orientation == Qt.Vertical:
                 return '>'
@@ -87,7 +88,7 @@ class UploadModel(QAbstractTableModel):
                     return Qt.Checked if self.get_data().loc[
                         index.row(), 'Save filename?'] else Qt.Unchecked
             if role == Qt.DisplayRole:
-                if column == 'Selected' or column == 'Save filename?':
+                if column in ['Selected', 'Save filename?', 'Folder']:
                     return None
 
                 elif column == 'Video':
@@ -106,7 +107,6 @@ class UploadModel(QAbstractTableModel):
 
                 elif column == 'Tags':
                     return self.get_data().loc[index.row(), column]
-
                 else:
                     return self.get_data().loc[index.row(), column]
             return None
@@ -148,8 +148,6 @@ class UploadModel(QAbstractTableModel):
                 self._data.loc[row_count, col] = UploadModel.default_content[col]
         row_count += count
         self.endInsertRows()
-        if 'Url' in kwargs:
-            self.paths.append(kwargs['Url'])
         self.update()
         return True
 
@@ -206,7 +204,7 @@ def open_location(table, index, ext: str):
 
 
 def add_video_for_uploading(table: QTableView, path, user=None):
-    if path in table.model().paths:
+    if path in table.model().get_data()['Folder']:
         return
     if user is None:
         user = app_settings_uploaders.def_account
@@ -222,5 +220,5 @@ def add_video_for_uploading(table: QTableView, path, user=None):
                                           'Description': description,
                                           'Playlist': playlist,
                                           'Preview': preview,
-                                          'Tags': tags},
-                             Url=path)
+                                          'Tags': tags,
+                                          'Folder': path})

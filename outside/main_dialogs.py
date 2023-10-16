@@ -13,7 +13,7 @@ from outside import TableModels
 from outside.asinc_functions import GetVideoInfoThread, CheckCookiesLifeThread
 from outside.functions import update_combobox, get_video_id, change_enabled_tab_elements
 from outside.message_boxes import error_func, warning_func, choose_func, info_func
-from outside.Upload.dialogs import google_login
+from outside.Upload.dialogs import google_login, update_uploads_delegate
 from outside.views_py import (
     AddUser_Dialog,
     AddWatcher_Dialog,
@@ -169,9 +169,12 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
                 table_settings.update_groups(data)
             if table_type != 'watch':
                 parent_settings.Download_Save_to_ComboBox = update_combobox(
-                    parent_settings.Download_Save_to_ComboBox, table_settings.accounts.keys(),
-                    table_settings.def_account
+                    parent_settings.Download_Save_to_ComboBox,
+                    table_settings.accounts.keys(),
+                    table_settings.def_account if table_settings.def_account != f'No default {def_type}'
+                    else parent_settings.Download_Save_to_ComboBox.currentText()
                 )
+                update_uploads_delegate(parent.Upload_Table)
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
 
@@ -219,43 +222,44 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
 
     def chk_cookies_life():
         def change_enabled_elements(state: bool):
-            current_tab = dialog.findChild(QWidget)
-            elements = current_tab.findChildren(QWidget)
-            for el in elements:
+            for el in dialog.findChildren(QWidget):
                 el.setEnabled(state)
 
         def finish(thread):
-            if thread.to_delete:
-                accs = {acc: table_settings.accounts[acc] for acc in thread.to_delete}
-                accs_list = [f'  {acc} ({gmail}@gmail.com)' for acc, gmail in accs.items()]
-                ans = choose_func(
-                    text=f'Do you want to delete dead cookies or log in again?\n\n' + '\n'.join(
-                        accs_list),
-                    vars={'Delete dead cookies': 0, 'Re login dead cookies': 1},
-                    standart_var='Delete dead cookies')
-                if ans != -1:
-                    for acc in thread.to_delete:
-                        group_val = table_settings.find_group(
-                            acc) if table_type == 'watch' else None
-                        table_settings.del_account(acc, confirm=True)
-                        if ans == 1:
-                            open_addUsers_Dialog(parent=dialog,
-                                                 parent_settings=dialog_settings,
-                                                 table_settings=table_settings,
-                                                 def_type=def_type,
-                                                 combo_items_default=combo_items_default,
-                                                 dialog_ui=AddUser_Dialog
-                                                 .Ui_AddUser_Dialog if table_type in [
-                                                     'upload',
-                                                     'download']
-                                                 else AddWatcher_Dialog.Ui_AddUser_Dialog,
-                                                 account_val=acc,
-                                                 gmail_val=accs[acc],
-                                                 group_val=group_val)
-                    dialog.close()
-                    open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
-            else:
-                info_func('All cookies are alive!')
+            try:
+                if thread.to_delete:
+                    accs = {acc: table_settings.accounts[acc] for acc in thread.to_delete}
+                    accs_list = [f'  {acc} ({gmail}@gmail.com)' for acc, gmail in accs.items()]
+                    ans = choose_func(
+                        text=f'Do you want to delete dead cookies or log in again?\n\n' + '\n'.join(
+                            accs_list),
+                        vars={'Delete dead cookies': 0, 'Re login dead cookies': 1},
+                        standart_var='Delete dead cookies')
+                    if ans != -1:
+                        for acc in thread.to_delete:
+                            group_val = table_settings.find_group(
+                                acc) if table_type == 'watch' else None
+                            table_settings.del_account(acc, confirm=True)
+                            if ans == 1:
+                                open_addUsers_Dialog(parent=dialog,
+                                                     parent_settings=dialog_settings,
+                                                     table_settings=table_settings,
+                                                     def_type=def_type,
+                                                     combo_items_default=combo_items_default,
+                                                     dialog_ui=AddUser_Dialog
+                                                     .Ui_AddUser_Dialog if table_type in [
+                                                         'upload',
+                                                         'download']
+                                                     else AddWatcher_Dialog.Ui_AddUser_Dialog,
+                                                     account_val=acc,
+                                                     gmail_val=accs[acc],
+                                                     group_val=group_val)
+                        dialog.close()
+                        open_UsersList_Dialog(parent, table_type, add_table_class, parent_settings)
+                else:
+                    info_func('All cookies are alive!')
+            except KeyError as e:
+                error_func(f'No account {e} in settings file')
             change_enabled_elements(True)
 
         if not table_settings.accounts:
@@ -293,7 +297,6 @@ def open_addUsers_Dialog(parent, parent_settings, table_settings,
         dialog_settings.Group_comboBox.setCurrentIndex(index)
     dialog_settings.Account_textbox.setText(account_val)
     dialog_settings.Gmail_textbox.setText(gmail_val)
-
 
     def ok(parent_settings):
         login = dialog_settings.Account_textbox.text()
@@ -552,12 +555,14 @@ def update_progress_bar(table: QTableView, value: int):
     if table.model().progress_bar:
         table.model().progress_bar.setValue(value)
 
+
 def update_progress_label(table: QTableView, label_text: str):
     if table.model().progress_label:
         table.model().progress_label.setText(label_text)
 
 
-def add_progress_label(table: QTableView, add_key: bool, add_text: str):
+def add_progress_label(table: QTableView, add_key: bool = False, add_text: str = ''):
+    add_key, add_text = yield
     label = table.model().progress_label
     if label:
         old_text = label.text()
@@ -576,3 +581,9 @@ def cancel_page_action(dialog_settings, table: QTableView):
     table_type = table.model().table_type
     if getattr(dialog_settings, f'{table_type.lower()}_thread'):
         getattr(dialog_settings, f'{table_type.lower()}_thread').terminate()
+
+
+def init_add_label_generator(table):
+    add_label_gen = add_progress_label(table, True, '')
+    next(add_label_gen)
+    return add_label_gen

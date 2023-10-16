@@ -112,9 +112,13 @@ def update_cookies(cookies: List[dict], cookies_file: str):
             cookies_login.append(cookies[i])
     pickle.dump(cookies_login, open(cookies_file, 'wb'))
 
+
 async def check_cookies_playwright(page: playwright.async_api.Page):
-    avatar = await page.query_selector('button[id="avatar-btn"]') is not None
-    return avatar
+    try:
+        avatar = await page.query_selector('button[id="avatar-btn"]') is not None
+        return avatar
+    except:
+        return False
 
 
 def get_google_login(login: str, mail: str, folder: str):
@@ -139,30 +143,62 @@ def get_google_login(login: str, mail: str, folder: str):
     return added
 
 
-def upload_video(user: str, title: str, publish, video: str, description: str, playlist: str,
+def upload_video(user: str, title: str, publish: str, video: str, description: str, playlist: str,
                  preview: str, tags: str, ends: str, cards: int, access: int, save_title: bool,
-                 driver_headless: bool = True):
+                 driver_headless: bool = True, _callback_func=None, _callback_info=None,
+                 _callback_error=None):
     """
-    :param user: Имя пользователя
-    :param title: Название
-    :param publish: время публикации
-    :param video: папка с данными для видео
-    :param description: Описание
-    :param playlist: Плейлист
-    :param preview: Превью
-    :param tags: теги
-    :param ends: import (default) - импортировать конечные заставки из предыдушего видео,
-    random - рандомные конечные заставки из стандартных
-    :param cards: int - количество подсказок, которые нужно добавить в видео (на рандомных моментах)
-    :param access: 0 - приватное, 1 - доступ по ссылке, 2 - открытое.
-    Используется, если publ_time = None (не указано)
-    :param save_title: bool - использовать ли название файла с видео в качестве названия видео
-    :param driver_headless: bool - отключить отображение браузеров
+    Uploads one video to YouTube.
+    Args:
+        user: str - username, on which account need to upload video
+        title: str - title of video
+        publish: str - publish time
+        video: str - path to the video file
+        description: str - description of video
+        playlist: str - playlist on the channel
+        preview: str - path to preview
+        tags: str - list of tags
+        ends: import (default) - import ends from last video,
+                random - random ends from standard set
+        cards: int - count of cards that needs to add to the video
+        access: 0 - private, 1 - access by link, 2 - open.
+        Used if publ_time = None
+        save_title: bool - use filename as name of video on YT
+        driver_headless: bool - enable headless
+        callback_func - callback of process
+        callback_info - callback with sending current stage info
+        callback_error - callback on errors
     :return:
     """
+    stage_count = 18
+
+    if not _callback_func:
+        _callback_func = lambda x: ...
+    if not _callback_info:
+        _callback_info = lambda x: ...
+    if not _callback_error:
+        _callback_error = lambda x: ...
+
+    def __gen_iter_stage():
+        current_stage = 1
+        while True:
+            _callback_func(int(current_stage / stage_count * 100))
+            current_stage += 1
+            if current_stage < stage_count:
+                yield
+            else:
+                break
+
+    gen_iter = __gen_iter_stage()
+
+    def _next_state():
+        next(gen_iter)
+
     try:
         with DriverContextSelenium(headless=driver_headless, images=not driver_headless,
                                    gpu=not driver_headless) as driver:
+            _callback_info("Connecting to YT")
+            _next_state()
             driver.get(YT_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             for cookie in pickle.load(
@@ -170,16 +206,18 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                          'rb')):
                 driver.add_cookie(cookie)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-
+            _next_state()
             driver.get(YT_STUDIO_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
+            _callback_info("Fill in info about video")
+            _next_state()
             driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-
+            _next_state()
             driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(video)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-
+            _next_state()
             title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                      f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                      f'*[@slot="body"]/*[@id="input"]/div')
@@ -190,23 +228,24 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
             elif title_el.text != '.'.join(os.path.basename(video).split('.')[:-1]) and save_title:
                 title_el.clear()
                 title_el.send_keys('.'.join(os.path.basename(video).split('.')[:-1]))
-
+            _next_state()
             description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                            f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                            f'*[@slot="body"]/*[@id="input"]/div')
             time.sleep(5)
+            _next_state()
             description_old = description_el.text
             description_el.clear()
             descs_del = '\n\n' if description_old else ''
             description_el.send_keys(''.join([description, descs_del, description_old]))
-
+            _next_state()
             if preview:
                 try:
                     driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(preview)
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-                except Exception:
-                    print('Превью невозможно загрузить')
-
+                except Exception as e:
+                    print(f"Can't upload preview.\n{e}")
+            _next_state()
             if playlist:
                 try:
                     playlist_el = driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger'
@@ -224,7 +263,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                         except:
                             print(f'No playlist: {i}')
                 except Exception as e:
-                    print('Произошла ошибка на этапе добавления видео в плейлисты')
+                    print('Error on add video to playlists')
                     print(e)
                 finally:
                     try:
@@ -233,7 +272,7 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                         driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     except:
                         pass
-
+            _next_state()
             if tags:
                 driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
                 driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
@@ -242,11 +281,11 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                                                         f'*[@slot="body"]/*[@id="chip-bar"]/div/*[@id="text-input"]')
                 tags_el.send_keys(tags)
                 driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-
+            _next_state()
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-
-            # Добавить добавление подсказок
+            _next_state()
+            # FIXME Need to add cards
 
             if ends:
                 try:
@@ -274,29 +313,48 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     time.sleep(2)
                 except Exception as e:
-                    print(f'Невозможно поставить конечные заставки\n{e}')
-
+                    print(f"Can't add endscreens.\n{e}")
+            _next_state()
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(1)
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
-
-            if True:
-                # if publish:
-                #     pass
-                # else:
+            _next_state()
+            if publish:
+                driver.find_element(By.XPATH,
+                                    f'//tp-yt-paper-radio-button['
+                                    f'@name="SCHEDULE"]').click()
+                driver.implicitly_wait(0.5)
+                driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger['
+                                              f'@id="datepicker-trigger"]').click()
+                driver.implicitly_wait(0.5)
+                driver.find_element(By.XPATH, f'//tp-yt-paper-input[@id="textbox"]/'
+                                              f'tp-yt-paper-input-container['
+                                              f'@id="container"]/div[@class='
+                                              f'"input-wrapper style-scope '
+                                              f'tp-yt-paper-input-container"]/div/'
+                                              f'iron-input').send_keys(
+                    publish.split()[0]
+                )
+                driver.find_element(By.XPATH, f'//ytcp-form-input-container['
+                                              f'@id="time-of-day-container"]').send_keys(
+                    publish.split()[1])
+            else:
                 publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
                 if access == 'Private':
                     publ_el.find_element(By.XPATH, f'//*[@name="PRIVATE"]').click()
                 elif access == 'On link':
                     publ_el.find_element(By.XPATH, f'//*[@name="UNLISTED"]').click()
                     video_url = driver.find_element(By.XPATH, f'//span[@class="video-url-fadeable'
-                                                              f' style-scope ytcp-video-info"]/a').text
-                    print(video_url)
+                                                              f' style-scope ytcp-video-info"]'
+                                                              f'/a').text
                 elif access == 'Public':
                     publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
-
+            _next_state()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
+
+            _callback_info("Uploading video")
+            _next_state()
             while True:
                 try:
                     driver.find_element(By.XPATH,
@@ -305,11 +363,15 @@ def upload_video(user: str, title: str, publish, video: str, description: str, p
                     break
                 except:
                     continue
+            _next_state()
             driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            print(f'\033[32m\033[1mВидео {os.path.basename(video)} было успешно загружено!\033[0m')
+            _next_state()
+            print(f'\033[32m\033[1mVideo {os.path.basename(video)} was successfully upload!\033[0m')
+            return True
     except Exception as e:
-        error_func(f"Error.\n {e}")
+        _callback_error(f"Error.\n {e}")
+    return False
 
 
 async def get_video_info(link, session: aiohttp.ClientSession, headers=None, *args, **kwargs):
@@ -493,30 +555,6 @@ def download_image(url: str, path: str):
     if res.status_code == 200:
         with open(path, 'wb') as f:
             f.write(res.content)
-
-
-def _on_progress_download_video_ylp(progress_dict: dict, progress_bar, total_size: int):
-    if progress_dict['status'] == 'downloading' and 'downloaded_bytes' in progress_dict:
-        progress_bar.setValue(
-            int(progress_dict['downloaded_bytes'] / total_size * 100))
-
-
-def download_video_dlp(videoname: str, link: str, params: dict, saving_path: str, progress_bar,
-                       **kwargs):
-    try:
-        total_size = 1000000
-        ylp_options = {'ffmpeg_location': r'outside/bin/ffmpeg.exe',
-                       'format': 'bestvideo+bestaudio/best',
-                       'outtmpl': os.path.join(saving_path, f'{videoname}.mp4'),
-                       'progress_hooks': [
-                           partial(_on_progress_download_video_ylp, progress_bar=progress_bar,
-                                   total_size=total_size)]}
-        with yt_dlp.YoutubeDL(ylp_options) as ydl:
-            ydl.download([link])
-        return True
-    except Exception as e:
-        print(f'Error on downloading video...\n{e}')
-        return False
 
 
 def open_video_in_browser(url):

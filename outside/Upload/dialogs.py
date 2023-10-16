@@ -1,5 +1,6 @@
 import os
 from functools import partial
+from typing import Dict
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -12,9 +13,10 @@ from outside.views_py import (
     UpdateTime_Dialog,
     UploadTime_for_Video_Dialog,
 )
-from outside.YT.functions import get_google_login
+from outside.YT.functions import get_google_login, upload_video
 
 from . import upload_time_max_rows
+from .. import TableModels as CommonTables
 
 
 class SetPublishTimeDelegate(QtWidgets.QStyledItemDelegate):
@@ -117,9 +119,13 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
     dialog_settings.User_ComboBox_1.setCurrentIndex(0)
     dialog_settings.startTimeEdit_1.setDateTime(
         QtCore.QDateTime(QtCore.QDate.currentDate().addDays(1), QtCore.QTime(0, 0, 0)))
-    dialog_settings.startTimeEdit_1.setMinimumDateTime(QtCore.QDateTime(QtCore.QDate.currentDate(),
-                                                                        QtCore.QTime.currentTime().addSecs(
-                                                                            60 * 60)))
+    dialog_settings.startTimeEdit_1.setMinimumDateTime(
+        QtCore.QDateTime(QtCore.QDate.currentDate(), QtCore.QTime.currentTime().addSecs(
+            60 * 60)))
+    dialog_settings.startTimeEdit_1.setMaximumDateTime(
+        QtCore.QDateTime(QtCore.QDate.currentDate().addYears(2),
+                         QtCore.QTime.currentTime().addSecs(
+                             60 * 60)))
     lines_visible = [dialog_settings.label_User, dialog_settings.User_ComboBox_1]
 
     def add_line():
@@ -138,6 +144,9 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
             QtCore.QDateTime(QtCore.QDate.currentDate().addDays(1), QtCore.QTime(0, 0, 0)))
         start.setMinimumDateTime(
             QtCore.QDateTime(QtCore.QDate.currentDate(),
+                             QtCore.QTime.currentTime().addSecs(60 * 60)))
+        start.setMaximumDateTime(
+            QtCore.QDateTime(QtCore.QDate.currentDate().addYears(2),
                              QtCore.QTime.currentTime().addSecs(60 * 60)))
         dialog_settings.gridLayout.addWidget(start, row, 0, 1, 1)
         setattr(dialog_settings, f'startTimeEdit_{row}', start)
@@ -241,6 +250,9 @@ def set_upload_time_for_video(parent, table, video_id):
         QtCore.QDateTime(QtCore.QDate.currentDate().addDays(1), QtCore.QTime(0, 0, 0)))
     dialog_settings.Day.setMinimumDateTime(
         QtCore.QDateTime(QtCore.QDate.currentDate(), QtCore.QTime.currentTime().addSecs(60 * 60)))
+    dialog_settings.Day.setMaximumDateTime(
+        QtCore.QDateTime(QtCore.QDate.currentDate().addYears(2),
+                         QtCore.QTime.currentTime().addSecs(60 * 60)))
 
     def ok():
         time = dialog_settings.Time.text()
@@ -261,3 +273,37 @@ def clear_upload_time(parent, table: QtWidgets.QTableView):
     if warning_func('Are you sure?\nAll upload times will be deleted!', parent):
         table.model()._data['Publish'] = 'Now'
         table.update()
+
+
+def upload_video_to_youtube(video: Dict, driver_headless: bool,
+                            callback_func=None, callback_error=None, callback_info=None):
+    if video['Selected']:
+        try:
+            if upload_video(user=video['User'],
+                            title=video['Title'],
+                            publish=video['Publish'],
+                            video=video['Video'],
+                            description=video['Description'],
+                            playlist=video['Playlist'],
+                            preview=video['Preview'],
+                            tags=video['Tags'],
+                            ends=video['Ends'],
+                            cards=video['Cards'],
+                            access=video['Access'],
+                            save_title=video['Save filename?'],
+                            driver_headless=driver_headless,
+                            _callback_func=callback_func,
+                            _callback_info=callback_info,
+                            _callback_error=callback_error):
+                return True
+        except Exception as e:
+            if callback_error:
+                callback_error(f'Error.\n{e}')
+    return False
+
+
+def update_uploads_delegate(upload_table):
+    user_combo_del = CommonTables.ComboBoxDelegate(upload_table,
+                                                   OutsideYT.app_settings_uploaders.accounts.keys())
+    upload_table.setItemDelegateForColumn(
+        list(upload_table.model().get_data().columns).index('User'), user_combo_del)

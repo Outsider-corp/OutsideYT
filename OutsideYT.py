@@ -14,8 +14,8 @@ app_settings_download = settings.SettingsDownloads(
     os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_DOWNLOAD.json'))
 
 chromedriver_location = os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe')
-chrome_playwright_location = os.path.join(project_folder, 'outside', 'bin', 'chrome-win',
-                                          'chrome.exe')
+chrome_playwright_location = os.path.join(project_folder, 'outside', 'bin', 'chromium-1080',
+                                          'chrome-win', 'chrome.exe')
 
 TEXT_EXTENSIONS = ['.txt']
 VIDEO_EXTENSIONS = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
@@ -34,6 +34,7 @@ FILENAMES_VIDEO_DETAILS = {"Title.txt": 'title', "Description.txt": 'shortDescri
 FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*.'
 
 WAIT_TIME_URL_UPLOADS = 5
+WAIT_TIME_URL_PLAYWRIGHT = 10
 WAIT_TIME_ASYNC_LOOPS = 0.8
 WAIT_TIME_THREAD = 1
 SAVE_COOKIES_TIME = 60 * 60 * 24 * 30

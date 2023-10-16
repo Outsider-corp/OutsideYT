@@ -9,9 +9,50 @@ from playwright.async_api import async_playwright
 
 import OutsideYT
 from outside.Download.functions import start_video_download, save_videos_info
+from outside.Upload.dialogs import upload_video_to_youtube
 from outside.YT.functions import get_video_info, watching_playwright, \
     BrowserContextPlayWright, check_cookies_playwright, update_cookies
 from outside.functions import get_video_link
+
+
+class Uploader(QThread):
+    update_progress_signal = pyqtSignal(int)
+    update_progress_label_signal = pyqtSignal(str)
+    error_signal = pyqtSignal(str)
+    add_progress_label_signal = pyqtSignal(bool, str)
+
+    def __init__(self, videos: List, driver_headless: bool = True):
+        super().__init__()
+        self.videos = videos
+        self.driver_headless = driver_headless
+        self.completed_tasks_info = [video['Selected'] for video in self.videos]
+
+    def update_progress_info(self, bar_value: int = 0, label_text: str = None):
+        self.update_progress_label_signal.emit(label_text)
+        self.update_progress_signal.emit(bar_value)
+
+    def update_progress_bar(self, value: int):
+        self.update_progress_signal.emit(value)
+
+    def add_progress_label(self, text: str = '', add_key: bool = True):
+        self.add_progress_label_signal.emit(add_key, text)
+
+    def run_upload(self):
+        cnt_videos = len([1 for vid in self.videos if vid['Selected']])
+        for num, video in enumerate(self.videos):
+            self.update_progress_info(label_text=f"{num + 1}/{cnt_videos} - {video['Title']}")
+            if upload_video_to_youtube(video, driver_headless=self.driver_headless,
+                                       callback_func=self.update_progress_bar,
+                                       callback_info=self.add_progress_label,
+                                       callback_error=self.show_error):
+                self.completed_tasks_info[num] = False
+
+    def show_error(self, text: str):
+        self.error_signal.emit(text)
+
+    def run(self):
+        self.run_upload()
+        self.update_progress_info()
 
 
 class WatchSignals(QObject):
@@ -147,7 +188,6 @@ class GetVideoInfoThread(QThread):
 class DownloadThread(QThread):
     update_progress_signal = pyqtSignal(int)
     update_progress_label_signal = pyqtSignal(str)
-    add_progress_label_signal = pyqtSignal((bool, str))
     error_signal = pyqtSignal(str)
 
     def __init__(self, videos: List, download_params: Dict, saving_path: str, parent=None,
@@ -166,9 +206,6 @@ class DownloadThread(QThread):
 
     def update_progress_bar(self, value: int):
         self.update_progress_signal.emit(value)
-
-    def add_progress_label(self, add_key: bool = False, text: str = ''):
-        self.add_progress_label_signal(add_key, text)
 
     def show_error(self, text: str):
         self.error_signal.emit(text)
@@ -205,7 +242,7 @@ class CheckCookiesLifeThread(QThread):
         async with BrowserContextPlayWright(playwright, cookies) as browser:
             page = await browser.new_page()
             await page.goto(OutsideYT.YT_URL, wait_until='domcontentloaded',
-                            timeout=OutsideYT.WAIT_TIME_URL_UPLOADS * 1000)
+                            timeout=OutsideYT.WAIT_TIME_URL_PLAYWRIGHT * 1000)
             if await check_cookies_playwright(page):
                 update_cookies(await page.context.cookies(), cookies_file)
             else:

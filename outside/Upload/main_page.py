@@ -5,10 +5,13 @@ from PyQt5 import QtCore, QtGui
 import OutsideYT
 from outside import TableModels as CommonTables
 from outside import main_dialogs
+from .dialogs import update_uploads_delegate
+from ..asinc_functions import Uploader
 
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
-from outside.YT.functions import upload_video
 from . import TableModels, context_menu, dialogs
+from ..main_dialogs import update_progress_bar, update_progress_label, init_add_label_generator
+from ..message_boxes import error_func
 
 
 def update_upload(ui, parent):
@@ -27,10 +30,7 @@ def update_upload(ui, parent):
     upload_table.setColumnWidth(11, 70)
     upload_table.setColumnWidth(12, 70)
 
-    user_combo_del = CommonTables.ComboBoxDelegate(upload_table,
-                                                   OutsideYT.app_settings_uploaders.accounts.keys())
-    upload_table.setItemDelegateForColumn(
-        list(upload_table.model().get_data().columns).index('User'), user_combo_del)
+    update_uploads_delegate(upload_table)
 
     access_combo_del = CommonTables.ComboBoxDelegate(upload_table,
                                                      ['Private', 'On link', 'Public'])
@@ -60,7 +60,7 @@ def update_upload(ui, parent):
     ui.Upload_UploadTime_Button.clicked.connect(
         partial(dialogs.set_upload_time, parent=parent, table=upload_table))
     ui.Upload_Start.clicked.connect(
-        partial(start_upload, dialog=parent, dialog_settings=ui, table=upload_table))
+        partial(start_upload, dialog_settings=ui, table=upload_table))
     ui.Upload_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                          checkbox=ui.Upload_SelectAll_CheckBox,
                                                          table=upload_table))
@@ -81,29 +81,37 @@ def update_upload(ui, parent):
     return upload_table, ui
 
 
-def start_upload(dialog, dialog_settings, table):
-    # start_operation(dialog=dialog, dialog_settings=dialog_settings, page="UploadPage",
-    #                 progress_bar=dialog_settings.Upload_Progress_Bar,
-    #                 process=partial(upload_video, login="test_test", mail="outside.deal1",
-    #                                 folder="Uploaders"),
-    #                 total_steps=7)
-    print('Start Upload!')
-    change_enabled_tab_elements(dialog_settings, 'Upload', False)
+def start_upload(dialog_settings, table):
+    def finish(thread):
+        try:
+            comp_info = thread.completed_tasks_info
+            thread.quit()
+            thread.wait(OutsideYT.WAIT_TIME_THREAD)
+            table.model()._data["Selected"] = comp_info
+            if not all(table.model()._data["Selected"]):
+                dialog_settings.Upload_SelectAll_CheckBox.setChecked(False)
+            dialog_settings.upload_thread = None
+        except Exception as e:
+            print(f"Error on uploading finish...\n{e}")
+        finally:
+            change_enabled_tab_elements(dialog_settings, 'Upload', True)
 
-    for num, video in table.model().get_data().iterrows():
-        upload_video(user=video['User'],
-                     title=video['Title'],
-                     publish=video['Publish'],
-                     video=video['Video'],
-                     description=video['Description'],
-                     playlist=video['Playlist'],
-                     preview=video['Preview'],
-                     tags=video['Tags'],
-                     ends=video['Ends'],
-                     cards=video['Cards'],
-                     access=video['Access'],
-                     save_title=video['Save filename?'],
-                     driver_headless=not dialog_settings.Upload_ShowBrowser_checkBox.isChecked()
-                     )
+    data = table.model().get_data()
+    if len(data) and any(data['Selected']):
+        change_enabled_tab_elements(dialog_settings, 'Upload', False)
+        data_list = data.to_dict(orient='records')
+        dialog_settings.upload_thread = Uploader(videos=data_list,
+                                                 driver_headless=(
+                                                     not dialog_settings.Upload_ShowBrowser_checkBox.isChecked()))
+        add_label_gen = init_add_label_generator(table)
+        dialog_settings.upload_thread.finished.connect(
+            partial(finish, dialog_settings.upload_thread))
+        dialog_settings.upload_thread.update_progress_signal.connect(
+            lambda x: update_progress_bar(table, x))
+        dialog_settings.upload_thread.update_progress_label_signal.connect(
+            lambda x: update_progress_label(table, x))
+        dialog_settings.upload_thread.add_progress_label_signal.connect(
+            lambda x, y: add_label_gen.send((x, y)))
+        dialog_settings.upload_thread.error_signal.connect(lambda x: error_func(x))
+        dialog_settings.upload_thread.start()
 
-    change_enabled_tab_elements(dialog_settings, 'Upload', True)

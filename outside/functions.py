@@ -23,7 +23,7 @@ def update_checkbox_select_all(checkbox, table):
 
 def find_files(args: list, folder: str, name: str = ''):
     for file in os.listdir(folder):
-        if file.endswith(tuple(args)) and file.startswith(name.lower()):
+        if file.endswith(tuple(args)) and (file.lower().startswith(name.lower())):
             if '.txt' in args:
                 with open(os.path.join(folder, file), 'r', encoding='UTF-8') as f:
                     if name.lower() == 'playlist':
