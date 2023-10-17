@@ -38,7 +38,7 @@ def create_video_folder(video_info: dict, saving_path: str):
                     elif file.endswith('.txt'):
                         with open(os.path.join(save_dir, file), 'w', encoding='UTF-8') as f:
                             if isinstance(video_info[key], list):
-                                f.write(", ".join(video_info[key]))
+                                f.write(",".join(video_info[key]))
                             else:
                                 f.write(video_info[key])
                     elif file.endswith(tuple(OutsideYT.IMAGE_EXTENSIONS)):

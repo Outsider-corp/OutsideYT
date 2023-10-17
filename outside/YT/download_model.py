@@ -392,7 +392,8 @@ class OutsideDownloadVideoYT:
         if_exists = self.params['if_exists']
         if if_exists != 'nothing':
             if if_exists == 'replace':
-                os.remove(output_file)
+                if os.path.exists(output_file):
+                    os.remove(output_file)
             elif if_exists == 'add':
                 i = 1
                 of = output_file
@@ -408,5 +409,17 @@ class OutsideDownloadVideoYT:
                        '-c:a', 'copy',
                        output_file]
             subprocess.run(command)
+        os.remove(file1)
+        os.remove(file2)
+
+    @classmethod
+    def add_video_audio(cls, file1: str, file2: str, output_file: str):
+        command = [cls.__FFMPEG_LOCATION,
+                   '-i', file1,
+                   '-i', file2,
+                   '-c:v', 'copy',
+                   '-c:a', 'copy',
+                   output_file]
+        subprocess.run(command)
         os.remove(file1)
         os.remove(file2)

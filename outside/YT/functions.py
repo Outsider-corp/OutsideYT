@@ -13,14 +13,15 @@ import requests
 
 import selenium.common.exceptions
 import webbrowser
-import yt_dlp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from playwright.async_api import async_playwright, Playwright
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
 
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.exceptions import BrowserClosedError, NotFoundCookiesError, OutdatedCookiesError
-from outside.functions import get_video_id, calc_time_from_string
+from outside.functions import calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
     chromedriver_location, app_settings_watchers, app_settings_uploaders, YT_URL, YT_STUDIO_URL, \
@@ -124,7 +125,7 @@ async def check_cookies_playwright(page: playwright.async_api.Page):
 def get_google_login(login: str, mail: str, folder: str):
     added = False
     try:
-        with DriverContextSelenium(headless=False, images=True) as driver:
+        with DriverContextSelenium(headless=False, images=True, gpu=True, audio=True) as driver:
             filename = f'{login}_cookies'
             driver.get(YT_URL)
             driver.implicitly_wait(7)
@@ -143,8 +144,9 @@ def get_google_login(login: str, mail: str, folder: str):
     return added
 
 
-def upload_video(user: str, title: str, publish: str, video: str, description: str, playlist: str,
-                 preview: str, tags: str, ends: str, cards: int, access: int, save_title: bool,
+def upload_video(user: str, title: str, video: str, access: int, save_title: bool,
+                 publish: str = None, description: str = None, playlist: str = None,
+                 preview: str = None, tags: str = None, ends: str = None, cards: int = None,
                  driver_headless: bool = True, _callback_func=None, _callback_info=None,
                  _callback_error=None):
     """
@@ -171,6 +173,7 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
     :return:
     """
     stage_count = 18
+    curr_stage = 1
 
     if not _callback_func:
         _callback_func = lambda x: ...
@@ -179,45 +182,35 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
     if not _callback_error:
         _callback_error = lambda x: ...
 
-    def __gen_iter_stage():
-        current_stage = 1
-        while True:
-            _callback_func(int(current_stage / stage_count * 100))
-            current_stage += 1
-            if current_stage < stage_count:
-                yield
-            else:
-                break
-
-    gen_iter = __gen_iter_stage()
-
-    def _next_state():
-        next(gen_iter)
-
     try:
-        with DriverContextSelenium(headless=driver_headless, images=not driver_headless,
-                                   gpu=not driver_headless) as driver:
+        with (DriverContextSelenium(headless=driver_headless, images=not driver_headless,
+                                    gpu=not driver_headless) as driver):
             _callback_info("Connecting to YT")
-            _next_state()
+            _callback_func(int(curr_stage/stage_count*100))
+            curr_stage+=1
             driver.get(YT_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             for cookie in pickle.load(
-                    open(f'outside/oyt_info/{app_settings_uploaders.__str__()}/{user}_cookies',
-                         'rb')):
+                    open(f'{app_settings_uploaders.cookies_folder}/{user}_cookies', 'rb')):
                 driver.add_cookie(cookie)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.get(YT_STUDIO_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
-
-            _callback_info("Fill in info about video")
-            _next_state()
+            if 'accounts.google.com' in driver.current_url:
+                raise OutdatedCookiesError(user)
+            _callback_info("Fill info about video")
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(video)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                      f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                      f'*[@slot="body"]/*[@id="input"]/div')
@@ -228,24 +221,28 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
             elif title_el.text != '.'.join(os.path.basename(video).split('.')[:-1]) and save_title:
                 title_el.clear()
                 title_el.send_keys('.'.join(os.path.basename(video).split('.')[:-1]))
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                            f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                            f'*[@slot="body"]/*[@id="input"]/div')
             time.sleep(5)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             description_old = description_el.text
             description_el.clear()
             descs_del = '\n\n' if description_old else ''
             description_el.send_keys(''.join([description, descs_del, description_old]))
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             if preview:
                 try:
                     driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(preview)
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
                 except Exception as e:
                     print(f"Can't upload preview.\n{e}")
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             if playlist:
                 try:
                     playlist_el = driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger'
@@ -272,20 +269,36 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
                         driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     except:
                         pass
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             if tags:
                 driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
                 driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
                 tags_el = driver.find_element(By.XPATH, f'//*[@id="tags-container"]/'
                                                         f'*[@id="outer"]/*[@id="child-input"]/'
                                                         f'*[@slot="body"]/*[@id="chip-bar"]/div/*[@id="text-input"]')
-                tags_el.send_keys(tags)
                 driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
+                tags_count = driver.find_element(By.ID, 'tags-count')
+                tags_int = int(tags_count.text.split('/')[0])
+                av_len = 500 - tags_int
+                tags_list = tags.split(',')
+                for i, tag in enumerate(tags_list):
+                    if len(tag) <= av_len:
+                        av_len -= len(tag) + 1
+                    else:
+                        tags_list = tags_list[:i]
+                        break
+                if tags_list:
+                    tags_el.send_keys(','.join(tags_list))
+                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
-            # FIXME Need to add cards
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
+
+            # TODO Need to add cards
 
             if ends:
                 try:
@@ -304,22 +317,27 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
                             end_el = ends_el.find_elements(By.XPATH, f'//*[@class="title'
                                                                      f' style-scope ytve-endscreen'
                                                                      f'-template-picker"]')[end_num]
-                            if 'playlist' not in end_el.text.lower() and 'плейлист' not in end_el.text.lower():
+                            end_el.find_element(By.XPATH, '..').click()
+                            driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
+                            save_button = driver.find_element(By.ID, 'save-button')
+                            if save_button.get_attribute('disabled'):
+                                driver.find_element(By.ID, 'discard-button').click()
+                                driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
+                            else:
                                 break
-                    end_el.find_element(By.XPATH, '..').click()
-                    driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
-                    time.sleep(2)
-                    driver.find_element(By.XPATH, f'//*[@id="save-button"]').click()
+                    driver.find_element(By.ID, 'save-button').click()
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     time.sleep(2)
                 except Exception as e:
                     print(f"Can't add endscreens.\n{e}")
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(1)
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             if publish:
                 driver.find_element(By.XPATH,
                                     f'//tp-yt-paper-radio-button['
@@ -328,17 +346,25 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
                 driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger['
                                               f'@id="datepicker-trigger"]').click()
                 driver.implicitly_wait(0.5)
-                driver.find_element(By.XPATH, f'//tp-yt-paper-input[@id="textbox"]/'
-                                              f'tp-yt-paper-input-container['
-                                              f'@id="container"]/div[@class='
-                                              f'"input-wrapper style-scope '
-                                              f'tp-yt-paper-input-container"]/div/'
-                                              f'iron-input').send_keys(
-                    publish.split()[0]
-                )
-                driver.find_element(By.XPATH, f'//ytcp-form-input-container['
-                                              f'@id="time-of-day-container"]').send_keys(
-                    publish.split()[1])
+                date_input = driver.find_element(By.XPATH, f'//div[@id="control-area"]/'
+                                                           f'form[@id="form"]/*[@id="textbox"]')
+                date_input.click()
+                date_input.send_keys(webdriver.Keys.CONTROL + 'a')
+                date_input.send_keys(webdriver.Keys.BACKSPACE)
+                date_input.send_keys(publish.split()[0])
+                date_input.submit()
+
+                time_el = driver.find_element(By.XPATH, f'//ytcp-form-input-container['
+                                                        f'@id="time-of-day-container"]//'
+                                                        f'*[@id="textbox"]')
+                time_el.click()
+                time_input = time_el.find_element(By.XPATH, f'//input[@class="style-scope'
+                                                            f' tp-yt-paper-input"]')
+                time_input.send_keys(webdriver.Keys.CONTROL + 'a')
+                time_input.send_keys(webdriver.Keys.BACKSPACE)
+                time_input.send_keys(publish.split()[1])
+                time_input.submit()
+
             else:
                 publ_el = driver.find_element(By.XPATH, f'//*[@id="privacy-radios"]')
                 if access == 'Private':
@@ -350,25 +376,43 @@ def upload_video(user: str, title: str, publish: str, video: str, description: s
                                                               f'/a').text
                 elif access == 'Public':
                     publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
             _callback_info("Uploading video")
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             while True:
                 try:
-                    driver.find_element(By.XPATH,
-                                        f'//ytcp-video-upload-progress[@checks-summary-status-v2='
-                                        f'"UPLOAD_CHECKS_DATA_SUMMARY_STATUS_COMPLETED"]')
+                    if publish:
+                        text = driver.find_element(By.XPATH, f'//span[@class="progress-label'
+                                                             f' style-scope ytcp-video'
+                                                             f'-upload-progress"]').text
+                        if '%' in text:
+                            continue
+                    else:
+                        driver.find_element(By.XPATH,
+                                            f'//ytcp-video-upload-progress[@checks-summary-status-v2='
+                                            f'"UPLOAD_CHECKS_DATA_SUMMARY_STATUS_COMPLETED"]')
                     break
                 except:
                     continue
-            _next_state()
-            driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
+            while True:
+                try:
+                    driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
+                    break
+                except:
+                    pass
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
-            _next_state()
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
             print(f'\033[32m\033[1mVideo {os.path.basename(video)} was successfully upload!\033[0m')
             return True
+    except OutdatedCookiesError as e:
+        _callback_error(f'Cookies are dead for user {e.user}...')
     except Exception as e:
         _callback_error(f"Error.\n {e}")
     return False

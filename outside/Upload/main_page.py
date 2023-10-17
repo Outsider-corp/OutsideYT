@@ -23,6 +23,7 @@ def update_upload(ui, parent):
 
     upload_table = CommonTables.table_universal(upload_table)
     upload_table.hideColumn(list(upload_table.model().get_data().columns).index('Selected'))
+    upload_table.hideColumn(list(upload_table.model().get_data().columns).index('Folder'))
     upload_table.setVerticalHeader(CommonTables.HeaderView(upload_table))
     upload_table.horizontalHeader().setFont(QtGui.QFont('Arial', 12))
     for i, size in enumerate([50, 0, 100, 250, 150]):

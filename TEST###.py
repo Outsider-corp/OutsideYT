@@ -1,5 +1,5 @@
 import datetime
-
+from outside.YT.download_model import OutsideDownloadVideoYT
 import yt_dlp
 import requests
 
@@ -18,5 +18,11 @@ import requests
 # with open("video_dud.html", 'w', encoding="utf-8") as f:
 #     f.write(res.text)
 
-time = datetime.datetime.now()
-print(time.strftime('%c'))
+# time = datetime.datetime.now()
+# print(time.strftime('%c'))
+
+
+
+OutsideDownloadVideoYT.add_video_audio(r'D:\Py_Projects\OutsideYT\videos\ deal1\FastAPI что это такое_ _ Django School\FastAPI что это такое_ _ Django School_0.webm',
+                 r'D:\Py_Projects\OutsideYT\videos\ deal1\FastAPI что это такое_ _ Django School\FastAPI что это такое_ _ Django School_1.webm',
+                 r'D:\Py_Projects\OutsideYT\videos\ deal1\FastAPI что это такое_ _ Django School\FastAPI что это такое_ _ Django School.webm',)

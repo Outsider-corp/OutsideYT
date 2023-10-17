@@ -16,6 +16,7 @@ from outside.views_py import (
 from outside.YT.functions import get_google_login, upload_video
 
 from . import upload_time_max_rows
+from .TableModels import UploadModel
 from .. import TableModels as CommonTables
 
 
@@ -255,10 +256,9 @@ def set_upload_time_for_video(parent, table, video_id):
                          QtCore.QTime.currentTime().addSecs(60 * 60)))
 
     def ok():
-        time = dialog_settings.Time.text()
-        if len(time.split(':')[0]) == 1:
-            time = '0' + time
-        date = ' '.join([dialog_settings.Day.text(), time])
+        date = dialog_settings.Day.date().toString('dd.MM.yyyy')
+        time = dialog_settings.Time.time().toString('hh:mm')
+        date = ' '.join([date, time])
         table.model()._data.at[video_id, 'Publish'] = date
         table.update()
         dialog.accept()
@@ -279,6 +279,8 @@ def upload_video_to_youtube(video: Dict, driver_headless: bool,
                             callback_func=None, callback_error=None, callback_info=None):
     if video['Selected']:
         try:
+            if video['Publish'] == 'Not used.':
+                video['Publish'] = None
             if upload_video(user=video['User'],
                             title=video['Title'],
                             publish=video['Publish'],

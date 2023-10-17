@@ -172,9 +172,9 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
                     parent_settings.Download_Save_to_ComboBox,
                     table_settings.accounts.keys(),
                     table_settings.def_account if table_settings.def_account != f'No default {def_type}'
-                    else parent_settings.Download_Save_to_ComboBox.currentText()
+                    else ''
                 )
-                update_uploads_delegate(parent.Upload_Table)
+                update_uploads_delegate(parent_settings.Upload_Table)
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
 
@@ -233,7 +233,7 @@ def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_setti
                     ans = choose_func(
                         text=f'Do you want to delete dead cookies or log in again?\n\n' + '\n'.join(
                             accs_list),
-                        vars={'Delete dead cookies': 0, 'Re login dead cookies': 1},
+                        vars={'Delete dead cookies': 0, 'Relogin dead cookies': 1},
                         standart_var='Delete dead cookies')
                     if ans != -1:
                         for acc in thread.to_delete:

@@ -21,7 +21,7 @@ class UploadModel(QAbstractTableModel):
 
     default_content = {'id': None, 'Selected': True,
                        'User': app_settings_uploaders.def_account,
-                       'Title': '', 'Publish': 'Now', 'Video': 'select video',
+                       'Title': '', 'Publish': 'Not used.', 'Video': 'select video',
                        'Description': '', 'Playlist': '', 'Preview': '',
                        'Tags': '', 'Ends': 'random', 'Cards': 2,
                        'Access': 'Private', 'Save filename?': False, "Folder": None}
@@ -135,6 +135,8 @@ class UploadModel(QAbstractTableModel):
                    **kwargs) -> bool:
         if not row_content:
             row_content = {}
+        if 'Folder' in row_content and row_content['Folder'] in self.get_data()['Folder'].to_list():
+            return False
         row_count = self.rowCount()
         self.beginInsertRows(QModelIndex(), row_count, row_count + count - 1)
         UploadModel.default_content['User'] = app_settings_uploaders.def_account
@@ -204,7 +206,7 @@ def open_location(table, index, ext: str):
 
 
 def add_video_for_uploading(table: QTableView, path, user=None):
-    if path in table.model().get_data()['Folder']:
+    if path in table.model().get_data()['Folder'].to_list():
         return
     if user is None:
         user = app_settings_uploaders.def_account
