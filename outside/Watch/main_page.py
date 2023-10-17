@@ -12,7 +12,7 @@ from OutsideYT import app_settings_watchers
 from ..asinc_functions import WatchManager
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
-    open_UsersList_Dialog
+    open_UsersList_Dialog, cancel_page_action
 from ..message_boxes import error_func
 from . import TableModels, context_menu, dialogs
 from ..views_py.SelectWatchVideos_Dialog import Ui_SelectVideos_Dialog
@@ -53,7 +53,7 @@ def update_watch(ui, parent):
                 dialog_settings=ui))
 
     ui.Watch_Start.clicked.connect(
-        partial(start_watch, dialog=parent, dialog_settings=ui, table=watch_table))
+        partial(watch_button, dialog=parent, dialog_settings=ui, table=watch_table))
 
     ui.Watch_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                         checkbox=ui.Watch_SelectAll_CheckBox,
@@ -99,10 +99,10 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
         False)
 
-    watch_manager = WatchManager(OutsideYT.MAX_THREADS_COUNT)
-    watch_manager.update_progress_watcher_signal.connect(
+    dialog_settings.watch_thread = WatchManager(OutsideYT.MAX_THREADS_COUNT)
+    dialog_settings.watch_thread.update_progress_watcher_signal.connect(
         lambda id, val: update_progress_watch(id, val))
-    watch_manager.finish_signal.connect(finish)
+    dialog_settings.watch_thread.finish_signal.connect(finish)
 
     sel_data = data.to_dict(orient='records')
     table.model().disable_unselected_progress_bars()
@@ -115,6 +115,13 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         if not users:
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
-        watch_manager.add_watcher(num, video, users,
+        dialog_settings.watch_thread.add_watcher(num, video, users,
                                   driver_headless=chk_headless(),
                                   auto_start=True)
+
+
+def watch_button(dialog_settings, table: QTableView, dialog):
+    if dialog_settings.Watch_Start.text() == "Start":
+        start_watch(dialog_settings=dialog_settings, table=table, dialog=dialog)
+    elif dialog_settings.Watch_Start.text() == "Stop":
+        cancel_page_action(dialog_settings, table)

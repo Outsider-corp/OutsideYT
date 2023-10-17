@@ -1,6 +1,7 @@
 from functools import partial
 
 from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import QTableView
 
 import OutsideYT
 from outside import TableModels as CommonTables
@@ -10,7 +11,8 @@ from ..asinc_functions import Uploader
 
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
 from . import TableModels, context_menu, dialogs
-from ..main_dialogs import update_progress_bar, update_progress_label, init_add_label_generator
+from ..main_dialogs import update_progress_bar, update_progress_label, init_add_label_generator, \
+    cancel_page_action
 from ..message_boxes import error_func
 
 
@@ -59,25 +61,25 @@ def update_upload(ui, parent):
 
     cards_spin_del = CommonTables.SpinBoxDelegate(upload_table)
     upload_table.setItemDelegateForColumn(
-    list(upload_table.model().get_data().columns).index('Cards'), cards_spin_del)
+        list(upload_table.model().get_data().columns).index('Cards'), cards_spin_del)
 
     ui.Upload_SelectVideos_Button.clicked.connect(
-    partial(dialogs.open_upload_select_videos, parent=parent, table=upload_table))
+        partial(dialogs.open_upload_select_videos, parent=parent, table=upload_table))
     ui.Upload_Check_Button.clicked.connect(
-    partial(dialogs.scan_videos_folder, table=upload_table))
+        partial(dialogs.scan_videos_folder, table=upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
-    partial(dialogs.set_upload_time, parent=parent, table=upload_table))
+        partial(dialogs.set_upload_time, parent=parent, table=upload_table))
     ui.Upload_Start.clicked.connect(
-    partial(start_upload, dialog_settings=ui, table=upload_table))
+        partial(upload_button, dialog_settings=ui, table=upload_table))
     ui.Upload_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                          checkbox=ui.Upload_SelectAll_CheckBox,
                                                          table=upload_table))
 
     upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     upload_table.customContextMenuRequested.connect(
-    lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=upload_table))
+        lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=upload_table))
     ui.Upload_ClearUTime_Button.clicked.connect(
-    partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
+        partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
 
     ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog,
                                                    parent=parent,
@@ -85,7 +87,6 @@ def update_upload(ui, parent):
                                                    table_type='upload',
                                                    add_table_class=partial(CommonTables.UsersModel,
                                                                            table_type='upload')))
-
 
     return upload_table, ui
 
@@ -123,3 +124,10 @@ def start_upload(dialog_settings, table):
             lambda x, y: add_label_gen.send((x, y)))
         dialog_settings.upload_thread.error_signal.connect(lambda x: error_func(x))
         dialog_settings.upload_thread.start()
+
+
+def upload_button(dialog_settings, table: QTableView):
+    if dialog_settings.Upload_Start.text() == "Start":
+        start_upload(dialog_settings=dialog_settings, table=table)
+    elif dialog_settings.Upload_Start.text() == "Stop":
+        cancel_page_action(dialog_settings, table)

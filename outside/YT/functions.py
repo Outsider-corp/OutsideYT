@@ -20,7 +20,8 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from outside.YT.download_model import OutsideDownloadVideoYT
-from outside.exceptions import BrowserClosedError, NotFoundCookiesError, OutdatedCookiesError
+from outside.exceptions import BrowserClosedError, NotFoundCookiesError, OutdatedCookiesError, \
+    StopActionError
 from outside.functions import calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
 from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
@@ -148,7 +149,7 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                  publish: str = None, description: str = None, playlist: str = None,
                  preview: str = None, tags: str = None, ends: str = None, cards: int = None,
                  driver_headless: bool = True, _callback_func=None, _callback_info=None,
-                 _callback_error=None):
+                 _callback_error=None, __check_stop=None):
     """
     Uploads one video to YouTube.
     Args:
@@ -170,6 +171,7 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
         callback_func - callback of process
         callback_info - callback with sending current stage info
         callback_error - callback on errors
+        __check_stop: bool - check if process was stopped from outside
     :return:
     """
     stage_count = 18
@@ -181,36 +183,54 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
         _callback_info = lambda x: ...
     if not _callback_error:
         _callback_error = lambda x: ...
+    if not __check_stop:
+        __check_stop = lambda: ...
+    else:
+        _stop_ = __check_stop
+        def __check_stop():
+            if _stop_():
+                raise StopActionError()
 
     try:
         with (DriverContextSelenium(headless=driver_headless, images=not driver_headless,
                                     gpu=not driver_headless) as driver):
             _callback_info("Connecting to YT")
-            _callback_func(int(curr_stage/stage_count*100))
-            curr_stage+=1
+            _callback_func(int(curr_stage / stage_count * 100))
+            curr_stage += 1
+            __check_stop()
+
             driver.get(YT_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             for cookie in pickle.load(
                     open(f'{app_settings_uploaders.cookies_folder}/{user}_cookies', 'rb')):
                 driver.add_cookie(cookie)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             driver.get(YT_STUDIO_URL)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
             if 'accounts.google.com' in driver.current_url:
                 raise OutdatedCookiesError(user)
+
             _callback_info("Fill info about video")
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             driver.find_element(By.XPATH, '//*[@id="upload-icon"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
             driver.find_element(By.XPATH, '//*[@id="content"]/input').send_keys(video)
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             title_el = driver.find_element(By.XPATH, f'//*[@id="title-textarea"]/'
                                                      f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                      f'*[@slot="body"]/*[@id="input"]/div')
@@ -221,28 +241,40 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
             elif title_el.text != '.'.join(os.path.basename(video).split('.')[:-1]) and save_title:
                 title_el.clear()
                 title_el.send_keys('.'.join(os.path.basename(video).split('.')[:-1]))
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             description_el = driver.find_element(By.XPATH, f'//*[@id="description-textarea"]/'
                                                            f'*[@id="container"]/*[@id="outer"]/*[@id="child-input"]/'
                                                            f'*[@slot="body"]/*[@id="input"]/div')
-            time.sleep(5)
+            time.sleep(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             description_old = description_el.text
             description_el.clear()
             descs_del = '\n\n' if description_old else ''
             description_el.send_keys(''.join([description, descs_del, description_old]))
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             if preview:
                 try:
                     driver.find_element(By.XPATH, f'//input[@id="file-loader"]').send_keys(preview)
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
                 except Exception as e:
                     print(f"Can't upload preview.\n{e}")
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             if playlist:
                 try:
                     playlist_el = driver.find_element(By.XPATH, f'//ytcp-text-dropdown-trigger'
@@ -269,8 +301,11 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                         driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
                     except:
                         pass
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             if tags:
                 driver.find_element(By.XPATH, f'//*[@id="toggle-button"]').click()
                 driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
@@ -291,12 +326,17 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                 if tags_list:
                     tags_el.send_keys(','.join(tags_list))
                     driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
 
             # TODO Need to add cards
 
@@ -330,14 +370,20 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                     time.sleep(2)
                 except Exception as e:
                     print(f"Can't add endscreens.\n{e}")
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(1)
             driver.find_element(By.XPATH, f'//*[@id="next-button"]').click()
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             if publish:
                 driver.find_element(By.XPATH,
                                     f'//tp-yt-paper-radio-button['
@@ -376,13 +422,18 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                                                               f'/a').text
                 elif access == 'Public':
                     publ_el.find_element(By.XPATH, f'//*[@name="PUBLIC"]').click()
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS // 2)
 
             _callback_info("Uploading video")
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             while True:
                 try:
                     if publish:
@@ -398,8 +449,11 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                     break
                 except:
                     continue
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             while True:
                 try:
                     driver.find_element(By.XPATH, f'//ytcp-button[@id="done-button"]').click()
@@ -407,12 +461,17 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
                 except:
                     pass
             driver.implicitly_wait(WAIT_TIME_URL_UPLOADS)
+
             _callback_func(int(curr_stage / stage_count * 100))
             curr_stage += 1
+            __check_stop()
+
             print(f'\033[32m\033[1mVideo {os.path.basename(video)} was successfully upload!\033[0m')
             return True
     except OutdatedCookiesError as e:
         _callback_error(f'Cookies are dead for user {e.user}...')
+    except StopActionError:
+        _callback_error(f'You stopped uploading...')
     except Exception as e:
         _callback_error(f"Error.\n {e}")
     return False
@@ -522,7 +581,7 @@ async def watching_selenium(url: str, duration: int, user: str, driver_headless:
 
 
 async def watching_playwright(url: str, user: str, driver_headless: bool = True,
-                              progress_inc=None):
+                              progress_inc=None, _stop=None):
     """
     Start watching video with Playwright on url link by group watchers.
 
@@ -532,7 +591,11 @@ async def watching_playwright(url: str, user: str, driver_headless: bool = True,
         user: str - watchers group
         driver_headless: bool - headless argument for driver
         progress_inc: function - function to increment progress_bar value
+        _stop - raise StopActionError if process was stopped from outside
     """
+    if not _stop:
+        _stop = lambda: ...
+        
     try:
         async with async_playwright() as pw:
             file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
@@ -547,6 +610,7 @@ async def watching_playwright(url: str, user: str, driver_headless: bool = True,
                     raise OutdatedCookiesError(user)
                 cookies = await page.context.cookies()
                 update_cookies(cookies, file_cookies)
+                _stop()
                 await page.goto(url, timeout=VIDEO_WATCH_TIMEOUT * 1000,
                                 wait_until='domcontentloaded')
                 await asyncio.sleep(1)
@@ -568,11 +632,12 @@ async def watching_playwright(url: str, user: str, driver_headless: bool = True,
                 await asyncio.sleep(0.5)
                 await page.locator(settings_button).click()
                 time_xpath = f'//span[@class="ytp-time-current"]'
-
+                _stop()
                 real_duration_str = await page.text_content(f'//span[@class="ytp-time-duration"]')
                 real_duration = calc_time_from_string(real_duration_str)
                 old_progress_value = 0
                 while old_progress_value < real_duration:
+                    _stop()
                     try:
                         time_left = await page.text_content(time_xpath)
                     except:
@@ -589,6 +654,8 @@ async def watching_playwright(url: str, user: str, driver_headless: bool = True,
         print(f'Cookies are outdated for user: {e.user}')
     except BrowserClosedError:
         print('Browser was closed.')
+    except StopActionError:
+        pass
     except BaseException as e:
         print(f"Error. \n {e}")
     return False

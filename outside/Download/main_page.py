@@ -11,7 +11,7 @@ from .functions import _get_download_saving_path
 from ..asinc_functions import DownloadThread
 from ..functions import update_checkbox_select_all, update_combobox, change_enabled_tab_elements
 from ..main_dialogs import open_watch_down_select_videos, add_video_from_textbox, \
-    cancel_page_action, update_progress_bar, update_progress_label, add_progress_label
+    cancel_page_action, update_progress_bar, update_progress_label
 from ..message_boxes import error_func
 from ..views_py.SelectDownloadVideos_Dialog import Ui_Download_Videos_Dialog
 

@@ -111,7 +111,7 @@ selection-background-color: rgb(15, 15, 15);</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -485,7 +485,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>      Start      </string>
+             <string>Start</string>
             </property>
            </widget>
           </item>
@@ -757,7 +757,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>      Start      </string>
+             <string>Start</string>
             </property>
            </widget>
           </item>
@@ -1173,7 +1173,7 @@ selection-background-color: rgb(15, 15, 15);</string>
              </font>
             </property>
             <property name="text">
-             <string>      Start      </string>
+             <string>Start</string>
             </property>
            </widget>
           </item>

@@ -620,7 +620,7 @@ class Ui_YouTubeOutside(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(YouTubeOutside)
-        self.OutsideYT.setCurrentIndex(2)
+        self.OutsideYT.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(YouTubeOutside)
 
     def retranslateUi(self, YouTubeOutside):
@@ -633,7 +633,7 @@ class Ui_YouTubeOutside(object):
         self.Upload_SelectVideos_Button.setText(_translate("YouTubeOutside", "  Select Videos  "))
         self.Upload_delete_after_upload_checkBox.setText(_translate("YouTubeOutside", "Delete after upload"))
         self.Upload_ShowBrowser_checkBox.setText(_translate("YouTubeOutside", "Show Browsers"))
-        self.Upload_Start.setText(_translate("YouTubeOutside", "      Start      "))
+        self.Upload_Start.setText(_translate("YouTubeOutside", "Start"))
         self.OutsideYT.setTabText(self.OutsideYT.indexOf(self.UploadPage), _translate("YouTubeOutside", "Upload"))
         self.Watch_SelectAll_CheckBox.setText(_translate("YouTubeOutside", "Select All"))
         self.Watch_url_label.setText(_translate("YouTubeOutside", "Url: "))
@@ -641,7 +641,7 @@ class Ui_YouTubeOutside(object):
         self.Watch_SelectVideos_Button.setText(_translate("YouTubeOutside", "  Select Videos  "))
         self.Watch_ShowBrowser_checkBox.setText(_translate("YouTubeOutside", "Show Browsers"))
         self.Watch_advanced_settings_Button.setText(_translate("YouTubeOutside", "  Advanced Settings  "))
-        self.Watch_Start.setText(_translate("YouTubeOutside", "      Start      "))
+        self.Watch_Start.setText(_translate("YouTubeOutside", "Start"))
         self.OutsideYT.setTabText(self.OutsideYT.indexOf(self.WatchPage), _translate("YouTubeOutside", "Watch"))
         self.Download_SelectAll_CheckBox.setText(_translate("YouTubeOutside", "Select All"))
         self.Download_url_label.setText(_translate("YouTubeOutside", "Url:"))
@@ -654,7 +654,7 @@ class Ui_YouTubeOutside(object):
         self.Download_Info_checkBox.setText(_translate("YouTubeOutside", "Download Video Info"))
         self.Download_Video_checkBox.setText(_translate("YouTubeOutside", "Download Video"))
         self.Download_advanced_settings_Button.setText(_translate("YouTubeOutside", "Advanced Settings"))
-        self.Download_Start.setText(_translate("YouTubeOutside", "      Start      "))
+        self.Download_Start.setText(_translate("YouTubeOutside", "Start"))
         self.OutsideYT.setTabText(self.OutsideYT.indexOf(self.DownloadPage), _translate("YouTubeOutside", "Download"))
         self.menuOutside_YouTube.setTitle(_translate("YouTubeOutside", "Shortcuts"))
         self.menuHelp.setTitle(_translate("YouTubeOutside", "Help"))

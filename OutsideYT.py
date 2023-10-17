@@ -18,7 +18,7 @@ chrome_playwright_location = os.path.join(project_folder, 'outside', 'bin', 'chr
                                           'chrome-win', 'chrome.exe')
 
 TEXT_EXTENSIONS = ['.txt']
-VIDEO_EXTENSIONS = ['.mp4', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
+VIDEO_EXTENSIONS = ['.mp4', '.webm', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
                     '.mpegps', '.flv', '.3gpp', '.WebM', '.DNxHR', '.ProRes', '.CineForm', '.HEVC',
                     '.MP4', '.AVI', '.MOV', '.MPEG-1', '.MPEG-2', '.MPG', '.WMV', '.MPEGPS',
                     '.FLV', '.3GPP', '.WEBM', '.DNXHR', '.PRORES', '.CINEFORM', '.HEVC']

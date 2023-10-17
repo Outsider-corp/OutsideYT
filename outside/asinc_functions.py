@@ -12,6 +12,7 @@ from outside.Download.functions import start_video_download, save_videos_info
 from outside.Upload.dialogs import upload_video_to_youtube
 from outside.YT.functions import get_video_info, watching_playwright, \
     BrowserContextPlayWright, check_cookies_playwright, update_cookies
+from outside.exceptions import StopActionError
 from outside.functions import get_video_link
 
 
@@ -26,6 +27,7 @@ class Uploader(QThread):
         self.videos = videos
         self.driver_headless = driver_headless
         self.completed_tasks_info = [video['Selected'] for video in self.videos]
+        self.stop_signal = False
 
     def update_progress_info(self, bar_value: int = 0, label_text: str = None):
         self.update_progress_label_signal.emit(label_text)
@@ -37,15 +39,24 @@ class Uploader(QThread):
     def add_progress_label(self, text: str = '', add_key: bool = True):
         self.add_progress_label_signal.emit(add_key, text)
 
+    def stop(self):
+        return self.stop_signal
+
     def run_upload(self):
         cnt_videos = len([1 for vid in self.videos if vid['Selected']])
+        i = 1
         for num, video in enumerate(self.videos):
-            self.update_progress_info(label_text=f"{num + 1}/{cnt_videos} - {video['Title']}")
-            if upload_video_to_youtube(video, driver_headless=self.driver_headless,
-                                       callback_func=self.update_progress_bar,
-                                       callback_info=self.add_progress_label,
-                                       callback_error=self.show_error):
-                self.completed_tasks_info[num] = False
+            if video['Selected']:
+                self.update_progress_info(label_text=f"{i}/{cnt_videos} - {video['Title']}")
+                i += 1
+                if upload_video_to_youtube(video, driver_headless=self.driver_headless,
+                                           callback_func=self.update_progress_bar,
+                                           callback_info=self.add_progress_label,
+                                           callback_error=self.show_error,
+                                           stop_signal=self.stop):
+                    self.completed_tasks_info[num] = False
+                if self.stop():
+                    break
 
     def show_error(self, text: str):
         self.error_signal.emit(text)
@@ -63,7 +74,7 @@ class WatchSignals(QObject):
 class Watcher(QRunnable):
 
     def __init__(self, _id, video_info: Dict, watchers: List, driver_headless=True,
-                 offsets: List = None):
+                 offsets: List = None, _stop=None):
         super().__init__()
         self.__id = _id
         self._video_info = video_info
@@ -71,6 +82,7 @@ class Watcher(QRunnable):
         self.driver_headless = driver_headless
         self._offsets = offsets
         self.signals = WatchSignals()
+        self._stop = _stop
 
         sum_offsets = sum(offsets) if offsets else 0
         self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
@@ -89,7 +101,8 @@ class Watcher(QRunnable):
             return await watching_playwright(get_video_link(self._video_info['Link'], type='watch'),
                                              user=user,
                                              driver_headless=self.driver_headless,
-                                             progress_inc=self.progress_bar_inc)
+                                             progress_inc=self.progress_bar_inc,
+                                             _stop=self._stop)
 
     async def start_loop(self):
         atasks = [self.watching(user) for user in self._watchers]
@@ -111,10 +124,11 @@ class WatchManager(QObject):
         self.threadpool = QThreadPool()
         self.threadpool.setMaxThreadCount(max_workers)
         self._watchers = {}
+        self.stop_signal = False
 
     def add_watcher(self, _id, video_info: Dict, watchers: List, offsets: List = None,
                     driver_headless=True, auto_start=False, **kwargs):
-        watcher = Watcher(_id, video_info, watchers, driver_headless, offsets)
+        watcher = Watcher(_id, video_info, watchers, driver_headless, offsets, _stop=self.stop)
         self._watchers[_id] = watcher
         watcher.signals.progress_signal.connect(
             lambda _id1, x: self.handle_watcher_progress(_id1, x))
@@ -124,6 +138,10 @@ class WatchManager(QObject):
 
     def start_watcher(self, _id):
         self.threadpool.start(self._watchers[_id])
+
+    def stop(self):
+        if self.stop_signal:
+            raise StopActionError()
 
     def handle_watcher_progress(self, _id: int, value: int):
         self.update_progress_watcher_signal.emit(_id, value)
@@ -160,6 +178,7 @@ class GetVideoInfoThread(QThread):
                 self.progress += 1
                 new_val = int(self.progress / self.total_steps * 100)
                 self.update_progress_signal.emit(new_val)
+
 
     async def worker(self, link, session, headers=None):
         headers = headers or {}
@@ -199,6 +218,7 @@ class DownloadThread(QThread):
         self.videos = videos
         self.download_params = download_params
         self.completed_tasks_info = [video['Selected'] for video in self.videos]
+        self.stop_signal = False
 
     def update_progress_info(self, bar_value: int = 0, label_text: str = None):
         self.update_progress_label_signal.emit(label_text)
@@ -209,6 +229,9 @@ class DownloadThread(QThread):
 
     def show_error(self, text: str):
         self.error_signal.emit(text)
+
+    def stop(self):
+        return self.stop_signal
 
     def run_download_process(self):
         if self.download_info_key:

@@ -276,31 +276,32 @@ def clear_upload_time(parent, table: QtWidgets.QTableView):
 
 
 def upload_video_to_youtube(video: Dict, driver_headless: bool,
-                            callback_func=None, callback_error=None, callback_info=None):
-    if video['Selected']:
-        try:
-            if video['Publish'] == 'Not used.':
-                video['Publish'] = None
-            if upload_video(user=video['User'],
-                            title=video['Title'],
-                            publish=video['Publish'],
-                            video=video['Video'],
-                            description=video['Description'],
-                            playlist=video['Playlist'],
-                            preview=video['Preview'],
-                            tags=video['Tags'],
-                            ends=video['Ends'],
-                            cards=video['Cards'],
-                            access=video['Access'],
-                            save_title=video['Save filename?'],
-                            driver_headless=driver_headless,
-                            _callback_func=callback_func,
-                            _callback_info=callback_info,
-                            _callback_error=callback_error):
-                return True
-        except Exception as e:
-            if callback_error:
-                callback_error(f'Error.\n{e}')
+                            callback_func=None, callback_error=None, callback_info=None,
+                            stop_signal=None):
+    try:
+        if video['Publish'] == 'Not used.':
+            video['Publish'] = None
+        if upload_video(user=video['User'],
+                        title=video['Title'],
+                        publish=video['Publish'],
+                        video=video['Video'],
+                        description=video['Description'],
+                        playlist=video['Playlist'],
+                        preview=video['Preview'],
+                        tags=video['Tags'],
+                        ends=video['Ends'],
+                        cards=video['Cards'],
+                        access=video['Access'],
+                        save_title=video['Save filename?'],
+                        driver_headless=driver_headless,
+                        _callback_func=callback_func,
+                        _callback_info=callback_info,
+                        _callback_error=callback_error,
+                        __check_stop=stop_signal):
+            return True
+    except Exception as e:
+        if callback_error:
+            callback_error(f'Error.\n{e}')
     return False
 
 

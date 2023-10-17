@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup as bs
 import OutsideYT
 import outside.video_qualities
 from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError, \
-    NoAvailableQualityError
+    NoAvailableQualityError, StopActionError
 from outside.functions import get_video_id, get_video_link, check_folder_name
 
 
@@ -39,7 +39,7 @@ class OutsideDownloadVideoYT:
                  callback_func=None,
                  callback_info=None,
                  callback_err=None,
-                 stop_signal=None):
+                 _stop=None):
         """
         Initialization of class.
         Args:
@@ -71,7 +71,7 @@ class OutsideDownloadVideoYT:
             callback_func - function that will be called on every step of downloading
             callback_info - function that will be called on changing type of process
             callback_err - function that will be called on errors
-            stop_signal - called if download process was stopped
+            _stop - check if process was stopped from outside
         """
         self.video_id = get_video_id(link)
         self.link = get_video_link(self.video_id, 'embed')
@@ -86,7 +86,12 @@ class OutsideDownloadVideoYT:
         self._callback_err = callback_err
         self.__progress_size = None
         self.__api_key = os.environ.get('YT_KEY', OutsideYT.ACCESS_TOKEN)
-        self.__stop_signal = stop_signal
+
+        def _stop_():
+            if _stop():
+                raise StopActionError()
+
+        self.__stop = _stop_
 
     @property
     def api_video_info(self):
@@ -326,6 +331,7 @@ class OutsideDownloadVideoYT:
             try:
                 for chunk in self._stream(url, timeout=timeout,
                                           max_retries=max_retries, file_size=filesize):
+                    self.__stop()
                     file.write(chunk)
                     downloaded += len(chunk)
                     if self._callback and self.__progress_size:
@@ -341,6 +347,7 @@ class OutsideDownloadVideoYT:
             use_api: bool - use YouTube API or not
         """
         try:
+            self.__stop()
             if use_api:
                 if self._itags_api is None:
                     self._itags_api = self.get_itags_from_params(self.api_video_info)
@@ -351,6 +358,7 @@ class OutsideDownloadVideoYT:
                     self._itags = self.get_itags_from_params(self.player_video_info)
                 itags = self._itags
                 video_info = self.player_video_info
+            self.__stop()
             files = []
             self.__progress_size = sum([int(i['contentLength']) for i in itags])
             filename = os.path.join(saving_path,
@@ -367,9 +375,11 @@ class OutsideDownloadVideoYT:
                 if i == 1:
                     self._add_video_audio(*files, f'{filename}.{ext}')
             return True
+        except StopActionError:
+            pass
         except Exception as e:
             self._callback_err(f'Error on download video!\n{e}')
-            return False
+        return False
 
     def __get_video_size(self, video_info):
         try:
@@ -389,28 +399,31 @@ class OutsideDownloadVideoYT:
         ...
 
     def _add_video_audio(self, file1: str, file2: str, output_file: str):
-        if_exists = self.params['if_exists']
-        if if_exists != 'nothing':
-            if if_exists == 'replace':
-                if os.path.exists(output_file):
-                    os.remove(output_file)
-            elif if_exists == 'add':
-                i = 1
-                of = output_file
-                while os.path.exists(of):
-                    of_list = output_file.split('.')
-                    of = f'{of_list[0]}_{i}.{of_list[1]}'
-                    i += 1
-                output_file = of
-            command = [self.__FFMPEG_LOCATION,
-                       '-i', file1,
-                       '-i', file2,
-                       '-c:v', 'copy',
-                       '-c:a', 'copy',
-                       output_file]
-            subprocess.run(command)
-        os.remove(file1)
-        os.remove(file2)
+        try:
+            if_exists = self.params['if_exists']
+            if if_exists != 'nothing':
+                if if_exists == 'replace':
+                    if os.path.exists(output_file):
+                        os.remove(output_file)
+                elif if_exists == 'add':
+                    i = 1
+                    of = output_file
+                    while os.path.exists(of):
+                        of_list = output_file.split('.')
+                        of = f'{of_list[0]}_{i}.{of_list[1]}'
+                        i += 1
+                    output_file = of
+                self.__stop()
+                command = [self.__FFMPEG_LOCATION,
+                           '-i', file1,
+                           '-i', file2,
+                           '-c:v', 'copy',
+                           '-c:a', 'copy',
+                           output_file]
+                subprocess.run(command)
+        finally:
+            os.remove(file1)
+            os.remove(file2)
 
     @classmethod
     def add_video_audio(cls, file1: str, file2: str, output_file: str):

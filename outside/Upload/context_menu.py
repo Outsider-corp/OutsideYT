@@ -67,7 +67,7 @@ def upload_context_menu(pos, parent, table: QAbstractItemView):
         elif table.currentIndex().column() == 8:
             add_option_open_file('Preview', table, menu)
         menu.addSeparator()
-    add_remove_row(menu, ind, table, None)
+    add_remove_row(menu, ind, table)
     cursor = QtGui.QCursor()
     menu.exec_(cursor.pos())
 

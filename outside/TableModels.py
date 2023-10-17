@@ -141,7 +141,7 @@ def remove_row(table, del_from_settings=None):
     table.parent().update()
 
 
-def remove_selected_rows(table, del_from_settings=None, type_deleting=''):
+def remove_selected_rows(table, del_from_settings=None, type_deleting: str = ''):
     if warning_func('Are you sure you want to delete UNSELECTED rows?'):
         num_rows = table.model().rowCount()
         data = table.model().get_data()

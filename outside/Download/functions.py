@@ -6,7 +6,7 @@ import OutsideYT
 from OutsideYT import app_settings_uploaders
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.YT.functions import download_image
-from outside.exceptions import NoAvailableQualityError
+from outside.exceptions import NoAvailableQualityError, StopActionError
 from outside.functions import check_folder_name, get_video_link
 from outside.message_boxes import error_func
 
@@ -55,19 +55,24 @@ def create_video_folder(video_info: dict, saving_path: str):
 def start_video_download(videos: List, saving_path: str, completed_tasks_info: List,
                          params: dict, thread):
     cnt_videos = len([1 for vid in videos if vid['Selected']])
+    i = 1
     for num, video in enumerate(videos):
         if video['Selected']:
             try:
-                thread.update_progress_info(label_text=f"{num + 1}/{cnt_videos} - {video['Video']}")
+                thread.update_progress_info(label_text=f"{i}/{cnt_videos} - {video['Video']}")
+                i += 1
                 saving_path_video = os.path.join(saving_path, check_folder_name(video['Video']))
                 os.makedirs(saving_path_video, exist_ok=True)
                 video_down = OutsideDownloadVideoYT(get_video_link(video['Link'], 'embed'),
                                                     video_info=video['_download_info'],
                                                     params=params,
                                                     callback_func=thread.update_progress_bar,
-                                                    callback_err=thread.show_error)
+                                                    callback_err=thread.show_error,
+                                                    _stop=thread.stop)
                 if video_down.download_video(saving_path=saving_path_video):
                     completed_tasks_info[num] = False
+                if thread.stop():
+                    break
             except NoAvailableQualityError:
                 thread.show_error("Can't find any settings that meet the selected parameters")
             except Exception as e:
@@ -77,8 +82,9 @@ def start_video_download(videos: List, saving_path: str, completed_tasks_info: L
 def save_videos_info(videos, saving_path: str, completed_tasks_info: List, thread):
     cnt_videos = len(videos)
     for num, video in enumerate(videos):
+        if thread.stop_signal:
+            return
         if video['Selected']:
             if create_video_folder(video_info=video['_download_info'], saving_path=saving_path):
                 thread.update_progress_bar(int((num + 1) / cnt_videos * 100))
                 completed_tasks_info[num] = False
-

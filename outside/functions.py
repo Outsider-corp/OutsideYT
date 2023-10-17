@@ -66,7 +66,8 @@ def check_folder_name(fname: str):
     return fname
 
 
-def change_enabled_tab_elements(dialog_settings, page_name: str, state: bool):
+def change_enabled_tab_elements(dialog_settings, page_name: str, state: bool,
+                                block_start_button: bool = False):
     current_tab = dialog_settings.OutsideYT.findChild(QWidget, f'{page_name.capitalize()}Page')
     tab_elements = current_tab.findChildren(QWidget)
 
@@ -74,7 +75,8 @@ def change_enabled_tab_elements(dialog_settings, page_name: str, state: bool):
         el.setEnabled(state)
     getattr(dialog_settings, f'{page_name.capitalize()}_Start').setText(
         "Start" if state else "Stop")
-    getattr(dialog_settings, f'{page_name.capitalize()}_Start').setEnabled(True)
+    if not block_start_button:
+        getattr(dialog_settings, f'{page_name.capitalize()}_Start').setEnabled(True)
 
 
 def calc_time_from_string(time: str):

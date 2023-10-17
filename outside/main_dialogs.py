@@ -484,7 +484,7 @@ def get_videos_info(table, links: List, dialog_settings, group=None, add_args=No
     try:
         change_enabled_tab_elements(dialog_settings=dialog_settings,
                                     page_name=table.model().table_type.capitalize(),
-                                    state=False)
+                                    state=False, block_start_button=True)
         links_add = [link for link in links if
                      link not in table.model().get_data()['Link'].to_list()]
         table.model().progress_label.setText('Get info about videos...')
@@ -580,7 +580,7 @@ def add_progress_label(table: QTableView, add_key: bool = False, add_text: str =
 def cancel_page_action(dialog_settings, table: QTableView):
     table_type = table.model().table_type
     if getattr(dialog_settings, f'{table_type.lower()}_thread'):
-        getattr(dialog_settings, f'{table_type.lower()}_thread').terminate()
+        getattr(dialog_settings, f'{table_type.lower()}_thread').stop_signal = True
 
 
 def init_add_label_generator(table):

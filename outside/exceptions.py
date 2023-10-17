@@ -40,3 +40,6 @@ class OutdatedCookiesError(OutsideError):
 
 class NoAvailableQualityError(OutsideError):
     """No available quality in itags."""
+
+class StopActionError(OutsideError):
+    """User pushed stop button."""
