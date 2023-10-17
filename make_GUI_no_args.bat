@@ -10,3 +10,4 @@ python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\UploadTime_f
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectDownloadVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectDownloadVideos_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\SelectWatchVideos_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\SelectWatchVideos_Dialog.py
 python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\DownloadAdvancedSettings_Dialog.ui -o P:\PROJECTS\OutsideYT\outside\views_py\DownloadAdvancedSettings_Dialog.py
+python -m PyQt5.uic.pyuic -x P:\PROJECTS\OutsideYT\outside\views_ui\TextEdit_Widget.ui -o P:\PROJECTS\OutsideYT\outside\views_py\TextEdit_Widget.py

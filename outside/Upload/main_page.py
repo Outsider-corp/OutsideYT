@@ -50,27 +50,34 @@ def update_upload(ui, parent):
     upload_table.setItemDelegateForColumn(
         list(upload_table.model().get_data().columns).index('Ends'), ends_combo_del)
 
+    desc_del = CommonTables.EditTextDelegate(upload_table, text_type="Description")
+    tags_del = CommonTables.EditTextDelegate(upload_table, text_type="Tags")
+    upload_table.setItemDelegateForColumn(
+        list(upload_table.model().get_data().columns).index('Description'), desc_del)
+    upload_table.setItemDelegateForColumn(
+        list(upload_table.model().get_data().columns).index('Tags'), tags_del)
+
     cards_spin_del = CommonTables.SpinBoxDelegate(upload_table)
     upload_table.setItemDelegateForColumn(
-        list(upload_table.model().get_data().columns).index('Cards'), cards_spin_del)
+    list(upload_table.model().get_data().columns).index('Cards'), cards_spin_del)
 
     ui.Upload_SelectVideos_Button.clicked.connect(
-        partial(dialogs.open_upload_select_videos, parent=parent, table=upload_table))
+    partial(dialogs.open_upload_select_videos, parent=parent, table=upload_table))
     ui.Upload_Check_Button.clicked.connect(
-        partial(dialogs.scan_videos_folder, table=upload_table))
+    partial(dialogs.scan_videos_folder, table=upload_table))
     ui.Upload_UploadTime_Button.clicked.connect(
-        partial(dialogs.set_upload_time, parent=parent, table=upload_table))
+    partial(dialogs.set_upload_time, parent=parent, table=upload_table))
     ui.Upload_Start.clicked.connect(
-        partial(start_upload, dialog_settings=ui, table=upload_table))
+    partial(start_upload, dialog_settings=ui, table=upload_table))
     ui.Upload_SelectAll_CheckBox.clicked.connect(partial(update_checkbox_select_all,
                                                          checkbox=ui.Upload_SelectAll_CheckBox,
                                                          table=upload_table))
 
     upload_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
     upload_table.customContextMenuRequested.connect(
-        lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=upload_table))
+    lambda pos: context_menu.upload_context_menu(pos, parent=parent, table=upload_table))
     ui.Upload_ClearUTime_Button.clicked.connect(
-        partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
+    partial(dialogs.clear_upload_time, parent=parent, table=upload_table))
 
     ui.actionUploaders_2.triggered.connect(partial(main_dialogs.open_UsersList_Dialog,
                                                    parent=parent,
@@ -78,6 +85,7 @@ def update_upload(ui, parent):
                                                    table_type='upload',
                                                    add_table_class=partial(CommonTables.UsersModel,
                                                                            table_type='upload')))
+
 
     return upload_table, ui
 
@@ -115,4 +123,3 @@ def start_upload(dialog_settings, table):
             lambda x, y: add_label_gen.send((x, y)))
         dialog_settings.upload_thread.error_signal.connect(lambda x: error_func(x))
         dialog_settings.upload_thread.start()
-

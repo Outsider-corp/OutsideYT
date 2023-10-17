@@ -3,10 +3,12 @@ import typing
 import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QStyleOptionViewItem, QWidget, QStyledItemDelegate
 
 from OutsideYT import app_settings_uploaders
 from outside.message_boxes import warning_func, error_func
+from outside.views_py import TextEdit_Widget
 
 
 class InLineEditDelegate(QtWidgets.QItemDelegate):
@@ -251,3 +253,47 @@ class UsersModel(QAbstractTableModel):
 
     def get_data(self):
         return self._data
+
+
+class EditTextDelegate(QStyledItemDelegate):
+
+    def __init__(self, parent=None, text_type: str = ''):
+        super().__init__(parent)
+        self.text_type = text_type
+        self.par = parent
+
+    def createEditor(self, parent, option, index):
+        text = index.model().data(index, Qt.DisplayRole)
+        video_name = index.model().get_data().loc[index.row(), 'Title']
+        editor = EditTextWidget(text, video_name, self.text_type, self.par)
+        return editor
+
+    def updateEditorGeometry(self, editor: QWidget, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
+        cursor = QCursor()
+        editor.move(cursor.pos())
+    def setModelData(self, editor, model, index):
+        if self.text_type.lower() == 'tags':
+            text = editor.text.replace(', ', ',')
+        else:
+            text = editor.text
+        model.setData(index, text, Qt.DisplayRole)
+
+
+class EditTextWidget(QWidget):
+    def __init__(self, text: str = '', video_name: str = '', text_type: str = '', parent=None):
+        super().__init__()
+        self.ui = TextEdit_Widget.Ui_Form()
+        self.ui.setupUi(self)
+        self.text = text
+        self.ui.TextEdit.setPlainText(text)
+        self.ui.Type_label.setText(video_name)
+        self.setWindowTitle(f"{text_type} Edit")
+
+        self.setMinimumSize(300, 250)
+
+        self.ui.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(self.accept)
+        self.ui.buttonBox.button(QtWidgets.QDialogButtonBox.Discard).clicked.connect(self.close)
+
+    def accept(self):
+        self.text = self.ui.TextEdit.toPlainText()
+        self.close()
