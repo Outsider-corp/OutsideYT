@@ -204,14 +204,15 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
                 data = table.model().get_data()
                 user = getattr(dialog_settings, f'User_ComboBox_{row}').currentText()
                 if user == 'All accounts':
-                    user_lines = data[(data.Publish == 'Now') | (data.Publish == '')].reset_index(
-                        drop=True)
+                    user_lines = data[
+                        data['Publish'].isin([table.model().default_content['Publish'], ''])
+                    ].reset_index(drop=True)
                 else:
-                    user_lines = data[data.User == user][
-                        (data.Publish == 'Now') | (data.Publish == '')].reset_index(
-                        drop=True)
-                if len(user_lines) == 0:
-                    continue
+                    user_lines = data[(data['User'] == user) & (
+                        data['Publish'].isin([table.model().default_content['Publish'],
+                                             '']))].reset_index(drop=True)
+                    if len(user_lines) == 0:
+                        continue
                 time = getattr(dialog_settings, f'timeEdit_{row}').time()
                 days = getattr(dialog_settings, f'days_Spin_{row}').value()
                 upload_time = getattr(dialog_settings, f'startTimeEdit_{row}').dateTime()
@@ -221,7 +222,7 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
                 vids_count = min(vids_count, len(user_lines))
                 for i in range(vids_count):
                     table.model().setData(
-                        table.model().index(user_lines.loc[i, 'id'] - 1,
+                        table.model().index(int(user_lines.loc[i, 'id']) - 1,
                                             list(user_lines.columns).index('Publish'),
                                             QtCore.QModelIndex()),
                         upload_time.toString('dd.MM.yyyy hh:mm'),
@@ -270,7 +271,7 @@ def set_upload_time_for_video(parent, table, video_id):
 
 def clear_upload_time(parent, table: QtWidgets.QTableView):
     if warning_func('Are you sure?\nAll upload times will be deleted!', parent):
-        table.model()._data['Publish'] = 'Now'
+        table.model()._data['Publish'] = table.model().default_content['Publish']
         table.update()
 
 
