@@ -1,0 +1,38 @@
+1) Rework all bots on playwright
+
+2) Add message on error if you exceed limit of uploading video in one day
+
+3) Add logger
+
+4) Replace jsons with PostgreSQL
+
+5) Replace OutsideYT.py consts with env or PostgreSQL
+
+6) Think about better log in info then cookies
+
+7) Add advanced settings to Watch (proxy, max thread count, offsets)
+
+8) Mb rework Watching: replace the allocation of a stream for a group with a common pool,
+ where with group will take only one (or more) 'right' to watch video. It must remove condition
+ when a lot of users watch one video at once.
+
+9) Add advanced settings to Upload (deleting after upload,...)
+
+10) Add deleting videos from channel which weren't upload successfully
+
+11) Add async to Upload
+
+12) Make About OutsideYT
+
+13) Add option to save video info in the video folder (for uploading);
+ save list of videos (for watching and download) with saving all info (Selected, Watchers...)
+
+14) Add Playlist selection, Channel selection (from pytube etc..)
+
+15) Delete all processes that were stopped
+
+16) Add icons on WindowTitles
+
+17*) Add change theme (light)
+
+18*) Add another languages (ru)

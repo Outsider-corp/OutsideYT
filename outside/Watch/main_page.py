@@ -2,12 +2,10 @@ import time
 from functools import partial
 
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QThreadPool
-from PyQt5.QtWidgets import QWidget, QTableView
+from PyQt5.QtWidgets import QTableView
 
-import OutsideYT
 from outside import TableModels as CommonTables
-from OutsideYT import app_settings_watchers
+from OYT_Settings import app_settings_watchers, MAX_THREADS_COUNT
 
 from ..asinc_functions import WatchManager
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements
@@ -66,13 +64,12 @@ def update_watch(ui, parent):
     ui.actionWatchers_2.triggered.connect(
         partial(open_UsersList_Dialog, parent=parent,
                 table_type=watch_table.model().table_type.lower(),
-                add_table_class=TableModels.WatchersUsersModel, parent_settings=ui,))
+                add_table_class=TableModels.WatchersUsersModel, parent_settings=ui, ))
 
     return watch_table, ui
 
 
 def start_watch(dialog, dialog_settings, table: QTableView):
-
     def chk_headless():
         return not dialog_settings.Watch_ShowBrowser_checkBox.isChecked()
 
@@ -99,7 +96,7 @@ def start_watch(dialog, dialog_settings, table: QTableView):
         list(dialog_settings.Watch_Table.model().get_data().columns).index('Progress'),
         False)
 
-    dialog_settings.watch_thread = WatchManager(OutsideYT.MAX_THREADS_COUNT)
+    dialog_settings.watch_thread = WatchManager(MAX_THREADS_COUNT)
     dialog_settings.watch_thread.update_progress_watcher_signal.connect(
         lambda id, val: update_progress_watch(id, val))
     dialog_settings.watch_thread.finish_signal.connect(finish)
@@ -116,8 +113,8 @@ def start_watch(dialog, dialog_settings, table: QTableView):
             error_func(f'Group "{group}" has 0 watchers', parent=dialog)
             continue
         dialog_settings.watch_thread.add_watcher(num, video, users,
-                                  driver_headless=chk_headless(),
-                                  auto_start=True)
+                                                 driver_headless=chk_headless(),
+                                                 auto_start=True)
 
 
 def watch_button(dialog_settings, table: QTableView, dialog):

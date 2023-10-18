@@ -4,7 +4,6 @@ import pickle
 import random
 import sys
 import time
-from functools import partial
 from typing import List
 
 import aiohttp
@@ -16,15 +15,13 @@ import webbrowser
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from playwright.async_api import async_playwright, Playwright
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.exceptions import BrowserClosedError, NotFoundCookiesError, OutdatedCookiesError, \
     StopActionError
 from outside.functions import calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
-from OutsideYT import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
+from OYT_Settings import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
     chromedriver_location, app_settings_watchers, app_settings_uploaders, YT_URL, YT_STUDIO_URL, \
     VIDEO_WATCH_TIMEOUT, chrome_playwright_location
 

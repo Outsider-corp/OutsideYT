@@ -3,7 +3,7 @@ from functools import partial
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QTableView
 
-import OutsideYT
+from OYT_Settings import WAIT_TIME_THREAD
 from outside import TableModels as CommonTables
 from outside import main_dialogs
 from .dialogs import update_uploads_delegate
@@ -96,7 +96,7 @@ def start_upload(dialog_settings, table):
         try:
             comp_info = thread.completed_tasks_info
             thread.quit()
-            thread.wait(OutsideYT.WAIT_TIME_THREAD)
+            thread.wait(WAIT_TIME_THREAD)
             table.model()._data["Selected"] = comp_info
             if not all(table.model()._data["Selected"]):
                 dialog_settings.Upload_SelectAll_CheckBox.setChecked(False)

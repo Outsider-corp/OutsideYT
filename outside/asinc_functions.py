@@ -2,12 +2,12 @@ import asyncio
 import os
 import pickle
 
-from typing import List, Dict, Union, Any
+from typing import List, Dict
 import aiohttp
 from PyQt5.QtCore import QThread, pyqtSignal, QObject, QThreadPool, QRunnable
 from playwright.async_api import async_playwright
 
-import OutsideYT
+from OYT_Settings import ASYNC_LIMIT, YT_URL, WAIT_TIME_URL_PLAYWRIGHT
 from outside.Download.functions import start_video_download, save_videos_info
 from outside.Upload.dialogs import upload_video_to_youtube
 from outside.YT.functions import get_video_info, watching_playwright, \
@@ -87,7 +87,7 @@ class Watcher(QRunnable):
         sum_offsets = sum(offsets) if offsets else 0
         self._total_steps = len(self._watchers) * int(self._video_info['Duration']) + sum_offsets
         self._lock = asyncio.Lock()
-        self.semaphore = asyncio.Semaphore(OutsideYT.ASYNC_LIMIT)
+        self.semaphore = asyncio.Semaphore(ASYNC_LIMIT)
         self._progress = 0
 
     async def progress_bar_inc(self, val: int = 1):
@@ -166,7 +166,7 @@ class GetVideoInfoThread(QThread):
         self.total_steps = len(tasks)
         self.progress = 0
         self._add_args = additional_args if additional_args else []
-        self.semaphore = asyncio.Semaphore(OutsideYT.ASYNC_LIMIT)
+        self.semaphore = asyncio.Semaphore(ASYNC_LIMIT)
 
     def update_progress_info(self, label_text: str = None, bar_value: int = 0):
         self.update_progress_label_signal.emit(label_text)
@@ -264,8 +264,8 @@ class CheckCookiesLifeThread(QThread):
         cookies = pickle.load(open(cookies_file, 'rb'))
         async with BrowserContextPlayWright(playwright, cookies) as browser:
             page = await browser.new_page()
-            await page.goto(OutsideYT.YT_URL, wait_until='domcontentloaded',
-                            timeout=OutsideYT.WAIT_TIME_URL_PLAYWRIGHT * 1000)
+            await page.goto(YT_URL, wait_until='domcontentloaded',
+                            timeout=WAIT_TIME_URL_PLAYWRIGHT * 1000)
             if await check_cookies_playwright(page):
                 update_cookies(await page.context.cookies(), cookies_file)
             else:

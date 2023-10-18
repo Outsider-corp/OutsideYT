@@ -3,7 +3,7 @@ from functools import partial
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QAbstractItemView, QMenu, QStyle
 
-import OutsideYT
+from OYT_Settings import app_settings_uploaders, app_settings_download
 from outside.TableModels import remove_all_rows, remove_row, remove_selected_rows
 from outside.YT.functions import open_video_in_browser
 
@@ -40,8 +40,8 @@ def users_dialogs_menu(pos, parent, table: QAbstractItemView, table_type: str):
         remove_data = menu.addAction('Remove Row')
         remove_data.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogCloseButton))
         acc = table.model().get_data().loc[ind.row(), 'Account']
-        del_func = OutsideYT.app_settings_uploaders.del_account if table_type == 'upload' else \
-            OutsideYT.app_settings_download.del_account
+        del_func = app_settings_uploaders.del_account if table_type == 'upload' else \
+            app_settings_download.del_account
         remove_data.triggered.connect(partial(remove_row, table=table,
                                               del_from_settings=partial(del_func,
                                                                         parent=parent, login=acc)))

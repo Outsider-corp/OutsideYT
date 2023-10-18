@@ -1,51 +1,72 @@
 import os
+import sys
 
-from outside import settings
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QShortcut, QStyleFactory
 
-ACCESS_TOKEN = ''
+from outside.Download.main_page import update_download
+from outside.main_dialogs import update_settings_from_file
+from outside.Upload.main_page import update_upload
+from outside.views_py.Outside_MainWindow import Ui_YouTubeOutside
+from outside.Watch.main_page import update_watch
 
-project_folder = os.getcwd()
-cookies_folder = os.path.join(project_folder, 'outside', 'oyt_info')
-app_settings_uploaders = settings.SettingsUsers(
-    os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_UPLOADERS.json'))
-app_settings_watchers = settings.SettingsWatchers(
-    os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_WATCHERS.json'))
-app_settings_download = settings.SettingsDownloads(
-    os.path.join(project_folder, 'outside', 'oyt_info', 'SETTINGS_DOWNLOAD.json'))
 
-chromedriver_location = os.path.join(project_folder, 'outside', 'bin', 'chromedriver.exe')
-chrome_playwright_location = os.path.join(project_folder, 'outside', 'bin', 'chromium-1080',
-                                          'chrome-win', 'chrome.exe')
+class QMainWindowPlus(QMainWindow):
+    def __init__(self) -> None:
+        super().__init__()
+        self.shortcut1 = QShortcut(QKeySequence('F5'), self)
+        self.shortcut1.activated.connect(QMainWindowPlus.table_update)
 
-TEXT_EXTENSIONS = ['.txt']
-VIDEO_EXTENSIONS = ['.mp4', '.webm', '.avi', '.mov', '.mpeg-1', '.mpeg-2', '.mpg', '.wmv',
-                    '.mpegps', '.flv', '.3gpp', '.WebM', '.DNxHR', '.ProRes', '.CineForm', '.HEVC',
-                    '.MP4', '.AVI', '.MOV', '.MPEG-1', '.MPEG-2', '.MPG', '.WMV', '.MPEGPS',
-                    '.FLV', '.3GPP', '.WEBM', '.DNXHR', '.PRORES', '.CINEFORM', '.HEVC']
-IMAGE_EXTENSIONS = ['.pjp', '.jpg', '.pjpeg', '.jpeg', '.jfif', '.png',
-                    '.PJP', '.JPG', '.PJPEG', '.JPEG', '.JFIF', '.PNG']
-JSON_EXTENSIONS = ['.json']
+        self.shortcut2 = QShortcut(QKeySequence('Ctrl+Shift+E'), self)
+        self.shortcut2.activated.connect(QMainWindowPlus.open_main_folder)
 
-FILENAMES_VIDEO_DETAILS = {"Title.txt": 'title', "Description.txt": 'shortDescription',
-                           'Tags.txt': 'keywords', 'Playlist.txt': '',
-                           'Preview.jpg': 'link',
-                           'Cards.json': 'cards'}
+        self.shortcut3 = QShortcut(QKeySequence('Ctrl+A'), self)
+        self.shortcut3.activated.connect(QMainWindowPlus.add_row)
 
-FOLDERNAME_FORBIDDEN_SYMBOLS = '`<>:"/\|?*.'
+    @classmethod
+    def open_main_folder(cls):
+        os.startfile(os.getcwd())
 
-WAIT_TIME_URL_UPLOADS = 5
-WAIT_TIME_URL_PLAYWRIGHT = 10
-WAIT_TIME_ASYNC_LOOPS = 0.8
-WAIT_TIME_THREAD = 1
-SAVE_COOKIES_TIME = 60 * 60 * 24 * 30
-ASYNC_LIMIT = 20
-VIDEO_DOWNLOAD_TIMEOUT = 5
-VIDEO_WATCH_TIMEOUT = 30
-VIDEO_DOWNLOAD_MAX_RETRIES = 3
-DEFAULT_CHUNK_SIZE = 1024 ** 2
-MAX_THREADS_COUNT = 5
+    @classmethod
+    def table_update(cls):
+        ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
+        table = globals()[f'Upload_table']
+        table.update()
 
-FFMPEG_LOCATION = os.path.join(project_folder, 'outside', 'bin', 'ffmpeg.exe')
+    @classmethod
+    def add_row(cls):
+        current_page = ui.OutsideYT.tabText(ui.OutsideYT.currentIndex())
+        table = globals()[f'{current_page}_table']
+        if current_page in ['Upload', 'Watch', 'Download'] and table.isEnabled():
+            table.model().insertRows()
+            table.update()
 
-YT_URL = 'https://www.youtube.com/'
-YT_STUDIO_URL = 'https://studio.youtube.com/'
+
+def update_ui():
+    global Upload_table, Watch_table, Download_table, ui
+    Upload_table, ui = update_upload(ui=ui, parent=YouTubeOutside)
+    Watch_table, ui = update_watch(ui=ui, parent=YouTubeOutside)
+    Download_table, ui = update_download(ui=ui, parent=YouTubeOutside)
+    ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
+    ui.actionOpen_Main_Folder.triggered.connect(QMainWindowPlus.open_main_folder)
+    ui.actionUpdate_Settings.triggered.connect(update_settings_from_file)
+
+
+def start_GUI():
+    global app, YouTubeOutside, ui, Upload_table, Download_table, Watch_table
+    QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create('Fusion'))
+    YouTubeOutside = QMainWindowPlus()
+    ui = Ui_YouTubeOutside()
+    ui.setupUi(YouTubeOutside)
+    update_ui()
+    YouTubeOutside.show()
+
+
+if __name__ == '__main__':
+    start_GUI()
+    sys.exit(app.exec_())

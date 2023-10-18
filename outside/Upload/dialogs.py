@@ -4,7 +4,7 @@ from typing import Dict
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import OutsideYT
+from OYT_Settings import app_settings_uploaders
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.Upload import TableModels
@@ -16,7 +16,6 @@ from outside.views_py import (
 from outside.YT.functions import get_google_login, upload_video
 
 from . import upload_time_max_rows
-from .TableModels import UploadModel
 from .. import TableModels as CommonTables
 
 
@@ -37,9 +36,9 @@ def open_upload_select_videos(parent, table):
     dialog = QtWidgets.QDialog(parent)
     dialog_settings = SelectUploadVideos_Dialog.Ui_SelectVideos_Dialog()
     dialog_settings.setupUi(dialog)
-    items = ['No default account', *OutsideYT.app_settings_uploaders.accounts.keys()]
+    items = ['No default account', *app_settings_uploaders.accounts.keys()]
     dialog_settings.Users_ComboBox = update_combobox(dialog_settings.Users_ComboBox, items,
-                                                     OutsideYT.app_settings_uploaders.def_account)
+                                                     app_settings_uploaders.def_account)
 
     def select_video(next_func):
         path = ''
@@ -56,7 +55,7 @@ def open_upload_select_videos(parent, table):
 
     def del_vids_folder():
         try:
-            OutsideYT.app_settings_uploaders.del_vids_folder()
+            app_settings_uploaders.del_vids_folder()
             dialog.accept()
         except Exception as e:
             error_func(f'Error.\n {e}')
@@ -80,9 +79,9 @@ def open_upload_select_videos(parent, table):
 
 
 def scan_videos_folder(table):
-    users = list(OutsideYT.app_settings_uploaders.accounts.keys())
+    users = list(app_settings_uploaders.accounts.keys())
     for user in users:
-        for vid in os.scandir(os.path.join(OutsideYT.app_settings_uploaders.vids_folder, user)):
+        for vid in os.scandir(os.path.join(app_settings_uploaders.vids_folder, user)):
             if vid.is_dir():
                 TableModels.add_video_for_uploading(table, os.path.abspath(vid), user)
 
@@ -91,7 +90,7 @@ def change_def_folder(path):
     if not path:
         return
     if os.path.isdir(path):
-        OutsideYT.app_settings_uploaders.add_vids_folder(path)
+        app_settings_uploaders.add_vids_folder(path)
     else:
         error_func('This is not a directory!')
 
@@ -114,9 +113,9 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
     dialog.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
     dialog_settings = UpdateTime_Dialog.Ui_Upload_Time()
     dialog_settings.setupUi(dialog)
-    items = ['All accounts', *OutsideYT.app_settings_uploaders.accounts.keys()]
+    items = ['All accounts', *app_settings_uploaders.accounts.keys()]
     dialog_settings.User_ComboBox_1 = update_combobox(dialog_settings.User_ComboBox_1, items,
-                                                      OutsideYT.app_settings_uploaders.def_account)
+                                                      app_settings_uploaders.def_account)
     dialog_settings.User_ComboBox_1.setCurrentIndex(0)
     dialog_settings.startTimeEdit_1.setDateTime(
         QtCore.QDateTime(QtCore.QDate.currentDate().addDays(1), QtCore.QTime(0, 0, 0)))
@@ -177,8 +176,8 @@ def set_upload_time(parent, table: QtWidgets.QTableView):
         combo.setFont(font)
         combo.setObjectName(f'User_ComboBox_{row}')
         combo = update_combobox(combo,
-                                ['All accounts', *OutsideYT.app_settings_uploaders.accounts.keys()],
-                                OutsideYT.app_settings_uploaders.def_account)
+                                ['All accounts', *app_settings_uploaders.accounts.keys()],
+                                app_settings_uploaders.def_account)
         combo.setCurrentIndex(0)
         dialog_settings.gridLayout.addWidget(combo, row, 2, 1, 1)
         setattr(dialog_settings, f'User_ComboBox_{row}', combo)
@@ -307,6 +306,6 @@ def upload_video_to_youtube(video: Dict, driver_headless: bool,
 
 def update_uploads_delegate(upload_table):
     user_combo_del = CommonTables.ComboBoxDelegate(upload_table,
-                                                   OutsideYT.app_settings_uploaders.accounts.keys())
+                                                   app_settings_uploaders.accounts.keys())
     upload_table.setItemDelegateForColumn(
         list(upload_table.model().get_data().columns).index('User'), user_combo_del)

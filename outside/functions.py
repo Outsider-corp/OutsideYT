@@ -2,7 +2,7 @@ import os
 
 from PyQt5.QtWidgets import QWidget
 
-from OutsideYT import FOLDERNAME_FORBIDDEN_SYMBOLS
+from OYT_Settings import FOLDERNAME_FORBIDDEN_SYMBOLS
 
 
 def update_combobox(combobox, items: list, def_value: str = ''):

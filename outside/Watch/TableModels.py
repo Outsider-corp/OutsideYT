@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 
 from outside.functions import get_video_link
 from outside.message_boxes import error_func
-from OutsideYT import app_settings_watchers
+from OYT_Settings import app_settings_watchers
 
 
 class WatchModel(QAbstractTableModel):

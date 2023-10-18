@@ -2,11 +2,11 @@ import json
 import os
 from typing import List
 
-import OutsideYT
-from OutsideYT import app_settings_uploaders
+from OYT_Settings import FILENAMES_VIDEO_DETAILS, JSON_EXTENSIONS, IMAGE_EXTENSIONS
+from OYT_Settings import app_settings_uploaders
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.YT.functions import download_image
-from outside.exceptions import NoAvailableQualityError, StopActionError
+from outside.exceptions import NoAvailableQualityError
 from outside.functions import check_folder_name, get_video_link
 from outside.message_boxes import error_func
 
@@ -30,9 +30,9 @@ def create_video_folder(video_info: dict, saving_path: str):
         if video_info:
             save_dir = os.path.join(saving_path, check_folder_name(video_info['title']))
             os.makedirs(os.path.join(save_dir), exist_ok=True)
-            for file, key in OutsideYT.FILENAMES_VIDEO_DETAILS.items():
+            for file, key in FILENAMES_VIDEO_DETAILS.items():
                 if key in video_info and video_info[key]:
-                    if file.endswith(tuple(OutsideYT.JSON_EXTENSIONS)):
+                    if file.endswith(tuple(JSON_EXTENSIONS)):
                         json.dump(video_info[key],
                                   open(os.path.join(save_dir, file), 'w', encoding="UTF-8"))
                     elif file.endswith('.txt'):
@@ -41,7 +41,7 @@ def create_video_folder(video_info: dict, saving_path: str):
                                 f.write(",".join(video_info[key]))
                             else:
                                 f.write(video_info[key])
-                    elif file.endswith(tuple(OutsideYT.IMAGE_EXTENSIONS)):
+                    elif file.endswith(tuple(IMAGE_EXTENSIONS)):
                         img_url = (f'https://i.ytimg.com/vi/{video_info["videoId"]}'
                                    f'/maxresdefault.jpg')
                         download_image(img_url, path=os.path.join(save_dir, file))

@@ -6,7 +6,7 @@ from PyQt5.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PyQt5.QtWidgets import QFileDialog, QStyledItemDelegate, QTableView
 
 from outside.functions import find_files
-from OutsideYT import (
+from OYT_Settings import (
     app_settings_uploaders,
     IMAGE_EXTENSIONS,
     TEXT_EXTENSIONS,

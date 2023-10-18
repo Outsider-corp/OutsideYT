@@ -7,7 +7,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableView, QWidget
 
 import outside.Watch.context_menu as watch_context
-import OutsideYT
+from OYT_Settings import app_settings_uploaders, app_settings_watchers, TEXT_EXTENSIONS, \
+    app_settings_download
 import outside.context_menu
 from outside import TableModels
 from outside.asinc_functions import GetVideoInfoThread, CheckCookiesLifeThread
@@ -26,11 +27,11 @@ from outside.YT.functions import get_playlist_info, select_page
 
 def open_UsersList_Dialog(parent, table_type: str, add_table_class, parent_settings):
     if table_type in ['upload', 'download']:
-        table_settings = OutsideYT.app_settings_uploaders
+        table_settings = app_settings_uploaders
         def_type = 'account'
         combo_items_default = table_settings.accounts.keys()
     elif table_type == 'watch':
-        table_settings = OutsideYT.app_settings_watchers
+        table_settings = app_settings_watchers
         def_type = 'group'
         combo_items_default = table_settings.groups.keys()
     else:
@@ -363,7 +364,7 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 
     def import_links_from_file():
         try:
-            exts = OutsideYT.TEXT_EXTENSIONS
+            exts = TEXT_EXTENSIONS
             file, _ = QtWidgets.QFileDialog.getOpenFileName(None,
                                                             f'Select File with Links', '',
                                                             f"Text Files ("
@@ -435,9 +436,9 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
                 dialog_settings.End_date.time()
 
     if table.model().table_type == 'watch':
-        items = list(OutsideYT.app_settings_watchers.groups.keys())
+        items = list(app_settings_watchers.groups.keys())
         dialog_settings.Group_comboBox = update_combobox(
-            dialog_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
+            dialog_settings.Group_comboBox, items, app_settings_watchers.def_group)
 
     show_elements('count')
 
@@ -537,18 +538,19 @@ def userslist(parent, table_name: str):
 def update_settings_combobox_with_type(dialog_settings, items, table_type):
     if table_type == 'watch':
         dialog_settings.Group_comboBox = update_combobox(
-            dialog_settings.Group_comboBox, items[1:], OutsideYT.app_settings_watchers.def_group)
+            dialog_settings.Group_comboBox, items[1:], app_settings_watchers.def_group)
     elif hasattr(dialog_settings, 'DefUser_CompBox'):
         if table_type == 'upload':
             dialog_settings.DefUser_ComboBox = update_combobox(
                 dialog_settings.DefUser_ComboBox, items,
-                OutsideYT.app_settings_uploaders.def_account)
+                app_settings_uploaders.def_account)
     return dialog_settings
 
 
 def update_settings_from_file():
-    OutsideYT.app_settings_uploaders.update_settings()
-    OutsideYT.app_settings_watchers.update_settings()
+    app_settings_uploaders.update_settings()
+    app_settings_watchers.update_settings()
+    app_settings_download.update_settings()
 
 
 def update_progress_bar(table: QTableView, value: int):

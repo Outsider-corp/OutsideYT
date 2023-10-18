@@ -7,7 +7,8 @@ from typing import Dict, List
 import requests
 from bs4 import BeautifulSoup as bs
 
-import OutsideYT
+from OYT_Settings import FFMPEG_LOCATION, DEFAULT_CHUNK_SIZE, VIDEO_DOWNLOAD_TIMEOUT, \
+    VIDEO_DOWNLOAD_MAX_RETRIES, ACCESS_TOKEN
 import outside.video_qualities
 from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError, \
     NoAvailableQualityError, StopActionError
@@ -20,10 +21,10 @@ class OutsideDownloadVideoYT:
     base_headers = {'Content-Type': 'application/json',
                     'User-Agent': 'com.google.android.apps.youtube.music/'}
 
-    __FFMPEG_LOCATION = OutsideYT.FFMPEG_LOCATION
-    __CHUNK_SIZE = OutsideYT.DEFAULT_CHUNK_SIZE
-    __TIMEOUT = OutsideYT.VIDEO_DOWNLOAD_TIMEOUT or 10
-    __MAX_TRIES = OutsideYT.VIDEO_DOWNLOAD_MAX_RETRIES or 3
+    __FFMPEG_LOCATION = FFMPEG_LOCATION
+    __CHUNK_SIZE = DEFAULT_CHUNK_SIZE
+    __TIMEOUT = VIDEO_DOWNLOAD_TIMEOUT or 10
+    __MAX_TRIES = VIDEO_DOWNLOAD_MAX_RETRIES or 3
     __VIDEO_ITAGS = outside.video_qualities.VIDEO_ITAG
     __AUDIO_ITAGS = outside.video_qualities.AUDIO_ITAG
     __SIMPLE_VIDEO_ITAGS = outside.video_qualities.SIMPLE_VIDEO_ITAG
@@ -85,7 +86,7 @@ class OutsideDownloadVideoYT:
         self._callback_info = callback_info
         self._callback_err = callback_err
         self.__progress_size = None
-        self.__api_key = os.environ.get('YT_KEY', OutsideYT.ACCESS_TOKEN)
+        self.__api_key = os.environ.get('YT_KEY', ACCESS_TOKEN)
 
         def _stop_():
             if _stop():

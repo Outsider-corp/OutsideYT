@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import outside.Watch.context_menu
 import outside.Watch.TableModels
-import OutsideYT
+from OYT_Settings import app_settings_watchers
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.views_py import EditWatchersGroups_Dialog
@@ -38,7 +38,7 @@ def edit_watchers_groups(parent, parent_settings):
                                                 f'All changes will be lost!'):
                 dialog.reject()
         else:
-             dialog.reject()
+            dialog.reject()
 
     def add_group():
         dialog_settings.Groups_Table.model().insertRows()
@@ -53,17 +53,17 @@ def edit_watchers_groups(parent, parent_settings):
         if not new_data['New Group name'].isna().all():
             for ind, row in new_data.iterrows():
                 if row.Group != row['New Group name'] and row['New Group name']:
-                    OutsideYT.app_settings_watchers.change_group_name(row.Group,
-                                                                      row['New Group name'])
+                    app_settings_watchers.change_group_name(row.Group,
+                                                            row['New Group name'])
         dialog_settings.Groups_Table.model().reset_ids(
             [dialog_settings.Groups_Table.verticalHeader().visualIndex(i) for i in
              range(dialog_settings.Groups_Table.model().rowCount())])
         dialog_settings.Groups_Table.model()._data = dialog_settings.Groups_Table.model().get_data().sort_values(
             by='id')
         parent_settings.Users_Table.model().update()
-        items = list(OutsideYT.app_settings_watchers.groups.keys())
+        items = list(app_settings_watchers.groups.keys())
         parent_settings.Group_comboBox = update_combobox(
-            parent_settings.Group_comboBox, items, OutsideYT.app_settings_watchers.def_group)
+            parent_settings.Group_comboBox, items, app_settings_watchers.def_group)
         dialog.accept()
 
     dialog_settings.buttonBox.button(QtWidgets.QDialogButtonBox.Save).clicked.connect(save)
