@@ -347,7 +347,10 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
         if text:
             group = dialog_settings.Group_comboBox.currentText() if \
                 table.model().table_type == 'watch' else None
-            get_videos_info(table, links=[text], group=group, dialog_settings=parent_settings)
+            get_videos_info(table, links=[text], group=group, dialog_settings=parent_settings,
+                            add_args=['cards',
+                                      'streamingData'] if (
+                                    table.model().table_type == 'download') else None)
             dialog.accept()
         else:
             error_func('Not valid link.', dialog)
@@ -459,7 +462,10 @@ def open_watch_down_select_videos(parent, table: QtWidgets.QTableView, parent_se
 def add_video_from_textbox(table, textbox: QtWidgets.QLineEdit, dialog_settings):
     text = textbox.text()
     if 'youtube.com/watch' in text or 'youtu.be/' in text:
-        get_videos_info(table, [text], dialog_settings)
+        get_videos_info(table, [text], dialog_settings,
+                        add_args=['cards',
+                                  'streamingData'] if (
+                                    table.model().table_type == 'download') else None)
         textbox.clear()
     elif 'youtube.com/playlist' in text:
         get_playlist_info(table, text)

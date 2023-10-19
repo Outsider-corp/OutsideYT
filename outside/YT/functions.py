@@ -184,6 +184,7 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
         __check_stop = lambda: ...
     else:
         _stop_ = __check_stop
+
         def __check_stop():
             if _stop_():
                 raise StopActionError()
@@ -474,7 +475,8 @@ def upload_video(user: str, title: str, video: str, access: int, save_title: boo
     return False
 
 
-async def get_video_info(link, session: aiohttp.ClientSession, headers=None, *args, **kwargs):
+async def get_video_info(link, session: aiohttp.ClientSession, headers=None, args: List = None,
+                         **kwargs):
     """Функция для получения информации о видео."""
     args = args or []
     vid_info = None
@@ -592,7 +594,7 @@ async def watching_playwright(url: str, user: str, driver_headless: bool = True,
     """
     if not _stop:
         _stop = lambda: ...
-        
+
     try:
         async with async_playwright() as pw:
             file_cookies = f'outside/oyt_info/{app_settings_watchers.__str__()}/{user}_cookies'
