@@ -143,7 +143,7 @@ def get_google_login(login: str, mail: str, folder: str):
 
 
 def upload_video(user: str, title: str, video: str, access: int, save_title: bool,
-                 publish: str = None, description: str = None, playlist: str = None,
+                 publish: str = None, description: str = None, playlist: List = None,
                  preview: str = None, tags: str = None, ends: str = None, cards: int = None,
                  driver_headless: bool = True, _callback_func=None, _callback_info=None,
                  _callback_error=None, __check_stop=None):
