@@ -517,8 +517,7 @@ def _add_video_to_table(table, video_info, group=None, force_add=False):
                            'Channel': video_info['author'],
                            'Duration': video_info['lengthSeconds'],
                            'Link': link,
-                           '_download_info': video_info
-                           }
+                           '_download_info': video_info}
             table.model().insertRows(row_content=row_content)
         except KeyError:
             pass
@@ -570,7 +569,6 @@ def add_progress_label(table: QTableView, add_key: bool = False, add_text: str =
         old_text = label.text()
         while True:
             if add_key:
-                print(add_text)
                 label.setText(f'{old_text} / {add_text}')
                 add_key, add_text = yield
             else:
