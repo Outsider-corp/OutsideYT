@@ -21,7 +21,7 @@ from outside.exceptions import BrowserClosedError, NotFoundCookiesError, Outdate
     StopActionError
 from outside.functions import calc_time_from_string
 from outside.message_boxes import error_func, waiting_func
-from OYT_Settings import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
+from outside.OYT_Settings import project_folder, SAVE_COOKIES_TIME, WAIT_TIME_URL_UPLOADS, \
     chromedriver_location, app_settings_watchers, app_settings_uploaders, YT_URL, YT_STUDIO_URL, \
     VIDEO_WATCH_TIMEOUT, chrome_playwright_location
 

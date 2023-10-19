@@ -2,7 +2,7 @@ from functools import partial
 
 from PyQt5 import QtWidgets
 
-from OYT_Settings import app_settings_download
+from outside.OYT_Settings import app_settings_download
 from outside.video_qualities import VIDEO_EXTS, VIDEO_QUALITIES, SIMPLE_VIDEO_QUALITIES, \
     AUDIO_QUALITIES, PREFER_QUALITY, IF_EXISTS_VARS
 from outside.functions import update_combobox

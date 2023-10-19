@@ -2,8 +2,8 @@ import json
 import os
 from typing import List
 
-from OYT_Settings import FILENAMES_VIDEO_DETAILS, JSON_EXTENSIONS, IMAGE_EXTENSIONS
-from OYT_Settings import app_settings_uploaders
+from outside.OYT_Settings import FILENAMES_VIDEO_DETAILS, JSON_EXTENSIONS, IMAGE_EXTENSIONS
+from outside.OYT_Settings import app_settings_uploaders
 from outside.YT.download_model import OutsideDownloadVideoYT
 from outside.YT.functions import download_image
 from outside.exceptions import NoAvailableQualityError

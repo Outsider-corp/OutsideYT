@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import outside.Watch.context_menu
 import outside.Watch.TableModels
-from OYT_Settings import app_settings_watchers
+from outside.OYT_Settings import app_settings_watchers
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.views_py import EditWatchersGroups_Dialog

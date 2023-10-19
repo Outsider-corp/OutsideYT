@@ -7,7 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QTableView, QWidget
 
 import outside.Watch.context_menu as watch_context
-from OYT_Settings import app_settings_uploaders, app_settings_watchers, TEXT_EXTENSIONS, \
+from outside.OYT_Settings import app_settings_uploaders, app_settings_watchers, TEXT_EXTENSIONS, \
     app_settings_download
 import outside.context_menu
 from outside import TableModels

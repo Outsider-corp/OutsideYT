@@ -3,7 +3,7 @@ from functools import partial
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QTableView
 
-from OYT_Settings import app_settings_uploaders, app_settings_download, WAIT_TIME_THREAD
+from outside.OYT_Settings import app_settings_uploaders, app_settings_download, WAIT_TIME_THREAD
 from . import TableModels, context_menu
 from outside import TableModels as CommonTables
 from .dialogs import select_saving_path, open_advanced_settings

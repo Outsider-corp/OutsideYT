@@ -3,7 +3,7 @@ from functools import partial
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QAbstractItemView, QMenu, QStyle
 
-from OYT_Settings import app_settings_uploaders, app_settings_download
+from outside.OYT_Settings import app_settings_uploaders, app_settings_download
 from outside.TableModels import remove_all_rows, remove_row, remove_selected_rows
 from outside.YT.functions import open_video_in_browser
 

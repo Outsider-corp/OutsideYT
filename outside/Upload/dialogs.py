@@ -4,7 +4,7 @@ from typing import Dict
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from OYT_Settings import app_settings_uploaders
+from outside.OYT_Settings import app_settings_uploaders
 from outside.functions import update_combobox
 from outside.message_boxes import error_func, warning_func
 from outside.Upload import TableModels

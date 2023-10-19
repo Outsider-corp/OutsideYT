@@ -5,7 +5,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QTableView
 
 from outside import TableModels as CommonTables
-from OYT_Settings import app_settings_watchers, MAX_THREADS_COUNT
+from outside.OYT_Settings import app_settings_watchers, MAX_THREADS_COUNT
 
 from ..asinc_functions import WatchManager
 from ..functions import update_checkbox_select_all, change_enabled_tab_elements

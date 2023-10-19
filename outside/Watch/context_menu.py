@@ -3,7 +3,7 @@ from functools import partial
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QMenu, QStyle
 
-from OYT_Settings import app_settings_watchers
+from outside.OYT_Settings import app_settings_watchers
 from outside.context_menu import add_remove_row, add_option_open_link
 from outside.TableModels import remove_row
 

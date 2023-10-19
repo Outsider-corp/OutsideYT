@@ -7,7 +7,7 @@ from typing import Dict, List
 import requests
 from bs4 import BeautifulSoup as bs
 
-from OYT_Settings import FFMPEG_LOCATION, DEFAULT_CHUNK_SIZE, VIDEO_DOWNLOAD_TIMEOUT, \
+from outside.OYT_Settings import FFMPEG_LOCATION, DEFAULT_CHUNK_SIZE, VIDEO_DOWNLOAD_TIMEOUT, \
     VIDEO_DOWNLOAD_MAX_RETRIES, ACCESS_TOKEN
 import outside.video_qualities
 from outside.exceptions import StatusCodeRequestError, RequestMethodTypeError, MaxRetriesError, \
